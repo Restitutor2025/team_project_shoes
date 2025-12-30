@@ -1,4 +1,5 @@
 import 'package:customer_app/view/login.dart';
+import 'package:customer_app/view/purchase_list.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
