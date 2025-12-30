@@ -1,4 +1,3 @@
-import 'package:customer_app/util/pcolor.dart';
 import 'package:flutter/material.dart';
 
 class Shoppingcart extends StatefulWidget {

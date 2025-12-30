@@ -1,6 +1,6 @@
-import 'package:customer_app/view/find_id_pw.dart';
-import 'package:customer_app/view/regist.dart';
-import 'package:customer_app/view/tabbar.dart';
+import 'package:customer_app/view/home/tabbar.dart';
+import 'package:customer_app/view/login/find_id_pw.dart';
+import 'package:customer_app/view/login/regist.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
