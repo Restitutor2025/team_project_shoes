@@ -1,7 +1,7 @@
-import 'package:customer_app/view/home.dart';
-import 'package:customer_app/view/map_select.dart';
-import 'package:customer_app/view/mypage.dart';
-import 'package:customer_app/view/shoppingcart.dart';
+import 'package:customer_app/view/home/home.dart';
+import 'package:customer_app/view/map/map_select.dart';
+import 'package:customer_app/view/mypage/mypage.dart';
+import 'package:customer_app/view/shoppingcart/shoppingcart.dart';
 import 'package:flutter/material.dart';
 
 class Tabbar extends StatefulWidget {

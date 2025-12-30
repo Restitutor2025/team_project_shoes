@@ -1,5 +1,5 @@
 import 'package:customer_app/util/pcolor.dart';
-import 'package:customer_app/view/map_detail.dart';
+import 'package:customer_app/view/map/map_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
