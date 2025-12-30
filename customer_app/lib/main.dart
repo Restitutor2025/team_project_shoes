@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: .fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const Login(),
+      home: const Login(),// 본인이 하는 페이지로 바꿔서 진행하시면 됩니다
     );
   }
 }
