@@ -1,4 +1,6 @@
+import 'package:customer_app/util/pcolor.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 /* 
 Description : 상품 상세페이지 화면
@@ -22,24 +24,31 @@ class Detail extends StatefulWidget {
 class _DetailState extends State<Detail> {
   // Property
   // late List<Product> productList; 제품 데이터 받아오기
-  List<Map<String, String>> productList = [];
+  List<Map<String, String>> productList = []; // 제품 데이터 받아올 곳
+  ScrollController scrollController = ScrollController();
+  List<String> sizeList = []; // 사이즈 데이터 받아올 곳
+  List<String> colorList = []; // 컬러 데이터 받아올 곳
+  late int count = 0; // 제품 수량
 
   
   @override
   void initState() {
     super.initState();
     addData(); // 더미 데이터 넣어줄 예정
+    print(sizeList);
+    sizeList = ['230','230','230','230','230','230'];
+    colorList = ['빨강','파랑','노랑'];
+
   }
     void addData() {
     productList.add({
       'imageName': 'images/logo.png',
+      'detailImageName': 'images/logo_non.png',
+      'productPrice': '100,000',
       'productName': '킨 제스퍼 여성화',
+      'englishName': 'KEEN JASPER Women Sneakers',
     });
 
-    productList.add({
-      'imageName': 'images/logo.png',
-      'productName': '아디다스 삼바',
-    });
   }
 
   @override
@@ -70,32 +79,235 @@ class _DetailState extends State<Detail> {
           ),
         ]
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: productList.length,
-              itemBuilder: (context, index) {
-                return Column(
-                children: [
-                  Image.asset(productList[index]['imageName']!),
-                  Text(productList[index]['productName']!)
-                ],
-              );
-              },
+      body: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Image.asset(productList[0]['imageName']!),
+                Text(
+                  productList[0]['productPrice']!,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold
+                  ),
+                  ),
+                Text(productList[0]['productName']!),
+                Text(
+                  productList[0]['englishName']!,
+                  style: TextStyle(
+                    color: Colors.blueGrey
+                  ),
+                  ),
+              ],
             ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              //
-            },
-            child: Text(
-              "결제하기",
-              style: TextStyle(),
+            Image.asset(productList[0]['detailImageName']!),
+            Image.asset(productList[0]['detailImageName']!),
+            Image.asset(productList[0]['detailImageName']!),
+            Image.asset(productList[0]['detailImageName']!),
+            Image.asset(productList[0]['detailImageName']!),
+            Image.asset(productList[0]['detailImageName']!),
+            Image.asset(productList[0]['detailImageName']!),
+            Image.asset(productList[0]['detailImageName']!),
+            Image.asset(productList[0]['detailImageName']!)
+          ],
+        ),
+      ),
+      bottomNavigationBar:SizedBox(
+        height: 80,
+        child: Column(
+          children: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(100, 50)
+              ),
+              onPressed: () {
+                sizeSheet();
+              }, 
+              child: Text("결제하기"),
               )
+          ],
+        ),
+      ),
+    );
+  } // build
+
+   // --- Functions ---
+  void sizeSheet(){
+    Get.bottomSheet(
+      Container(
+        width: 500,
+        height: 500,
+        color: Pcolor.basebackgroundColor,
+        child: Column(
+          children: [
+            Icon(Icons.horizontal_rule_sharp),
+            SizedBox(height: 12),
+            Text(
+              '구매하기',
+              style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            Text('Text Line 2'),
+            Container(
+                  decoration: BoxDecoration(
+                  color: Pcolor.appBarForegroundColor,
+                  borderRadius: BorderRadius.circular(16), 
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              'images/logo.png',
+                              width: 72,
+                              height: 72,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Text(
+                                  "킨 재스퍼 여성 스니커즈 발라드",
+                                style: TextStyle(
+                                fontWeight: FontWeight.bold),),
+                                Text('KEEN'),
+                                SizedBox(height: 12),
+                              ],
+                            ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+            SizedBox(
+              height: 300,
+              child: GridView.builder(
+                  controller: scrollController,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    crossAxisSpacing: 1,
+                    mainAxisSpacing: 1,
+                  ), 
+                  itemCount: sizeList.length,
+                  itemBuilder: (context, index) {
+                    return SizedBox(
+                      child: Center(
+                        child: GestureDetector(
+                          onTap: () {
+                            colorSheet();
+                          },
+                          child: Card(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(sizeList[index]),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+              ),
             )
-        ],
+          ],
+        ),
+      )
+    );
+
+  }
+
+  void colorSheet(){
+    Get.bottomSheet(
+      Container(
+        width: 500,
+        height: 300,
+        color: Pcolor.basebackgroundColor,
+        child: Column(
+          children: [
+            Icon(Icons.horizontal_rule_sharp),
+            Text("색깔"),
+            SizedBox(height: 12),
+            SizedBox(
+              width: 200,
+              height: 50,
+              child: GridView.builder(
+                itemCount: colorList.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                ), 
+                controller: scrollController,
+                itemBuilder: (context, index) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Pcolor.effectBackColor,
+                      borderRadius: BorderRadius.circular(15)
+                    ),
+                    child: Card(
+                      child: Center(
+                        child:
+                          Text(colorList[index])
+                      ),
+                    ),
+                  );
+                },
+                ),
+            ),
+            
+          Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    count--;
+                    setState(() {});
+                  },
+                  child: Text('-'),
+                ),
+                Text("$count"),
+                TextButton.icon(
+                  label: Icon(Icons.add),
+                  onPressed: () {
+                    count++;
+                    setState(() {});
+                  },
+                ),
+              ]
+            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  //
+                },
+                 child: Text("장바구니"),
+                 ),
+              ElevatedButton(
+                onPressed: () {
+                  //
+                },
+                 child: Text("구매하기"),
+                 ),
+            ],
+          ),
+          ]
+          )
+          ]
+          ,)
       ),
     );
   }
-}
+
+
+
+} // class
