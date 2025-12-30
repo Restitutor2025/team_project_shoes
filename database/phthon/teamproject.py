@@ -6,14 +6,14 @@ import pymysql
 
 app = FastAPI()
 ipAddress = '172.16.250.193'
-# 회원가입용 클라스
+# 회원가입용 클라스 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 class Customer(BaseModel):
     email: str
     password: str
     name: str
     phone: str
     address: str
-# 로그인용 클라스
+# 로그인용 클라스 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 class LoginRequest(BaseModel):
     email: str
     password: str
@@ -28,7 +28,7 @@ def connect():
         cursorclass=pymysql.cursors.DictCursor
     )
     return conn
-
+#회원 가입 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 @app.post("/idregist")
 async def idInsert(customer: Customer):
     conn=connect()
@@ -44,6 +44,7 @@ async def idInsert(customer: Customer):
     finally:
         conn.close()
 
+#로그인 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 @app.post("/login")
 async def login(request: LoginRequest):
     conn = connect()
