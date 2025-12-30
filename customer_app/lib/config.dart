@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
   Create: 12/12/2025 18:12, Creator: Chansol, Park
   Update log: 
     DUMMY 00/00/0000 00:00, 'Point X, Description', Creator: Chansol, Park
+    30/12/2025 14:10, 'Point 1, Chatting chatDateFormat', Creator: Chansol Park
   Version: 1.0
   Desc: Configuration of the App
 */
@@ -33,11 +34,33 @@ const String rDefaultProductImage = '${rImageAssetPath}default.png';  //  Defaul
 //  Formats
 const String dateFormat = 'yyyy-MM-dd'; //  DateTime Format
 const String dateTimeFormat = 'yyyy-MM-dd HH:mm:ss';  //  DateTime Format to second 
+
+//  Point 1
+final String chatDateFormat = 'HH:mm';  //  Chat Date Format
 final NumberFormat priceFormatter = NumberFormat('#,###.##'); //  Number format ###,###
 
 final RegExp emailRegex = RegExp(
   r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$',
 );
+
+Widget chatDate({
+  required String title,
+  required DateTime datetime
+}){
+  return SizedBox(
+    width: double.infinity,
+    child: Row(
+      children: [
+        Expanded(child: Divider()),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20,0,20,0),
+          child: Text('$title, ${datetime.year}.${datetime.month}.${datetime.day}'),
+        ),
+        Expanded(child: Divider()),
+      ],
+    ),
+  );
+}
 
 //  Features
 const bool kEnableSaleFeature = true;
