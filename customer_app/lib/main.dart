@@ -1,4 +1,5 @@
 import 'package:customer_app/view/login.dart';
+import 'package:customer_app/view/purchase_list.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: .fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const Login(),
+      home: const PurchaseList(),
     );
   }
 }
