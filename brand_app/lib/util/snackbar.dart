@@ -27,7 +27,11 @@ class CustomSnackbar {
   }
 
   // Dialog
-  dynamic showDialog(String title, String message) {
+  dynamic showDialog(
+    String title,
+    String message, {
+    required VoidCallback onConfirm,
+  }) {
     Get.defaultDialog(
       title: title,
       middleText: message,
@@ -41,8 +45,8 @@ class CustomSnackbar {
       actions: [
         TextButton(
           onPressed: () {
-            Get.back();
-            Get.back();
+            onConfirm(); // 1. 전달받은 삭제 로직 실행
+            Get.back(); //2. 다이얼로그만 닫기 (딱 한 번만 실행)
           },
           style: TextButton.styleFrom(
             foregroundColor: Colors.black,
