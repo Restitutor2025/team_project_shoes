@@ -34,9 +34,9 @@ const String rDefaultProductImage = '${rImageAssetPath}default.png';  //  Defaul
 //  Formats
 const String dateFormat = 'yyyy-MM-dd'; //  DateTime Format
 const String dateTimeFormat = 'yyyy-MM-dd HH:mm:ss';  //  DateTime Format to second 
-
 //  Point 1
 final String chatDateFormat = 'HH:mm';  //  Chat Date Format
+final formatter = NumberFormat('#,###');
 final NumberFormat priceFormatter = NumberFormat('#,###.##'); //  Number format ###,###
 
 final RegExp emailRegex = RegExp(
