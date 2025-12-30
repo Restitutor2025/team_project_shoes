@@ -24,22 +24,24 @@ class Mypage extends StatefulWidget {
 class _MypageState extends State<Mypage> {
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.vertical,
-      child: Scaffold(
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
         backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          title: Text('마이 페이지'),
-          centerTitle: true,
-          leading: Icon(Icons.menu),
-          actions: [Icon(Icons.settings)],
-        ),
-        body: Column(
+        title: Text('마이 페이지'),
+        centerTitle: true,
+        leading: Icon(Icons.menu),
+        actions: [Icon(Icons.settings)],
+      ),
+      body: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-              child: Row(children: [Icon(Icons.question_mark), Text('\t\tUser')]),
+              child: Row(
+                children: [Icon(Icons.question_mark), Text('\t\tUser')],
+              ),
             ),
             Card(
               color: Colors.white,
@@ -96,7 +98,7 @@ class _MypageState extends State<Mypage> {
               child: Column(
                 children: [
                   Align(
-                    alignment: AlignmentGeometry.topLeft,
+                    alignment: Alignment.topLeft,
                     child: Text(
                       '\n\t\t\t\t도움말\n',
                       style: TextStyle(fontWeight: FontWeight.bold),
@@ -150,14 +152,14 @@ class _MypageState extends State<Mypage> {
                       ],
                     ),
                   ),
-                  Image.asset(
-                    config.rlogoImage,
-                    width: MediaQuery.of(context).size.width,
-                    height: 100,
-                    fit: BoxFit.contain,
-                  ),
                 ],
               ),
+            ),
+            Image.asset(
+              config.rlogoImage,
+              width: MediaQuery.of(context).size.width,
+              height: 100,
+              fit: BoxFit.contain,
             ),
           ],
         ),
