@@ -1,5 +1,7 @@
+import 'package:brand_app/view/image_app_page.dart';
 import 'package:brand_app/view/staff_main_page.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 void main() {
   runApp(const MyApp());
@@ -8,12 +10,15 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: .fromSeed(
+          seedColor: Colors.deepPurple,
+        ),
       ),
       home: const StaffMainpage(),
     );
