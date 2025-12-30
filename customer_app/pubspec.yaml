@@ -35,6 +35,28 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+  # intl
+  intl: ^0.20.2
+    
+  # GetX
+  get: ^4.7.3
+
+  # Get Storage
+  get_storage: ^2.1.1
+
+  # http and Path
+  http: ^1.6.0
+  path: ^1.9.1
+
+  # SQlite
+  sqflite: ^2.4.2
+
+  # Slidable
+  flutter_slidable: ^4.0.3
+
+  # Image picker
+  image_picker: ^1.2.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
