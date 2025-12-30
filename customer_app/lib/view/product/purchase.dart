@@ -1,5 +1,6 @@
 import 'package:customer_app/util/pcolor.dart';
-import 'package:customer_app/view/detail.dart';
+import 'package:customer_app/view/product/detail.dart';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

@@ -1,4 +1,4 @@
-import 'package:customer_app/view/login.dart';
+import 'package:customer_app/view/login/login.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
