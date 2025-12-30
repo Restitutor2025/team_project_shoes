@@ -1,4 +1,4 @@
-import 'package:brand_app/view/image_app_page.dart';
+import 'package:brand_app/view/ask_chat.dart';
 import 'package:brand_app/view/staff_main_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
