@@ -8,6 +8,8 @@ class AskChat extends StatefulWidget {
 }
 
 class _AskChatState extends State<AskChat> {
+  // Property
+  TextEditingController chatController = TextEditingController();
   final Map<String, Object?> chat1 = {
     "id": 1,
     "cid": 1,
@@ -20,7 +22,7 @@ class _AskChatState extends State<AskChat> {
     "id": 2,
     "cid": null,
     "iid": 1,
-    "timeStamp": DateTime(2025, 12, 30, 17, 16, 19),
+    "timeStamp": DateTime(2025, 12, 30, 17, 20, 19),
     "content": 'okokokokok',
     "title": '주문 문의',
   };
@@ -67,7 +69,7 @@ class _AskChatState extends State<AskChat> {
                               padding: const EdgeInsets.fromLTRB(10, 10, 0, 10),
                               child: Container(
                                 color: Colors.grey,
-                                width: 100,
+                                width: 120,
                                 height: 100,
                               ),
                             ),
@@ -76,33 +78,32 @@ class _AskChatState extends State<AskChat> {
                                 children: [
                                   Row(
                                     mainAxisAlignment:
-                                        MainAxisAlignment.spaceAround,
+                                        MainAxisAlignment.spaceEvenly,
                                     children: [
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            data[index],
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          Text('이름 : '),
-                                          Text('제조사 : '),
-                                          Text('사이즈 : '),
-                                          Text('수량 : '),
-                                        ],
+                                      SizedBox(
+                                        width: MediaQuery.of(context).size.width*0.16,
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(data[index], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                                            Text('이름 : '),
+                                            Text('제조사 : '),
+                                            Text('사이즈 : '),
+                                            Text('수량 : '),
+                                          ],
+                                        ),
                                       ),
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text('지점 위치 : '),
-                                          Text('제품 번호 : '),
-                                          Text('색상 : '),
-                                          Text('결재자 : '),
-                                        ],
+                                      SizedBox(
+                                        width: MediaQuery.of(context).size.width*0.16,
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text('지점 위치 : '),
+                                            Text('제품 번호 : '),
+                                            Text('색상 : '),
+                                            Text('결재자 : '),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -177,6 +178,32 @@ class _AskChatState extends State<AskChat> {
                       },
                     ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width*0.4,
+                          child: TextField(
+                            controller: chatController,
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(0)
+                              ),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            //
+                          },
+                          icon: Icon(Icons.keyboard_return_outlined, size: 40),
+                          color: Colors.black,
+                        ),
+                      ],
+                    ),
+                  )
                 ],
               ),
             ),
@@ -186,8 +213,7 @@ class _AskChatState extends State<AskChat> {
     );
   } // build
 
-  // -------------------------------- Widget --------------------------------
-
+  // Widget --------------------------------
   Widget _buildDateDivider(String text) {
     return Row(
       children: [
@@ -205,7 +231,6 @@ class _AskChatState extends State<AskChat> {
     );
   }
 
-  // 버블 + 시간 한 번에
   Widget _buildChatItem({
     required String text,
     required DateTime time,
