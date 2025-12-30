@@ -57,8 +57,17 @@ dependencies:
   # Image picker
   image_picker: ^1.2.1
 
-  # 구글 로그인
-  google_sign_in: 6.2.1
+  # 위치 정보
+  geocoding: ^4.0.0
+
+  # GPS 신호
+  geolocator: ^14.0.2
+
+  # 지도
+  flutter_map: ^8.2.2
+
+  # 지도를 현위치로 옮기기
+  latlong2: ^0.9.1
 
 dev_dependencies:
   flutter_test:
