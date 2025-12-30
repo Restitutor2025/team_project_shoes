@@ -1,5 +1,6 @@
 import 'package:customer_app/view/find_id_pw.dart';
 import 'package:customer_app/view/regist.dart';
+import 'package:customer_app/view/tabbar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -81,7 +82,7 @@ class _LoginState extends State<Login> {
                   minimumSize: const Size(double.infinity, 50),
                 ),
                 onPressed: (){
-                  // 로그인 기능
+                  Get.to(Tabbar());
                 },
                 child: Text('로그인')
               ),

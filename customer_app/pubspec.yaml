@@ -68,6 +68,7 @@ dependencies:
 
   # 지도를 현위치로 옮기기
   latlong2: ^0.9.1
+  google_sign_in: 6.2.1
 
 dev_dependencies:
   flutter_test:
