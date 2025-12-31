@@ -1,3 +1,4 @@
+import 'package:brand_app/view/product_inventory.dart';
 import 'package:brand_app/view/staff_main_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -19,7 +20,7 @@ class MyApp extends StatelessWidget {
           seedColor: Colors.deepPurple,
         ),
       ),
-      home: const StaffMainpage(),
+      home: const ProductInventory(),
     );
   }
 }
