@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:customer_app/config.dart' as config;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -41,13 +42,9 @@ class _ChattingState extends State<Chatting> {
     "title": '주문 문의',
   };
 
-  final List<Map<String, Object?>> totalChates = [];
-
   @override
   void initState() {
     super.initState();
-    totalChates.add(chat1);
-    totalChates.add(chat2);
   }
 
   @override
@@ -70,60 +67,66 @@ class _ChattingState extends State<Chatting> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          //  Listview builder needed on realease
-          config.chatDate(title: '\$주문 문의', datetime: DateTime.now()),
-          Expanded(
-            child: ListView.builder(
-              itemCount: totalChates.length,
-              itemBuilder: (context, index) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: totalChates[index]['cid'] == null
-                      ? MainAxisAlignment.start
-                      : MainAxisAlignment.end,
-                  children: [
-                    if (totalChates[index]['cid'] != null)
-                      Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Text(
-                          DateFormat(
-                            config.chatDateFormat,
-                          ).format(totalChates[index]['timeStamp'] as DateTime),
-                        ),
-                      ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 30, 0, 0),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width * 0.5,
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Text(totalChates[index]['content'] as String),
-                        ),
+      body: StreamBuilder<QuerySnapshot>(
+        //  데이타 바뀌어도 자동 동기화
+        stream: FirebaseFirestore.instance
+            .collection("ask")
+            .orderBy("timestamp", descending: false)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return Center(child: CircularProgressIndicator());
+          }
+          final totalChates = snapshot.data!.docs;
+          return ListView.builder(
+            itemCount: totalChates.length,
+            itemBuilder: (context, index) {
+              final chattime = totalChates[index]['timeStamp'].toDate();
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: totalChates[index]['cid'] == null
+                    ? MainAxisAlignment.start
+                    : MainAxisAlignment.end,
+                children: [
+                  if (totalChates[index]['cid'] != null)
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Text(
+                        DateFormat(
+                          config.chatDateFormat,
+                        ).format(chattime),
                       ),
                     ),
-                    if (totalChates[index]['cid'] == null)
-                      Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Text(
-                          DateFormat(
-                            config.chatDateFormat,
-                          ).format(totalChates[index]['timeStamp'] as DateTime),
-                        ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 30, 0, 0),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width * 0.5,
                       ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(totalChates[index]['contents'] as String),
+                      ),
+                    ),
+                  ),
+                  if (totalChates[index]['cid'] == null)
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Text(
+                        DateFormat(
+                          config.chatDateFormat,
+                        ).format(chattime),
+                      ),
+                    ),
+                ],
+              );
+            },
+          );
+        },
       ),
     );
   }
