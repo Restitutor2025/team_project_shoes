@@ -1,48 +1,42 @@
-//  Customer Model
+//  request Model
 /*
-  Create: 31/12/2025 14:15, Creator: Chansol, Park
+  Create: 31/12/2025 14:08, Creator: Chansol, Park
   Update log: 
     DUMMY 00/00/0000 00:00, 'Point X, Description', Creator: Chansol, Park
   Version: 1.0
   Dependency: 
-  Desc: Customer Model
+  Desc: request Model
 
   DateTime MUST converted using value.toIso8601String()
   DateTime MUST converted using value: (json['value'] as num).toDouble()
   Stored DateTime in String MUST converted using DateTime.parse(value);
 */
 
-class Customer {
+class Request {
   //  Property
   int? id;
-  String email;
-  String password;
-  String name;
-  String phone;
+  int eid;  //  FK from Employee
   DateTime date;
-  String address;
+  DateTime okdate;
+  String contents;
 
   //  Constructor
-  Customer({
+  Request({
     this.id, 
-    required this.email, 
-    required this.password,
-    required this.name,
-    required this.phone,
+    required this.eid, 
     required this.date,
-    required this.address
+    required this.okdate,
+    required this.contents
     });
 
   //  Decode from Json type
-  factory Customer.fromJson(Map<String, dynamic> json) {
-    return Customer(
+  factory Request.fromJson(Map<String, dynamic> json) {
+    return Request(
       id: json['id'],
-      email: json['email'],
-      password: json['password'],
-      name: json['name'],
-      phone: json['phone'],
+      eid: json['eid'],
       date: DateTime.parse(json['date']),
-      address: json['address']
+      okdate: DateTime.parse(json['okdate']),
+      contents: json['contents']
     );
   }
 
@@ -50,12 +44,10 @@ class Customer {
   Map<String, dynamic> toJson(){
     return {
       'id':id,
-      'email':email,
-      'password':password,
-      'name':name,
-      'phone':phone,
+      'eid':eid,
       'date':date.toIso8601String(),
-      'address':address,
+      'okdate':okdate.toIso8601String(),
+      'contents':contents
     };
   }
 }

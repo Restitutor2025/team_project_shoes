@@ -104,6 +104,7 @@ class _RegistState extends State<Regist> {
         name: nameController.text.trim(),
         phone: phoneController.text.trim(),
         address: addressController.text.trim(),
+        date: DateTime.now()
       );
 
       final url = Uri.parse('http://172.16.250.193:8008/customer/idregist');
