@@ -4,8 +4,6 @@ import 'package:brand_app/util/pcolor.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:flutter/services.dart'; // 컴마 자동 생성
-
 class ImageAppPage extends StatefulWidget {
   const ImageAppPage({super.key});
 
@@ -29,31 +27,12 @@ class _ImageAppPageState extends State<ImageAppPage> {
     'Apple',
     'Sony',
   ];
-  String? selectedManufacturer;
 
-  ///// 칼라 테스트 데이터 (나중에 DB로 교체)
-  final List<String> colorlist = ['화이트', '블랙', '그레이'];
-  String? selectedColor;
+  String? selectedManufacturer;
 
   // 상품명 컨트롤러
   final TextEditingController productNameController =
       TextEditingController();
-
-  //
-  // 사이즈 드랍다운용 리스트
-  final List<int> sizeList = List.generate(
-    21,
-    (index) => 230 + index * 3,
-  ); // 230 ~ 290
-
-  int? startSize;
-  int? endSize;
-
-  List<int> selectedSizes = [];
-
-  // 가격 텍스트 필드
-  final TextEditingController priceController =
-      TextEditingController(text: '0');
 
   ///////////////
   Future<void> _pickImage(Function(File) onSelected) async {
@@ -81,438 +60,122 @@ class _ImageAppPageState extends State<ImageAppPage> {
         foregroundColor: Pcolor.appBarForegroundColor,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(40.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    '*  ',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: Colors.red,
-                    ),
-                  ),
-                  Text(
-                    '상품이미지',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                    ),
-                  ),
-
-                  Text(
-                    '  권장크기 300 * 300 / 용량 : 10MB 이하 / 파일 형식 : PNG,JPG,GIF',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.blueGrey,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const SizedBox(height: 16),
-                  _imageBox(
-                    title: '대표 이미지',
-                    image: mainImage,
-                    onTap: () =>
-                        _pickImage((f) => mainImage = f),
-                  ),
-                  const SizedBox(width: 16),
-                  _imageBox(
-                    title: 'Top 이미지',
-                    image: topImage,
-                    onTap: () =>
-                        _pickImage((f) => topImage = f),
-                  ),
-                  const SizedBox(width: 16),
-                  _imageBox(
-                    title: 'Side 이미지',
-                    image: sideImage,
-                    onTap: () =>
-                        _pickImage((f) => sideImage = f),
-                  ),
-                  const SizedBox(width: 16),
-                  _imageBox(
-                    title: 'Back 이미지',
-                    image: backImage,
-                    onTap: () =>
-                        _pickImage((f) => backImage = f),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Text(
-                    '*  ',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: Colors.red,
-                    ),
-                  ),
-                  Text(
-                    '제조사명',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                    ),
-                  ),
-                ],
-              ),
-              DropdownButtonFormField<String>(
-                value: selectedManufacturer,
-                hint: const Text('제조사를 선택하세요'),
-                items: manufacturers
-                    .map(
-                      (e) => DropdownMenuItem(
-                        value: e,
-                        child: Text(e),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedManufacturer = value;
-                  });
-                },
-                decoration: InputDecoration(
-                  contentPadding:
-                      const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 14,
-                      ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+      body: Padding(
+        padding: const EdgeInsets.all(40.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  '*  ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    color: Colors.red,
                   ),
                 ),
-              ),
-              const SizedBox(height: 30),
-
-              Row(
-                children: [
-                  Text(
-                    '*  ',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: Colors.red,
-                    ),
-                  ),
-                  Text(
-                    '상품명',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              TextField(
-                controller: productNameController,
-                maxLength: 40,
-                decoration: InputDecoration(
-                  hintText: '상품명을 입력하세요.',
-                  counterText:
-                      '${productNameController.text.length}/40',
-                  contentPadding:
-                      const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 14,
-                      ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                Text(
+                  '상품이미지',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
                   ),
                 ),
-                onChanged: (value) {
-                  setState(() {}); // 글자 수 갱신
-                },
-              ),
 
-              const SizedBox(height: 30),
-
-              Row(
-                children: [
-                  Text(
-                    '*  ',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: Colors.red,
-                    ),
-                  ),
-                  Text(
-                    '사이즈',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              Row(
-                children: [
-                  // 시작 사이즈
-                  SizedBox(
-                    width: 120,
-                    child: DropdownButtonFormField<int>(
-                      value: startSize,
-                      hint: const Text('시작'),
-                      items: sizeList
-                          .map(
-                            (e) => DropdownMenuItem(
-                              value: e,
-                              child: Text('$e'),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          startSize = value;
-                          _updateSelectedSizes();
-                        });
-                      },
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(8),
-                        ),
-                        contentPadding:
-                            const EdgeInsets.symmetric(
-                              horizontal: 12,
-                            ),
-                      ),
-                    ),
-                  ),
-
-                  const Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 8,
-                    ),
-                    child: Text('~'),
-                  ),
-
-                  // 끝 사이즈
-                  SizedBox(
-                    width: 120,
-                    child: DropdownButtonFormField<int>(
-                      value: endSize,
-                      hint: const Text('끝'),
-                      items: sizeList
-                          .map(
-                            (e) => DropdownMenuItem(
-                              value: e,
-                              child: Text('$e'),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          endSize = value;
-                          _updateSelectedSizes();
-                        });
-                      },
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(8),
-                        ),
-                        contentPadding:
-                            const EdgeInsets.symmetric(
-                              horizontal: 12,
-                            ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text('(mm 단위)'),
-                  if (selectedSizes.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      selectedSizes.join(', '),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 40),
-              Row(
-                children: [
-                  Text(
-                    '*  ',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: Colors.red,
-                    ),
-                  ),
-                  Text(
-                    '칼라',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 15),
-              DropdownButtonFormField<String>(
-                value: selectedColor,
-                hint: const Text('칼라를 선택하세요'),
-                items: colorlist
-                    .map(
-                      (e) => DropdownMenuItem(
-                        value: e,
-                        child: Text(e),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedColor = value;
-                  });
-                },
-                decoration: InputDecoration(
-                  contentPadding:
-                      const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 14,
-                      ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                Text(
+                  '  권장크기 300 * 300 / 용량 : 10MB 이하 / 파일 형식 : PNG,JPG,GIF',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.blueGrey,
                   ),
                 ),
-              ),
-              const SizedBox(height: 40),
-              Row(
-                children: [
-                  Text(
-                    '*  ',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: Colors.red,
-                    ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const SizedBox(height: 16),
+                _imageBox(
+                  title: '대표 이미지',
+                  image: mainImage,
+                  onTap: () =>
+                      _pickImage((f) => mainImage = f),
+                ),
+                const SizedBox(width: 16),
+                _imageBox(
+                  title: 'Top 이미지',
+                  image: topImage,
+                  onTap: () =>
+                      _pickImage((f) => topImage = f),
+                ),
+                const SizedBox(width: 16),
+                _imageBox(
+                  title: 'Side 이미지',
+                  image: sideImage,
+                  onTap: () =>
+                      _pickImage((f) => sideImage = f),
+                ),
+                const SizedBox(width: 16),
+                _imageBox(
+                  title: 'Back 이미지',
+                  image: backImage,
+                  onTap: () =>
+                      _pickImage((f) => backImage = f),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Text(
+                  '*  ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    color: Colors.red,
                   ),
-                  Text(
-                    '상품가격',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                    ),
+                ),
+                Text(
+                  '제조사명',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              Container(
-                padding: const EdgeInsets.symmetric(
+                ),
+              ],
+            ),
+            DropdownButtonFormField<String>(
+              value: selectedManufacturer,
+              hint: const Text('제조사를 선택하세요'),
+              items: manufacturers
+                  .map(
+                    (e) => DropdownMenuItem(
+                      value: e,
+                      child: Text(e),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  selectedManufacturer = value;
+                });
+              },
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
+                  vertical: 14,
                 ),
-                height: 56,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    const Text(
-                      '판매가',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    const SizedBox(width: 12),
-
-                    Expanded(
-                      child: TextField(
-                        controller: priceController,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          CurrencyInputFormatter(),
-                        ],
-                        textAlign: TextAlign.right,
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(width: 8),
-                    const Text('원'),
-                  ],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              const SizedBox(height: 40),
-
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black87,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        10,
-                      ),
-                    ),
-                  ),
-                  onPressed: () {
-                    // 콤마 제거 후 실제 숫자값
-                    final price = int.parse(
-                      priceController.text.replaceAll(
-                        ',',
-                        '',
-                      ),
-                    );
-
-                    debugPrint('상품가격: $price');
-                  },
-                  child: const Text(
-                    '상품 등록',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
-
-  //
-  // 드랍다운 함수
-  void _updateSelectedSizes() {
-    if (startSize != null &&
-        endSize != null &&
-        startSize! <= endSize!) {
-      selectedSizes = [];
-
-      for (int i = startSize!; i <= endSize!; i += 5) {
-        selectedSizes.add(i);
-      }
-    } else {
-      selectedSizes = [];
-    }
-  }
-
-  //
 }
 
 /// 이미지 박스 위젯
@@ -594,47 +257,4 @@ Widget _imageBox({
       ],
     ),
   );
-}
-
-//
-// 컴마 자동 생성 코드
-class CurrencyInputFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    if (newValue.text.isEmpty) {
-      return const TextEditingValue(text: '0');
-    }
-
-    // 숫자만 남기기
-    String digits = newValue.text.replaceAll(
-      RegExp(r'[^0-9]'),
-      '',
-    );
-
-    // 앞에 0만 있는 경우 방지
-    digits = digits.replaceFirst(RegExp(r'^0+'), '');
-    if (digits.isEmpty) digits = '0';
-
-    // 콤마 찍기
-    final buffer = StringBuffer();
-    for (int i = 0; i < digits.length; i++) {
-      int indexFromEnd = digits.length - i;
-      buffer.write(digits[i]);
-      if (indexFromEnd > 1 && indexFromEnd % 3 == 1) {
-        buffer.write(',');
-      }
-    }
-
-    final formatted = buffer.toString();
-
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(
-        offset: formatted.length,
-      ),
-    );
-  }
 }
