@@ -1,36 +1,33 @@
-//  image Model
+//  name Model
 /*
-  Create: 31/12/2025 12:53, Creator: Chansol, Park
+  Create: 31/12/2025 12:56, Creator: Chansol, Park
   Update log: 
     DUMMY 00/00/0000 00:00, 'Point X, Description', Creator: Chansol, Park
   Version: 1.0
   Dependency: 
-  Desc: image Model
+  Desc: name Model
 
   DateTime MUST converted using value.toIso8601String()
   DateTime MUST converted using value: (json['value'] as num).toDouble()
   Stored DateTime in String MUST converted using DateTime.parse(value);
 */
 
-class Image {
+class Name {
   //  Property
   int pid;  //  FK from Product
-  String path;
-  String position;
+  String name;
 
   //  Constructor
-  Image({
+  Name({
     required this.pid, 
-    required this.path, 
-    required this.position
+    required this.name
     });
 
   //  Decode from Json type
-  factory Image.fromJson(Map<String, dynamic> json) {
-    return Image(
+  factory Name.fromJson(Map<String, dynamic> json) {
+    return Name(
       pid: json['pid'],
-      path: json['path'],
-      position: json['position']
+      name: json['name'],
     );
   }
 
@@ -38,8 +35,7 @@ class Image {
   Map<String, dynamic> toJson(){
     return {
       'pid':pid,
-      'path':path,
-      'position':position
+      'name':name
     };
   }
 }
