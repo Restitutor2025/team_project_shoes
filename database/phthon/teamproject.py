@@ -1,77 +1,58 @@
 # ip Address : 172.16.250.193
 
 from fastapi import FastAPI
+from color import router as color_router
+from commission import router as commission_router
+from customer import router as customer_router
+from employee import router as employee_router
+from image import router as image_router
+from manufacturer import router as manufacturer_router
+from manufacturername import router as manufacturername_router
+from name import router as name_router
+from product import router as product_router
+from purchase import router as purchase_router
+from receive import router as receive_router
+from refund import router as refund_router
+from request import router as request_router
+from size import router as size_router
+from store import router as store_router
 from pydantic import BaseModel
+import config
 import pymysql
 
+
+
 app = FastAPI()
-ipAddress = '172.16.250.193'
-# 회원가입용 클라스 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-class Customer(BaseModel):
-    email: str
-    password: str
-    name: str
-    phone: str
-    address: str
-# 로그인용 클라스 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-class LoginRequest(BaseModel):
-    email: str
-    password: str
+app.include_router(color_router,prefix='/color', tags=['color'])
+app.include_router(commission_router,prefix='/commission', tags=['commission'])
+app.include_router(customer_router,prefix='/customer', tags=['customer'])
+app.include_router(employee_router,prefix='/employee', tags=['employee'])
+app.include_router(image_router,prefix='/image', tags=['image'])
+app.include_router(manufacturer_router,prefix='/manufacturer', tags=['manufacturer'])
+app.include_router(manufacturername_router,prefix='/manufacturername', tags=['manufacturername'])
+app.include_router(name_router,prefix='/name', tags=['name'])
+app.include_router(product_router,prefix='/product', tags=['product'])
+app.include_router(purchase_router,prefix='/purchase', tags=['purchase'])
+app.include_router(receive_router,prefix='/receive', tags=['receive'])
+app.include_router(refund_router,prefix='/refund', tags=['refund'])
+app.include_router(request_router,prefix='/request', tags=['request'])
+app.include_router(size_router,prefix='/size', tags=['size'])
+app.include_router(store_router,prefix='/store', tags=['store'])
 
 def connect():
     conn = pymysql.connect(
-        host=ipAddress,
-        user='root',
-        password='qwer1234',
-        database='teamproject',
+        host=config.hostip,
+        user=config.hostuser,
+        password=config.hostpassword,
+        database=config.hostdatabase,
         charset='utf8',
         cursorclass=pymysql.cursors.DictCursor
     )
     return conn
-#회원 가입 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-@app.post("/idregist")
-async def idInsert(customer: Customer):
-    conn=connect()
-    curs=conn.cursor()
 
-    try:
-        sql = "INSERT INTO customer(email, password, name, phone, date, address) VALUES (%s, %s, %s, %s, NOW(), %s)"
-        curs.execute(sql, (customer.email,customer.password,customer.name,customer.phone,customer.address))
-        conn.commit()
-        return{'results':'OK'}
-    except Exception as e:
-        return{'results':'Error'}
-    finally:
-        conn.close()
 
-#로그인 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-@app.post("/login")
-async def login(request: LoginRequest):
-    conn = connect()
-    curs = conn.cursor()
-    
-    try:
-        sql = "SELECT email, password FROM customer WHERE email = %s AND password = %s"
-        curs.execute(sql, (request.email, request.password))
-        user = curs.fetchone() 
-
-        if user:
-            return {
-                'results': 'OK',
-                'email': user['email'],
-                'password': user['password']
-            }
-        else:
-            # 일치하는 정보가 없다면 (이메일이 틀렸거나, 비번이 틀렸거나)
-            return {'results': 'Fail'}
-            
-    except Exception as e:
-        print(f"로그인 처리 중 에러 발생: {e}")
-        return {'results': 'Error'}
-    finally:
-        conn.close()
 
 
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, host=ipAddress, port=8008)
+    uvicorn.run(app, host=config.userAddress, port=8008)
