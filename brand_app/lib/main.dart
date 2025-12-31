@@ -1,5 +1,4 @@
 import 'package:brand_app/firebase_options.dart';
-import 'package:brand_app/view/sales_dashboard.dart';
 import 'package:brand_app/view/staff_main_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';

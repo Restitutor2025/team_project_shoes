@@ -73,7 +73,7 @@ class _AskChatState extends State<AskChat> {
                               child: Container(
                                 color: Colors.grey,
                                 width: 120,
-                                height: 100,
+                                height: 90,
                               ),
                             ),
                             Expanded(
@@ -84,7 +84,7 @@ class _AskChatState extends State<AskChat> {
                                         MainAxisAlignment.spaceEvenly,
                                     children: [
                                       SizedBox(
-                                        width: MediaQuery.of(context).size.width*0.16,
+                                        width: MediaQuery.of(context).size.width*0.15,
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
@@ -97,7 +97,7 @@ class _AskChatState extends State<AskChat> {
                                         ),
                                       ),
                                       SizedBox(
-                                        width: MediaQuery.of(context).size.width*0.16,
+                                        width: MediaQuery.of(context).size.width*0.15,
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
@@ -112,6 +112,12 @@ class _AskChatState extends State<AskChat> {
                                   ),
                                 ],
                               ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                
+                              },
+                              icon: Icon(Icons.arrow_forward_ios_outlined)
                             ),
                           ],
                         ),
