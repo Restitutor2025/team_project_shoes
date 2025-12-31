@@ -145,7 +145,7 @@ class _LoginState extends State<Login> {
 
     try {
       // 2. 서버 주소 설정 (FastAPI 서버 주소)
-      final url = Uri.parse('http://172.16.250.193:8008/login');
+      final url = Uri.parse('http://172.16.250.193:8008/customer/login');
 
       // 3. 서버에 POST 요청 보내기
       final response = await http.post(

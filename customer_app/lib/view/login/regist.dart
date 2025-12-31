@@ -106,7 +106,7 @@ class _RegistState extends State<Regist> {
         address: addressController.text.trim(),
       );
 
-      final url = Uri.parse('http://172.16.250.193:8008/idregist');
+      final url = Uri.parse('http://172.16.250.193:8008/customer/idregist');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
