@@ -46,6 +46,12 @@ dependencies:
   cloud_firestore: ^6.1.1
   firebase_storage: ^13.0.5
 
+  # pie chart
+  pie_chart: ^5.4.0
+
+  #syncfusion
+  syncfusion_flutter_charts: ^32.1.21
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
