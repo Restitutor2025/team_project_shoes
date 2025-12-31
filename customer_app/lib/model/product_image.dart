@@ -1,33 +1,34 @@
-//  image Model
+//  ProductImage Model
 /*
   Create: 31/12/2025 12:53, Creator: Chansol, Park
   Update log: 
     DUMMY 00/00/0000 00:00, 'Point X, Description', Creator: Chansol, Park
+    31/12/2025 18:10, 'Point 1, Changed model name to ProductImage', Creator: Chansol, Park
   Version: 1.0
   Dependency: 
-  Desc: image Model
+  Desc: ProductImage Model
 
   DateTime MUST converted using value.toIso8601String()
   DateTime MUST converted using value: (json['value'] as num).toDouble()
   Stored DateTime in String MUST converted using DateTime.parse(value);
 */
 
-class Image {
+class ProductImage {
   //  Property
   int pid;  //  FK from Product
   String path;
   String position;
 
   //  Constructor
-  Image({
+  ProductImage({
     required this.pid, 
     required this.path, 
     required this.position
     });
 
   //  Decode from Json type
-  factory Image.fromJson(Map<String, dynamic> json) {
-    return Image(
+  factory ProductImage.fromJson(Map<String, dynamic> json) {
+    return ProductImage(
       pid: json['pid'],
       path: json['path'],
       position: json['position']
