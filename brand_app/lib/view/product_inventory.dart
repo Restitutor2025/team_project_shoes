@@ -71,16 +71,29 @@ class _ProductInventoryState extends State<ProductInventory> {
       body: Center(
         child: Column(
           children: [
-            GridView.builder(
-              controller: scrollController,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 5), 
-                itemCount: procduct.length,
-              itemBuilder: (context, index) {
-                return ;
-                // 작업 내용 중간 push 후 수정 예정
-              },
-              ),
+            SizedBox(
+              height: 300,
+              width: MediaQuery.maybeWidthOf(context),
+              child: GridView.builder(
+                controller: scrollController,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 5,
+                  crossAxisSpacing: 1,
+                  mainAxisSpacing: 1,
+                  ), 
+                  itemCount: procduct.length,
+                  itemBuilder: (context, index) {
+                  return Card(
+                    child: Column(
+                      children: [
+                        Image.asset(imageName[index])
+                      ],
+                    ),
+                  );
+                  // 작업 내용 중간 push 후 수정 예정
+                },
+                ),
+            ),
           ],
         ),
       ),
