@@ -22,9 +22,10 @@ class _ProductInventoryState extends State<ProductInventory> {
   TextEditingController searchController = TextEditingController(); // 검색 controller
   ScrollController scrollController = ScrollController(); // GridViewBbuilder용
   List<Map<String,String>> procduct = []; // 상품 데이터 받아올 곳
-  List<String> procduct_name = ['터프 테라 스웨이드','에어 맥스','어쩌구','저쩌구']; // 상품명 데이터 받아올 곳
-  List<String> imageName = ['images/logo.png','images/logo.png','images/logo.png','images/logo.png']; // 상품명 데이터 받아올 곳
-
+  List<String> brand_name = ['kin','nike','nike','nike',"nike","nike","nike","nike","nike","nike","nike"];
+  List<String> procduct_name = ['터프 테라 스웨이드','에어 맥스','어쩌구','저쩌구',"11","111","111","333","444","333","22"]; // 상품명 데이터 받아올 곳
+  List<String> imageName = ['images/kin.png','images/kin2.png','images/kin3.png','images/puma.png','images/puma1.png','images/puma2.png','images/kin.png','images/kin2.png','images/kin3.png','images/puma.png','images/puma1.png']; // 상품명 데이터 받아올 곳
+  List<String> procduct_count = ['40','20','30','40',"11","111","111","333","444","333","22"];
 
   @override
   void initState() {
@@ -81,12 +82,28 @@ class _ProductInventoryState extends State<ProductInventory> {
                   crossAxisSpacing: 1,
                   mainAxisSpacing: 1,
                   ), 
-                  itemCount: procduct.length,
+                  itemCount: imageName.length,
                   itemBuilder: (context, index) {
                   return Card(
                     child: Column(
                       children: [
-                        Image.asset(imageName[index])
+                        Image.asset(
+                          imageName[index],
+                          width: 100,
+                          height: 100,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                children: [
+                                  Text(brand_name[index]),
+                                  Text(procduct_name[index]),
+                                ],
+                              ),
+                              Text(procduct_count[index]),
+                            ],
+                          ),
                       ],
                     ),
                   );
