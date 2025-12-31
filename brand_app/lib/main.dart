@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
           seedColor: Colors.deepPurple,
         ),
       ),
-      home: const SalesDashboard(),
+      home: const StaffMainpage(),
     );
   }
 }

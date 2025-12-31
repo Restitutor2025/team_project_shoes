@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:customer_app/model/customer.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -19,11 +18,28 @@ class _RegistState extends State<Regist> {
   TextEditingController phoneController = TextEditingController();
   TextEditingController addressController = TextEditingController();
 
+  bool isEmailChecked = false; // 중복확인 여부
+  bool isPasswordMatch = true; // 비밀번호 일치 여부
+
+  @override
+  void initState() {
+    super.initState();
+    pwcheckController.addListener(() {
+      setState(() {
+        isPasswordMatch = pwController.text == pwcheckController.text;
+      });
+    });
+    pwController.addListener(() {
+      setState(() {
+        isPasswordMatch = pwController.text == pwcheckController.text;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('회원가입')),
-      // 키보드 올라올 때 화면 깨짐 방지를 위해 SingleChildScrollView 추천
       body: SingleChildScrollView(
         child: Center(
           child: SizedBox(
@@ -41,6 +57,7 @@ class _RegistState extends State<Regist> {
                 const SizedBox(height: 15),
                 TextField(
                   controller: emailController,
+                  onChanged: (value) => isEmailChecked = false, // 이메일 수정시 중복확인 리셋
                   decoration: const InputDecoration(labelText: '이메일', hintText: 'EX)dsss@email.com'),
                 ),
                 const SizedBox(height: 30),
@@ -50,7 +67,7 @@ class _RegistState extends State<Regist> {
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 50),
                   ),
-                  onPressed: () { /* 중복확인 */ },
+                  onPressed: () => checkDuplicate(),
                   child: const Text('중복확인'),
                 ),
                 const SizedBox(height: 15),
@@ -63,7 +80,11 @@ class _RegistState extends State<Regist> {
                 TextField(
                   obscureText: true,
                   controller: pwcheckController,
-                  decoration: const InputDecoration(labelText: '비밀번호 확인'),
+                  decoration: InputDecoration(
+                    labelText: '비밀번호 확인',
+                    // 실시간으로 비밀번호가 다르면 에러 텍스트 표시
+                    errorText: isPasswordMatch ? null : '비밀번호가 일치하지 않습니다.',
+                  ),
                 ),
                 const SizedBox(height: 15),
                 TextField(
@@ -82,7 +103,15 @@ class _RegistState extends State<Regist> {
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 50),
                   ),
-                  onPressed: () => registCustomer(),
+                  onPressed: () {
+                    if (!isEmailChecked) {
+                      Get.snackbar('경고', '이메일 중복확인을 먼저 해주세요.');
+                    } else if (!isPasswordMatch || pwcheckController.text.isEmpty) {
+                      Get.snackbar('경고', '비밀번호가 일치하지 않습니다.');
+                    } else {
+                      registCustomer();
+                    }
+                  },
                   child: const Text('회원가입'),
                 ),
                 const SizedBox(height: 10),
@@ -94,30 +123,51 @@ class _RegistState extends State<Regist> {
     );
   }
 
-  // --- Functions (모두 _RegistState 클래스 블록 { } 안에 있어야 합니다) ---
+  // 중복 확인 함수
+  Future<void> checkDuplicate() async {
+    if (emailController.text.trim().isEmpty) {
+      Get.snackbar('경고', '이메일을 입력하세요.');
+      return;
+    }
+
+    try {
+      var url = Uri.parse('http://172.16.250.193:8008/customer/check_email');
+      var response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'email': emailController.text.trim()}),
+      );
+
+      var data = json.decode(utf8.decode(response.bodyBytes));
+      if (data['results'] == 'OK') {
+        isEmailChecked = true;
+        Get.snackbar('확인', '사용 가능한 이메일입니다.',backgroundColor: Colors.green, colorText: Colors.white);
+      } else {
+        isEmailChecked = false;
+        Get.snackbar('경고', '이미 등록된 이메일입니다.',backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      Get.snackbar('에러', '서버 연결에 실패했습니다.',backgroundColor: Colors.red, colorText: Colors.white);
+    }
+  }
 
   Future<void> registCustomer() async {
     try {
-      final customer = Customer(
-        email: emailController.text.trim(),
-        password: pwController.text.trim(),
-        name: nameController.text.trim(),
-        phone: phoneController.text.trim(),
-        address: addressController.text.trim(),
-        date: DateTime.now()
-      );
-
       final url = Uri.parse('http://172.16.250.193:8008/customer/idregist');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: json.encode(customer.toJson()),
+        body: json.encode({
+          'email': emailController.text.trim(),
+          'password': pwController.text.trim(),
+          'name': nameController.text.trim(),
+          'phone': phoneController.text.trim(),
+          'address': addressController.text.trim(),
+        }),
       );
 
       final data = json.decode(utf8.decode(response.bodyBytes));
-      final result = data['results'];
-
-      if (result == 'OK') {
+      if (data['results'] == 'OK') {
         _showDialog();
       } else {
         errorSnackBar();
@@ -135,8 +185,8 @@ class _RegistState extends State<Regist> {
       actions: [
         TextButton(
           onPressed: () {
-            Get.back(); // 다이얼로그 닫기
-            Get.back(); // 가입 화면 나가기
+            Get.back();
+            Get.back();
           },
           child: const Text('OK'),
         )
@@ -145,10 +195,6 @@ class _RegistState extends State<Regist> {
   }
 
   void errorSnackBar() {
-    Get.snackbar(
-      '경고',
-      '제대로 입력하세요',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    Get.snackbar('경고', '회원가입에 실패했습니다.',backgroundColor: Colors.red, colorText: Colors.white);
   }
-} // <--- 클래스 닫는 괄호는 맨 마지막에 딱 하나만 있어야 합니다.
+}
