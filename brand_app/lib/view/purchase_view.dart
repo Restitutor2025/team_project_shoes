@@ -16,7 +16,7 @@ class _PurchaseViewState extends State<PurchaseView> {
   TextEditingController searchController = TextEditingController();
 
   final Map<String, Object?> pc1 = {
-    "pid": 1,
+    "pcid": 1,
     "cid": 1,
     "cemail": 'kimbobbbbb@xyz.com',
     "cname": '김밥',
@@ -29,7 +29,7 @@ class _PurchaseViewState extends State<PurchaseView> {
     "pstatus": '수령대기'
   };
   final Map<String, Object?> pc2 = {
-    "pid": 2,
+    "pcid": 2,
     "cid": 2,
     "cemail": 'stststst@iii.com',
     "cname": '스티커',
@@ -42,7 +42,7 @@ class _PurchaseViewState extends State<PurchaseView> {
     "pstatus": '반품완료'
   };
   final Map<String, Object?> pc3 = {
-    "pid": 3,
+    "pcid": 3,
     "cid": 3,
     "cemail": '348957340@uyssre.com',
     "cname": '김상준',
@@ -55,7 +55,7 @@ class _PurchaseViewState extends State<PurchaseView> {
     "pstatus": '반품대기'
   };
   final Map<String, Object?> pc4 = {
-    "pid": 4,
+    "pcid": 4,
     "cid": 4,
     "cemail": 'asdas344as@neves.com',
     "cname": '데이비드 길모어',
@@ -68,7 +68,7 @@ class _PurchaseViewState extends State<PurchaseView> {
     "pstatus": '주문완료'
   };
   final Map<String, Object?> pc5 = {
-    "pid": 5,
+    "pcid": 5,
     "cid": 5,
     "cemail": '390dfs909fd@kingfd.com',
     "cname": '크리스 마틴',
@@ -102,7 +102,7 @@ class _PurchaseViewState extends State<PurchaseView> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
             child: Stack(
               children: [
                 SizedBox(
@@ -156,20 +156,20 @@ class _PurchaseViewState extends State<PurchaseView> {
                                       MainAxisAlignment.spaceEvenly,
                                   children: [
                                     SizedBox(
-                                      width: MediaQuery.of(context).size.width*0.275,
+                                      width: MediaQuery.of(context).size.width*0.25,
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text('id: ${data[index]['cemail']}', style: TextStyle(fontWeight: FontWeight.bold)),
                                           Text('이름 : ${data[index]['cname']}'),
-                                          Text('구매번호 : ${data[index]['pid']}'),
+                                          Text('구매번호 : ${data[index]['pcid']}'),
                                           Text('제품명 : ${data[index]['pname']}'),
                                           Text('구매날짜 : ${data[index]['pdate']}'),
                                         ],
                                       ),
                                     ),
                                     SizedBox(
-                                      width: MediaQuery.of(context).size.width*0.275,
+                                      width: MediaQuery.of(context).size.width*0.15,
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [

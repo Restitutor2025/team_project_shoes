@@ -1,4 +1,6 @@
+import 'package:brand_app/view/ask_chat.dart';
 import 'package:brand_app/view/image_app_page.dart';
+import 'package:brand_app/view/purchase_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -211,7 +213,7 @@ class _StaffMainpageState extends State<StaffMainpage> {
                   Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () => Get.to(AskChat()),
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(
                           MediaQuery.of(
@@ -235,7 +237,7 @@ class _StaffMainpageState extends State<StaffMainpage> {
                       child: Column(
                         children: [
                           Icon(
-                            Icons.attach_money,
+                            Icons.chat,
                             size: 75,
                           ),
                           Padding(
@@ -243,7 +245,7 @@ class _StaffMainpageState extends State<StaffMainpage> {
                               top: 5,
                             ),
                             child: Text(
-                              "구매조회",
+                              "문의내역조회",
                               style: TextStyle(
                                 fontSize: 20,
                               ),
@@ -256,7 +258,7 @@ class _StaffMainpageState extends State<StaffMainpage> {
                   Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () => Get.to(PurchaseView()),
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(
                           MediaQuery.of(
