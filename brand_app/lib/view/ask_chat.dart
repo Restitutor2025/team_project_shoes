@@ -1,3 +1,4 @@
+import 'package:brand_app/util/pcolor.dart';
 import 'package:flutter/material.dart';
 
 class AskChat extends StatefulWidget {
@@ -53,6 +54,8 @@ class _AskChatState extends State<AskChat> {
             child: Scaffold(
               appBar: AppBar(
                 title: Text('문의 내역'),
+                backgroundColor: Pcolor.appBarBackgroundColor,
+                foregroundColor: Pcolor.appBarForegroundColor,
                 centerTitle: true,
               ),
               body: Padding(
@@ -122,10 +125,6 @@ class _AskChatState extends State<AskChat> {
           SizedBox(
             width: MediaQuery.of(context).size.width * 0.5,
             child: Scaffold(
-              appBar: AppBar(
-                title: Text('문의'),
-                centerTitle: true,
-              ),
               body: Column(
                 children: [
                   Padding(
@@ -180,11 +179,10 @@ class _AskChatState extends State<AskChat> {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(15.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    child: Stack(
                       children: [
                         SizedBox(
-                          width: MediaQuery.of(context).size.width*0.4,
+                          width: MediaQuery.of(context).size.width*0.45,
                           child: TextField(
                             controller: chatController,
                             decoration: InputDecoration(
@@ -194,12 +192,15 @@ class _AskChatState extends State<AskChat> {
                             ),
                           ),
                         ),
-                        IconButton(
-                          onPressed: () {
-                            //
-                          },
-                          icon: Icon(Icons.keyboard_return_outlined, size: 40),
-                          color: Colors.black,
+                        Positioned(
+                          right: 10,
+                          child: IconButton(
+                            onPressed: () {
+                              //
+                            },
+                            icon: Icon(Icons.keyboard_return_outlined, size: 40),
+                            color: Colors.black,
+                          ),
                         ),
                       ],
                     ),
