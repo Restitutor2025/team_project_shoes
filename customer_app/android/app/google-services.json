@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1050525353416",
+    "project_id": "team-project-dsss",
+    "storage_bucket": "team-project-dsss.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1050525353416:android:9af133cb95fd1c92adacfd",
+        "android_client_info": {
+          "package_name": "com.example.customer_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_5-EEoxsLQseHuVePSP8Mp4Xlv4_HQkw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
