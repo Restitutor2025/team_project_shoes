@@ -12,15 +12,10 @@ class Customer(BaseModel):
     name: str
     phone: str
     address: str
-
 # 로그인용 클라스 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 class LoginRequest(BaseModel):
     email: str
     password: str
-    
-# 이메일 중복 확인용 클래스
-class EmailCheck(BaseModel):
-    email: str
 
 def connect():
     conn = pymysql.connect(
@@ -71,26 +66,6 @@ async def login(request: LoginRequest):
             
     except Exception as e:
         print(f"로그인 처리 중 에러 발생: {e}")
-        return {'results': 'Error'}
-    finally:
-        conn.close()
-
-
-#이메일 중복확인 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-@router.post("/check_email")
-async def checkEmail(request: EmailCheck):
-    conn = connect()
-    curs = conn.cursor()
-    try:
-        sql = "SELECT email FROM customer WHERE email = %s"
-        curs.execute(sql, (request.email,))
-        user = curs.fetchone()
-        if user:
-            return {'results': 'Exists'} # 이미 존재함
-        else:
-            return {'results': 'OK'}     # 사용 가능
-    except Exception as e:
         return {'results': 'Error'}
     finally:
         conn.close()
