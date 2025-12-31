@@ -171,6 +171,48 @@ class _ImageAppPageState extends State<ImageAppPage> {
                 ),
               ),
             ),
+            const SizedBox(height: 30),
+
+            Row(
+              children: [
+                Text(
+                  '*  ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    color: Colors.red,
+                  ),
+                ),
+                Text(
+                  '상품명',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            TextField(
+              controller: productNameController,
+              maxLength: 40,
+              decoration: InputDecoration(
+                hintText: '상품명을 입력하세요.',
+                counterText:
+                    '${productNameController.text.length}/40',
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 14,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onChanged: (value) {
+                setState(() {}); // 글자 수 갱신
+              },
+            ),
           ],
         ),
       ),
