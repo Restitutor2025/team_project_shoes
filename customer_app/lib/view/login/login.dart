@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:customer_app/view/home/tabbar.dart';
+import 'package:customer_app/view/login/find_id_pw.dart';
 import 'package:customer_app/view/login/regist.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -97,7 +98,7 @@ class _LoginState extends State<Login> {
                       minimumSize: const Size(145, 50),
                     ),
                     onPressed: () {
-                      Get.snackbar('알림', 'ID / PW 찾기 준비중입니다.');
+                      Get.to(FindIdPw());
                     },
                     child: const Text('ID / Pw 찾기')
                   ),
