@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
   Update log: 
     DUMMY 00/00/0000 00:00, 'Point X, Description', Creator: Chansol, Park
     30/12/2025 14:10, 'Point 1, Chatting chatDateFormat', Creator: Chansol Park
+    31/12/2025 10:17, 'Point 2, rDBName changed', Creator: Chansol Park
   Version: 1.0
   Desc: Configuration of the App
 */
@@ -14,8 +15,10 @@ import 'package:intl/intl.dart';
 //  DB
 //  For use
 //  '${rDBName}${rDBFileExt}';
-const String rDBName = 'DBname';  //  Database Name
+const String rDBName = 'teamproject';  //  Database Name
 const String rDBFileExt = '.db';
+//  Point 2
+const String rDBFull = rDBName+rDBFileExt;
 const int rVersion = 1;
 
 
@@ -62,16 +65,11 @@ Widget chatDate({
   );
 }
 
-//  Features
-const bool kEnableSaleFeature = true;
-const bool kEnableStockAutoRequest = true;
-const bool kUseLocalDBOnly = true;
-
 //  Tables
-const String kTableCustomer = 'Customer';
-const String kTableManufacturer = 'Manufacturer';
-const String kTableProduct = 'Product';
-const String tTableEmployee = 'Employee';
+const String rTableColor = 'Customer';
+const String rTableManufacturer = 'Manufacturer';
+const String rTableProduct = 'Product';
+const String rTableEmployee = 'Employee';
 
 
 //  Routes
