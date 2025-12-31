@@ -1,29 +1,29 @@
-//  color Model
+//  size Model
 /*
-  Create: 31/12/2025 12:07, Creator: Chansol, Park
+  Create: 31/12/2025 12:30, Creator: Chansol, Park
   Update log: 
     DUMMY 00/00/0000 00:00, 'Point X, Description', Creator: Chansol, Park
   Version: 1.0
   Dependency: 
-  Desc: color Model
+  Desc: size Model
 
   DateTime MUST converted using value.toIso8601String()
   Stored DateTime in String MUST converted using DateTime.parse(value);
 */
 
-class Color {
+class Size {
   //  Property
-  int pid; //  FK from Product
-  String color;
+  int pid;  //  FK from Product
+  int size;
 
   //  Constructor
-  Color({required this.pid, required this.color});
+  Size({required this.pid, required this.size});
 
   //  Decode from Json type
-  factory Color.fromJson(Map<String, dynamic> json) {
-    return Color(
+  factory Size.fromJson(Map<String, dynamic> json) {
+    return Size(
       pid: json['pid'],
-      color: json['color'],
+      size: json['size'],
     );
   }
 
@@ -31,7 +31,7 @@ class Color {
   Map<String, dynamic> toJson(){
     return {
       'pid':pid,
-      'color':color,
+      'size':size,
     };
   }
 }
