@@ -9,136 +9,189 @@ class Wishlist extends StatefulWidget {
 }
 
 class _WishlistState extends State<Wishlist> {
-  late bool check;
-  late int count;
+  List<Map<String, dynamic>> wishList = [
+    {
+      'brand': '나이키',
+      'name': '나이키 에어포스',
+      'price': 92000,
+      'image': 'images/logo.png',
+      'checked': false,
+      'count': 0,
+    },
+    {
+      'brand': '아디다스',
+      'name': '슈퍼스타',
+      'price': 89000,
+      'image': 'images/logo.png',
+      'checked': false,
+      'count': 0,
+    },
+  ];
 
-
-  @override
-  void initState() {
-    super.initState();
-    check=false;
-    count=0;
-  
-  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("찜목록",
-        style: TextStyle(
-          fontWeight: FontWeight.bold
-        ),
-      
+        title: Text(
+          "찜목록",
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
-      body:Center(
-        child: Column(
-          
-          children: [
-             ListTile(
-             
-             leading: Image.asset("images/logo.png",
-             width: 100,
-             height: 100,
-             fit: BoxFit.cover,),
-             title: Text("나이키",
-             style: TextStyle(fontWeight: FontWeight.bold),),
-             subtitle:Column(
+      body: ListView.builder(
+        itemCount: wishList.length,
+        itemBuilder: (context, index) {
+          final item = wishList[index];
+
+          return Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text("나이키 에어포스"),
-                Text("92000원"),
-               
-                
+                // 이미지
+                Image.asset(
+                  item['image'],
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.cover,
+                ),
+
+                SizedBox(width: 12),
+
+                // 상품 정보
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        item['brand'],
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text(item['name']),
+                      SizedBox(height: 4),
+                      Text(
+                        "${item['price']}원",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 체크박스 + 버튼
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Checkbox(
+                      value: item['checked'],
+                      onChanged: (value) {
+                        setState(() {
+                          item['checked'] = value!;
+                        });
+                      },
+                    ),
+                    SizedBox(
+                      width: 70,
+                      height: 30,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          shoppingcartmove(index);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        child: Text(
+                          "장바구니",
+                          style: TextStyle(fontSize: 11),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
-             
-             ) ,
-             trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Checkbox(value: check,
-                 onChanged: (value) {
-                
-                   check=value!;
-                   setState(() {
-                     
-                   });
-                 },),
-               
-              ],
-             ),
-              ),
-          ],
+            ),
+          );
+        },
+      ),
+      bottomNavigationBar: SizedBox(
+        height: 56,
+        child: ElevatedButton(
+          onPressed: deletedialog,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.black,
+            foregroundColor: Colors.white,
+          ),
+          child: Text("삭제하기"),
         ),
       ),
-      bottomNavigationBar: ElevatedButton(
-        onPressed: () {
-          deletedialog();
-        },
-        child: Text("삭제하기"),
-         style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                borderRadius: BorderRadiusGeometry.circular(4),
-                ),
-              ),),
-    );
-  }//class
-
-  deletedialog(){
-    Get.defaultDialog(
-      title: "찜 목록 삭제",
-      middleText: "찜 목록에서 삭제하시겠습니까?",
-      actions:[
-        TextButton(onPressed:  () {
-          Get.back();
-        },
-         child: Text("삭제")),
-        TextButton(onPressed:  () {
-          Get.back();
-        },
-         child: Text("취소")),
-      ] 
     );
   }
 
-shoppingcartmove(){
-  Get.bottomSheet(
-    Container(
-      width: 500,
-      height: 500,
-      color: Colors.white,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Text("사이즈"),
-          // DropdownButton(items: items, onChanged: onChanged),
-          Text("지점"),
-          // DropdownButton(items: items, onChanged: onChanged),
-          Text("수량"),
-          Row(
-                  children: [
-                    TextButton(onPressed: () {
-                      count--;
-                      setState(() {
-                        
-                      });
-                    }, child: Text("-")),
-                    Text("$count"),
-                    TextButton(onPressed: () {
-                      count++;
-                      setState(() {
-                        
-                      });
-                    }, child: Text("+")),
+  void deletedialog() {
+    Get.defaultDialog(
+      title: "찜 목록 삭제",
+      middleText: "찜 목록에서 삭제하시겠습니까?",
+      actions: [
+        TextButton(
+          onPressed: () {
+            Get.back();
+          },
+          child: Text("삭제"),
+        ),
+        TextButton(
+          onPressed: () {
+            Get.back();
+          },
+          child: Text("취소"),
+        ),
+      ],
+    );
+  }
 
-                  ],
+  void shoppingcartmove(int index) {
+    final item = wishList[index];
+
+    Get.bottomSheet(
+      Container(
+        height: 500,
+        color: Colors.white,
+        padding: EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("수량"),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      if (item['count'] > 0) {
+                        item['count']--;
+                      }
+                    });
+                  },
+                  icon: Icon(Icons.remove),
                 ),
-        ],
+                Text("${item['count']}"),
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      item['count']++;
+                    });
+                  },
+                  icon: Icon(Icons.add),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-    )
-  );
+    );
+  }
 }
-  
-}//build
