@@ -120,7 +120,8 @@ class _DetailState extends State<Detail> {
           children: [
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                minimumSize: Size(100, 50)
+                minimumSize: Size(100, 50),
+                backgroundColor: Pcolor.errorBackColor
               ),
               onPressed: () {
                 sizeSheet();

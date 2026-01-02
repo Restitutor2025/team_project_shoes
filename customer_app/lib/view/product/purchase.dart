@@ -317,6 +317,26 @@ class _PurchaseState extends State<Purchase> {
           ),
         ),
       ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: SizedBox(
+          height: 40,
+          width: 50,
+          child: ElevatedButton(
+            onPressed: () {
+              //
+            }, 
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Pcolor.errorBackColor,
+              foregroundColor: Pcolor.effectForeColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(5)
+                )
+            ),
+            child: Text("결제하기")
+            ),
+        ),
+      ),
         );
   }
 }
