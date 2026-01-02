@@ -29,7 +29,7 @@ async def select(pid:int):
     result=[rows]
     return{'results':result}
 
-@router.post("/uproad")
+@router.post("/upload")
 async def upload(pid:int=Form(...),name:str=Form(...)):
     try:
         conn=connect()
