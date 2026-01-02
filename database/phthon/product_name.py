@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter ,Form
 from pydantic import BaseModel
 import config
 import pymysql
@@ -15,3 +15,48 @@ def connect():
         cursorclass=pymysql.cursors.DictCursor
     )
     return conn
+
+@router.get("/select")
+async def select(pid:int):
+    conn=connect()
+    curs=conn.cursor()
+    sql = """
+    SELECT name FROM PRODUCTNAME WHERE pid = %s
+    """
+    curs.execute(sql,(pid,))
+    rows =curs.fetchall()
+    conn.close()
+    result=[rows]
+    return{'results':result}
+
+@router.post("/uproad")
+async def upload(pid:int=Form(...),name:str=Form(...)):
+    try:
+        conn=connect()
+        curs=conn.cursor()
+        sql="insert into productname(pid,name) values(%s,%s)"
+        curs.execute(sql,(pid,name))
+        conn.commit()
+        conn.close()
+        return{'result':'OK'}
+    except Exception as e:
+        print("Error",e)
+        return{'result':"Error"}
+    
+@router.delete("/delete") # 또는 @router.post("/delete")
+async def delete_color(pid: int, name: str):
+    conn = connect()
+    curs = conn.cursor()
+    try:
+        sql = "DELETE FROM productname WHERE pid = %s AND name = %s"
+        curs.execute(sql, (pid, name))
+        conn.commit()
+        if curs.rowcount > 0:
+            return {'result': 'OK', 'message': f'Deleted {name} for product {pid}'}
+        else:
+            return {'result': 'NoData', 'message': '일치하는 데이터가 없습니다.'}
+    except Exception as e:
+        print("Error during delete:", e)
+        return {'result': 'Error'}
+    finally:
+        conn.close()
