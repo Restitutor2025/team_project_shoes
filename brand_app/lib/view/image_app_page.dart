@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:flutter/services.dart';
 
+import 'package:http/http.dart' as http;
+
 class ImageAppPage extends StatefulWidget {
   const ImageAppPage({super.key});
 
@@ -65,6 +67,17 @@ class _ImageAppPageState extends State<ImageAppPage> {
       onSelected(File(picked.path));
       setState(() {});
     }
+  }
+
+  Future<void> insertAction() async {
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse(
+        'http://172.16.250.183:8008/productimage/upload',
+      ),
+    );
+    request.fields['pid'] = '1';
+    request.fields['position'] = 'main';
   }
 
   @override
@@ -232,6 +245,54 @@ class _ImageAppPageState extends State<ImageAppPage> {
                 onChanged: (value) {
                   setState(() {}); // 글자 수 갱신
                 },
+              ),
+              const SizedBox(height: 30),
+              Row(
+                children: [
+                  Text(
+                    '*  ',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: Colors.red,
+                    ),
+                  ),
+                  Text(
+                    '칼라',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: selectedManufacturer,
+                hint: const Text('칼라를 선택하세요'),
+                items: manufacturers
+                    .map(
+                      (e) => DropdownMenuItem(
+                        value: e,
+                        child: Text(e),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedManufacturer = value;
+                  });
+                },
+                decoration: InputDecoration(
+                  contentPadding:
+                      const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
               const SizedBox(height: 30),
 
