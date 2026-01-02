@@ -1208,6 +1208,9 @@ PODS:
     - Firebase/Firestore (= 12.6.0)
     - firebase_core
     - Flutter
+  - Firebase/Auth (12.6.0):
+    - Firebase/CoreOnly
+    - FirebaseAuth (~> 12.6.0)
   - Firebase/CoreOnly (12.6.0):
     - FirebaseCore (~> 12.6.0)
   - Firebase/Firestore (12.6.0):
@@ -1216,6 +1219,10 @@ PODS:
   - Firebase/Storage (12.6.0):
     - Firebase/CoreOnly
     - FirebaseStorage (~> 12.6.0)
+  - firebase_auth (6.1.3):
+    - Firebase/Auth (= 12.6.0)
+    - firebase_core
+    - Flutter
   - firebase_core (4.3.0):
     - Firebase/CoreOnly (= 12.6.0)
     - Flutter
@@ -1224,6 +1231,15 @@ PODS:
     - firebase_core
     - Flutter
   - FirebaseAppCheckInterop (12.6.0)
+  - FirebaseAuth (12.6.0):
+    - FirebaseAppCheckInterop (~> 12.6.0)
+    - FirebaseAuthInterop (~> 12.6.0)
+    - FirebaseCore (~> 12.6.0)
+    - FirebaseCoreExtension (~> 12.6.0)
+    - GoogleUtilities/AppDelegateSwizzler (~> 8.1)
+    - GoogleUtilities/Environment (~> 8.1)
+    - GTMSessionFetcher/Core (< 6.0, >= 3.4)
+    - RecaptchaInterop (~> 101.0)
   - FirebaseAuthInterop (12.6.0)
   - FirebaseCore (12.6.0):
     - FirebaseCoreInternal (~> 12.6.0)
@@ -1278,14 +1294,27 @@ PODS:
     - AppCheckCore (~> 11.0)
     - GTMAppAuth (< 5.0, >= 4.1.1)
     - GTMSessionFetcher/Core (~> 3.3)
+  - GoogleUtilities/AppDelegateSwizzler (8.1.0):
+    - GoogleUtilities/Environment
+    - GoogleUtilities/Logger
+    - GoogleUtilities/Network
+    - GoogleUtilities/Privacy
   - GoogleUtilities/Environment (8.1.0):
     - GoogleUtilities/Privacy
   - GoogleUtilities/Logger (8.1.0):
     - GoogleUtilities/Environment
     - GoogleUtilities/Privacy
+  - GoogleUtilities/Network (8.1.0):
+    - GoogleUtilities/Logger
+    - "GoogleUtilities/NSData+zlib"
+    - GoogleUtilities/Privacy
+    - GoogleUtilities/Reachability
   - "GoogleUtilities/NSData+zlib (8.1.0)":
     - GoogleUtilities/Privacy
   - GoogleUtilities/Privacy (8.1.0)
+  - GoogleUtilities/Reachability (8.1.0):
+    - GoogleUtilities/Logger
+    - GoogleUtilities/Privacy
   - GoogleUtilities/UserDefaults (8.1.0):
     - GoogleUtilities/Logger
     - GoogleUtilities/Privacy
@@ -1403,12 +1432,14 @@ PODS:
     - Flutter
     - FlutterMacOS
   - PromisesObjC (2.4.0)
+  - RecaptchaInterop (101.0.0)
   - sqflite_darwin (0.0.4):
     - Flutter
     - FlutterMacOS
 
 DEPENDENCIES:
   - cloud_firestore (from `.symlinks/plugins/cloud_firestore/ios`)
+  - firebase_auth (from `.symlinks/plugins/firebase_auth/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - firebase_storage (from `.symlinks/plugins/firebase_storage/ios`)
   - Flutter (from `Flutter`)
@@ -1428,6 +1459,7 @@ SPEC REPOS:
     - BoringSSL-GRPC
     - Firebase
     - FirebaseAppCheckInterop
+    - FirebaseAuth
     - FirebaseAuthInterop
     - FirebaseCore
     - FirebaseCoreExtension
@@ -1445,10 +1477,13 @@ SPEC REPOS:
     - leveldb-library
     - nanopb
     - PromisesObjC
+    - RecaptchaInterop
 
 EXTERNAL SOURCES:
   cloud_firestore:
     :path: ".symlinks/plugins/cloud_firestore/ios"
+  firebase_auth:
+    :path: ".symlinks/plugins/firebase_auth/ios"
   firebase_core:
     :path: ".symlinks/plugins/firebase_core/ios"
   firebase_storage:
@@ -1477,9 +1512,11 @@ SPEC CHECKSUMS:
   BoringSSL-GRPC: dded2a44897e45f28f08ae87a55ee4bcd19bc508
   cloud_firestore: 45532e0c1fd1f6a5720af8aa0312470c366b73d2
   Firebase: a451a7b61536298fd5cbfe3a746fd40443a50679
+  firebase_auth: f547a06ed4933a1da2b9ac8d8c64ae09d113c8e1
   firebase_core: ba00a168e719694f38960502ceb560285603d073
   firebase_storage: 90cdab308fdc9e9aedcbe90d62b949cb66d91ce1
   FirebaseAppCheckInterop: e2178171b4145013c7c1a3cc464d1d446d3a1896
+  FirebaseAuth: 613c463cb43545a7fd2cd99ade09b78ac472c544
   FirebaseAuthInterop: db06756ef028006d034b6004dc0c37c24f7828d4
   FirebaseCore: 0e38ad5d62d980a47a64b8e9301ffa311457be04
   FirebaseCoreExtension: 032fd6f8509e591fda8cb76f6651f20d926b121f
@@ -1504,6 +1541,7 @@ SPEC CHECKSUMS:
   package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
   path_provider_foundation: bb55f6dbba17d0dccd6737fe6f7f34fbd0376880
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
+  RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
   sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
 
 PODFILE CHECKSUM: 53a6aebc29ccee84c41f92f409fc20cd4ca011f1

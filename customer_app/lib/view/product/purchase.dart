@@ -30,6 +30,7 @@ class _PurchaseState extends State<Purchase> {
   late TextEditingController branchName; //  매장명
   late bool isBranchSelected; // 픽업 장소 선택 여부
   late int _radioValue; // Radio
+  late Color okColor = Pcolor.appBarBackgroundColor;
 
   @override
   void initState() {
@@ -43,8 +44,10 @@ class _PurchaseState extends State<Purchase> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Pcolor.basebackgroundColor,
         title: Text("결제하기"),
       ),
+      backgroundColor: const Color.fromARGB(255, 243, 243, 243),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -153,55 +156,64 @@ class _PurchaseState extends State<Purchase> {
                   color: Pcolor.appBarForegroundColor,
                   borderRadius: BorderRadius.circular(16), 
                   ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              'images/logo.png',
-                              width: 72,
-                              height: 72,
-                              fit: BoxFit.cover,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.asset(
+                                'images/logo.png',
+                                width: 72,
+                                height: 72,
+                                fit: BoxFit.cover,
+                              ),
                             ),
-                          ),
-                          Expanded(
-                            child: Column(
-                              children: [
-                                Text(
-                                  "킨 재스퍼 여성 스니커즈 발라드",
-                                style: TextStyle(
-                                fontWeight: FontWeight.bold),),
-                                Text('킨'),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      "240 SIZE",
-                                    style: TextStyle(
-                                    fontWeight: FontWeight.bold),),
-                                    Text(
-                                      " / ",
-                                    style: TextStyle(
-                                    fontWeight: FontWeight.bold),),
-                                    Text(
-                                      "1 개",
-                                    style: TextStyle(
-                                    fontWeight: FontWeight.bold),),
-                                  ],
-                                ),
-                                SizedBox(height: 12),
-                              ],
-                            ),
-                            ),
-                        ],
-                      ),
-                      Divider(),
-                      SizedBox(height: 12),
-                      Text("data"),
-                      SizedBox(height: 12),
-                    ],
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  Text(
+                                    "킨 재스퍼 여성 스니커즈 발라드",
+                                  style: TextStyle(
+                                  fontWeight: FontWeight.bold),),
+                                  Text('킨'),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        "240 SIZE",
+                                      style: TextStyle(
+                                      fontWeight: FontWeight.bold),),
+                                      Text(
+                                        " / ",
+                                      style: TextStyle(
+                                      fontWeight: FontWeight.bold),),
+                                      Text(
+                                        "1 개",
+                                      style: TextStyle(
+                                      fontWeight: FontWeight.bold),),
+                                    ],
+                                  ),
+                                  SizedBox(height: 12),
+                                ],
+                              ),
+                              ),
+                          ],
+                        ),
+                        Divider(),
+                        SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text("결제 금액"),
+                            Text("382,000 원"),
+                          ],
+                        ),
+                        SizedBox(height: 12),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -324,10 +336,12 @@ class _PurchaseState extends State<Purchase> {
           width: 50,
           child: ElevatedButton(
             onPressed: () {
-              //
+              if(branchName.text.isEmpty){
+               okColor = Pcolor.errorBackColor;
+              }
             }, 
             style: ElevatedButton.styleFrom(
-              backgroundColor: Pcolor.errorBackColor,
+              backgroundColor: okColor,
               foregroundColor: Pcolor.effectForeColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(5)
