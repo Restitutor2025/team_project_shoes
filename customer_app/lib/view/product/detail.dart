@@ -1,3 +1,4 @@
+import 'package:customer_app/model/product.dart';
 import 'package:customer_app/util/pcolor.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -24,34 +25,35 @@ class Detail extends StatefulWidget {
 class _DetailState extends State<Detail> {
   // Property
   // late List<Product> productList; 제품 데이터 받아오기
-  List<Map<String, String>> productList = []; // 제품 데이터 받아올 곳
+  // List<Map<String, String>> productList = []; // 제품 데이터 받아올 곳
   ScrollController scrollController = ScrollController();
   List<String> sizeList = []; // 사이즈 데이터 받아올 곳
   List<String> colorList = []; // 컬러 데이터 받아올 곳
   late int count = 1; // 제품 수량
   Color changeSizeColor = Pcolor.appBarForegroundColor;
   int? indexNum;
-
+  // List<Map<String, String>>productList = Get.arguments ?? '___';
+  Product product = Get.arguments ?? '__';
   
   @override
   void initState() {
     super.initState();
-    addData(); // 더미 데이터 넣어줄 예정
+    // addData(); // 더미 데이터 넣어줄 예정
     print(sizeList);
     sizeList = ['230','230','230','230','230','230'];
     colorList = ['빨강','파랑','노랑'];
 
   }
-    void addData() {
-    productList.add({
-      'imageName': 'images/logo.png',
-      'detailImageName': 'images/logo_non.png',
-      'productPrice': '100,000',
-      'productName': '킨 제스퍼 여성화',
-      'englishName': 'KEEN JASPER Women Sneakers',
-    });
+    // void addData() {
+    // productList.add({
+    //   'imageName': 'images/logo.png',
+    //   'detailImageName': 'images/logo_non.png',
+    //   'productPrice': '100,000',
+    //   'productName': '킨 제스퍼 여성화',
+    //   'englishName': 'KEEN JASPER Women Sneakers',
+    // }); 더미 데이터_테스트용
 
-  }
+  //}
 
   @override
   Widget build(BuildContext context) {
@@ -88,31 +90,28 @@ class _DetailState extends State<Detail> {
             Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Image.asset(productList[0]['imageName']!),
+                Image.network(
+                  'http://172.16.250.183:8008/productimage/view?pid=${product.id}&position=main', //상품이미지
+                  fit: BoxFit.contain,
+                ),
                 Text(
-                  productList[0]['productPrice']!,
+                  product.ename,
                   style: TextStyle(
                     fontWeight: FontWeight.bold
                   ),
                   ),
-                Text(productList[0]['productName']!),
                 Text(
-                  productList[0]['englishName']!,
+                  product.ename,
                   style: TextStyle(
                     color: Colors.blueGrey
                   ),
                   ),
               ],
             ),
-            Image.asset(productList[0]['detailImageName']!),
-            Image.asset(productList[0]['detailImageName']!),
-            Image.asset(productList[0]['detailImageName']!),
-            Image.asset(productList[0]['detailImageName']!),
-            Image.asset(productList[0]['detailImageName']!),
-            Image.asset(productList[0]['detailImageName']!),
-            Image.asset(productList[0]['detailImageName']!),
-            Image.asset(productList[0]['detailImageName']!),
-            Image.asset(productList[0]['detailImageName']!)
+            Image.network(
+                  'http://172.16.250.183:8008/productimage/view?pid=${product.id}&position=main', //상품이미지
+                  fit: BoxFit.contain,
+                ),
           ],
         ),
       ),
@@ -162,11 +161,9 @@ class _DetailState extends State<Detail> {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              'images/logo.png',
-                              width: 72,
-                              height: 72,
-                              fit: BoxFit.cover,
+                            child: Image.network(
+                              'http://172.16.250.183:8008/productimage/view?pid=${product.id}&position=main', //상품이미지
+                              fit: BoxFit.contain,
                             ),
                           ),
                           Expanded(
