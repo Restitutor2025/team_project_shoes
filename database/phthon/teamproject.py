@@ -1,20 +1,20 @@
 # ip Address : 172.16.250.193
 
 from fastapi import FastAPI
-from color import router as color_router
+from productcolor import router as color_router
 from commission import router as commission_router
 from customer import router as customer_router
 from employee import router as employee_router
 from image import router as image_router
 from manufacturer import router as manufacturer_router
 from manufacturername import router as manufacturername_router
-from name import router as name_router
+from productname import router as name_router
 from product import router as product_router
 from purchase import router as purchase_router
 from receive import router as receive_router
 from refund import router as refund_router
 from request import router as request_router
-from size import router as size_router
+from productsize import router as size_router
 from store import router as store_router
 from pydantic import BaseModel
 import config
