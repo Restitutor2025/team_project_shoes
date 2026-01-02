@@ -30,14 +30,10 @@ class _HomeState extends State<Home> {
 
   Future<void> getJSONdata() async {
     var url = Uri.parse(
-      'http://172.16.250.193:8000/product/list',
+      'http://172.16.250.183:8008/product/select',
     );
     try {
-      var response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({'limit': 10}),
-      );
+      var response = await http.post(url);
       if (response.statusCode == 200) {
         var dataConvertedJSON = json.decode(
           utf8.decode(response.bodyBytes),
@@ -116,7 +112,8 @@ class _HomeState extends State<Home> {
               height: 240,
               child: PageView.builder(
                 controller: _pageController,
-                itemCount: 3,
+                itemCount: data.isEmpty ? 0 : data.length,
+
                 onPageChanged: (value) {
                   _currentPage = value;
                   setState(() {});
@@ -130,6 +127,7 @@ class _HomeState extends State<Home> {
                     duration: const Duration(
                       milliseconds: 300,
                     ),
+
                     curve: Curves.easeOut,
                     child: Padding(
                       padding: const EdgeInsets.all(10.0),
@@ -139,16 +137,8 @@ class _HomeState extends State<Home> {
                           borderRadius:
                               BorderRadius.circular(24),
                         ),
-                        child: Column(
-                          children: [
-                            Image.asset(
-                              'images/logo_non.png',
-                              height: 110,
-                              fit: BoxFit.contain,
-                            ),
-
-                            ///상품 데이터 베이스 연결시키기
-                          ],
+                        child: _ProductCard(
+                          product: data[index],
                         ),
                       ),
                     ),
@@ -187,17 +177,23 @@ class _HomeState extends State<Home> {
             const SizedBox(height: 24),
 
             // 신상상품 섹션
-            ProductSection(title: '신상상품', product: []),
+            ProductSection(title: '신상상품', product: data),
 
             const SizedBox(height: 32),
 
             // 인기상품 섹션
-            ProductSection(title: '오늘의 인기상품', product: []),
+            ProductSection(
+              title: '오늘의 인기상품',
+              product: data,
+            ),
 
             // >>>>>>>>👇 나중에 DB 붙이면 최근 본 상품 조건부
             if (data.isNotEmpty) ...[
               const SizedBox(height: 32),
-              ProductSection(title: '최근 본 상품', product: []),
+              ProductSection(
+                title: '최근 본 상품',
+                product: data,
+              ),
             ],
 
             const SizedBox(height: 32),
