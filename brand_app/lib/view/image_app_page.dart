@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:brand_app/util/pcolor.dart';
@@ -5,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:flutter/services.dart';
+
+import 'package:http/http.dart' as http;
 
 class ImageAppPage extends StatefulWidget {
   const ImageAppPage({super.key});
@@ -36,8 +39,7 @@ class _ImageAppPageState extends State<ImageAppPage> {
   File? sideImage;
   File? backImage;
 
-  ///
-  ///// 제조사 테스트 데이터 (나중에 DB로 교체)
+  // 제조사 테스트 데이터 (나중에 DB로 교체)
   final List<String> manufacturers = [
     '삼성',
     'LG',
@@ -64,6 +66,55 @@ class _ImageAppPageState extends State<ImageAppPage> {
     if (picked != null) {
       onSelected(File(picked.path));
       setState(() {});
+    }
+  }
+
+  Future<void> insertAction() async {
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse(
+        'http://172.16.250.183:8008/product/insert',
+      ),
+    );
+    request.fields['ename'] = productNameController.text;
+    request.fields['price'] = priceController.text;
+
+    var response = await request.send();
+    if (response.statusCode == 200) {
+      var respStr = await response.stream.bytesToString();
+      var data = json.decode(respStr);
+
+      return data['pid'];
+    }
+  }
+
+  Future<void> uploadImages(int newPid) async {
+    List<Map<String, dynamic>> imageTasks = [
+      {'pos': 'main', 'file': mainImage},
+      {'pos': 'top', 'file': topImage},
+      {'pos': 'side', 'file': sideImage},
+      {'pos': 'back', 'file': backImage},
+    ];
+
+    for (var task in imageTasks) {
+      if (task['file'] == null) continue;
+
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse(
+          'http://172.16.250.183:8008/productimage/upload',
+        ),
+      );
+      request.fields['pid'] = newPid.toString();
+      request.fields['position'] = task['pos'];
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'file',
+          task['file'].path,
+        ),
+      );
+
+      await request.send();
     }
   }
 
@@ -232,6 +283,54 @@ class _ImageAppPageState extends State<ImageAppPage> {
                 onChanged: (value) {
                   setState(() {}); // 글자 수 갱신
                 },
+              ),
+              const SizedBox(height: 30),
+              Row(
+                children: [
+                  Text(
+                    '*  ',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: Colors.red,
+                    ),
+                  ),
+                  Text(
+                    '칼라',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: selectedManufacturer,
+                hint: const Text('칼라를 선택하세요'),
+                items: manufacturers
+                    .map(
+                      (e) => DropdownMenuItem(
+                        value: e,
+                        child: Text(e),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedManufacturer = value;
+                  });
+                },
+                decoration: InputDecoration(
+                  contentPadding:
+                      const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
               const SizedBox(height: 30),
 
