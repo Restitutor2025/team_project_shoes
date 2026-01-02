@@ -16,13 +16,11 @@
 class ProductImage {
   //  Property
   int pid;  //  FK from Product
-  String path;
   String position;
 
   //  Constructor
   ProductImage({
     required this.pid, 
-    required this.path, 
     required this.position
     });
 
@@ -30,7 +28,6 @@ class ProductImage {
   factory ProductImage.fromJson(Map<String, dynamic> json) {
     return ProductImage(
       pid: json['pid'],
-      path: json['path'],
       position: json['position']
     );
   }
@@ -39,7 +36,6 @@ class ProductImage {
   Map<String, dynamic> toJson(){
     return {
       'pid':pid,
-      'path':path,
       'position':position
     };
   }
