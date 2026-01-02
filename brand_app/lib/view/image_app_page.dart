@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:brand_app/ip/ipaddress.dart';
 import 'package:brand_app/util/pcolor.dart';
 import 'package:brand_app/util/snackbar.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:flutter/services.dart';
@@ -79,7 +81,7 @@ class _ImageAppPageState extends State<ImageAppPage> {
     var request = http.MultipartRequest(
       'POST',
       Uri.parse(
-        'http://172.16.250.183:8008/product/insert',
+        '${IpAddress.baseUrl}/product/insert',
       ),
     );
     request.fields['ename'] = productNameController.text;
@@ -108,7 +110,7 @@ class _ImageAppPageState extends State<ImageAppPage> {
       var request = http.MultipartRequest(
         'POST',
         Uri.parse(
-          'http://172.16.250.183:8008/productimage/upload',
+          '${IpAddress.baseUrl}/productimage/upload',
         ),
       );
       request.fields['pid'] = newPid.toString();
@@ -531,7 +533,7 @@ class _ImageAppPageState extends State<ImageAppPage> {
                             .isEmpty ||
                         selectedManufacturer == null ||
                         selectedColorlist == null) {
-                      snack.errorSnackBar(
+                      Get.snackbar(
                         "입력 오류",
                         "모든 필수 항목을 입력해주세요.",
                       );

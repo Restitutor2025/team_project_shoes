@@ -1,3 +1,4 @@
+import 'package:customer_app/ip/ipaddress.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -19,7 +20,7 @@ class _FindIdPwState extends State<FindIdPw> {
   TextEditingController pwEmailController = TextEditingController();
   TextEditingController pwPhoneController = TextEditingController();
 
-  final String baseUrl = "http://172.16.250.193:8008";
+  final String baseUrl = "${IpAddress.baseUrl}";
 
   // 스낵바 표시 함수
   void _showSnackBar(String message, {bool isError = true}) {

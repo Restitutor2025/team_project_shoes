@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:customer_app/ip/ipaddress.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -131,7 +132,7 @@ class _RegistState extends State<Regist> {
     }
 
     try {
-      var url = Uri.parse('http://172.16.250.193:8008/customer/check_email');
+      var url = Uri.parse('${IpAddress.baseUrl}/customer/check_email');
       var response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -153,7 +154,7 @@ class _RegistState extends State<Regist> {
 
   Future<void> registCustomer() async {
     try {
-      final url = Uri.parse('http://172.16.250.193:8008/customer/idregist');
+      final url = Uri.parse('${IpAddress.baseUrl}/customer/idregist');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
