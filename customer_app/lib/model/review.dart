@@ -1,38 +1,41 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-//  Ask Model(for Chatting)
+
+//  Review Model(for Chatting)
 /*
-  Create: 2/1/2026 10:17, Creator: Chansol, Park
+  Create: 2/1/2026 11:27, Creator: Chansol, Park
   Update log: 
     DUMMY 00/00/0000 00:00, 'Point X, Description', Creator: Chansol, Park
   Version: 1.0
-  Dependency: firebase_core, cloud_firestore, firebase_storage, firebase_auth
-  Desc: Ask Model(for Chatting)
+  Dependency: cloud_firestore
+  Desc: Review Model(for Chatting)
 
   DateTime MUST converted using value.toIso8601String()
   Stored DateTime in String MUST converted using DateTime.parse(value);
 */
 
-class Ask {
+class Review {
   final String? id; // Firestore doc id
   final String? cid; // FK from Customer
   final String? eid; // FK from Employee
+  final int pcid; //  FK from Purchase
   final DateTime timestamp;
   final String contents;
-  final String title;
+  final double star;
 
-  Ask({
+  Review({
     this.id,
     this.cid,
     this.eid,
+    required this.pcid,
     required this.timestamp,
     required this.contents,
-    required this.title,
+    required this.star,
   });
 
-  factory Ask.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory Review.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     if (data == null) {
-      throw StateError('Ask document ${doc.id} has no data');
+      throw StateError('Review document ${doc.id} has no data');
     }
 
     final ts = data['timestamp'];
@@ -40,23 +43,30 @@ class Ask {
         ? ts.toDate()
         : DateTime.parse(ts as String);
 
-    return Ask(
+    return Review(
       id: doc.id,
       cid: data['cid'] as String?,
       eid: data['eid'] as String?,
+      pcid: (data['pcid'] as num).toInt(),
       timestamp: time,
       contents: data['contents'] as String,
-      title: data['title'] as String,
+      star: (data['star'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      'cid': cid,
-      'eid': eid,
-      'timestamp': Timestamp.fromDate(timestamp),
+    final map = {
+      'pcid': pcid,
+      'timestamp': FieldValue.serverTimestamp(),
       'contents': contents,
-      'title': title,
+      'star': star,
     };
+    if (eid != null) {
+      map['eid'] = eid!;
+    }
+    if (cid != null) {
+      map['cid'] = cid!;
+    }
+    return map;
   }
 }

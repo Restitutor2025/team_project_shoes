@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:customer_app/firebase_options.dart';
 import 'package:customer_app/view/login/login.dart';
-import 'package:customer_app/view/mypage/chatting.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -47,8 +46,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: const Login(), // 본인이 하는 페이지로 바꿔서 진행하시면 됩니다
+      theme: ThemeData(
+        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+      ),
+      home: const Login(),// 본인이 하는 페이지로 바꿔서 진행하시면 됩니다
     );
   }
 }

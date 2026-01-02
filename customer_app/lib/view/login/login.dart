@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:customer_app/model/customer.dart';
+import 'package:customer_app/model/usercontroller.dart';
 import 'package:customer_app/view/home/tabbar.dart';
 import 'package:customer_app/view/login/find_id_pw.dart';
 import 'package:customer_app/view/login/regist.dart';
@@ -18,6 +20,8 @@ class _LoginState extends State<Login> {
   TextEditingController emailController = TextEditingController();
   TextEditingController pwController = TextEditingController();
 
+  final UserController userController = Get.put(UserController()); // 유저 정보 저장
+
   final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
 
   Future<void> _handleGoogleSignIn() async {
@@ -34,77 +38,82 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: SizedBox(
-          width: 300,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset('images/logo_non.png', width: 250),
-              const SizedBox(height: 100),
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: '이메일',
-                  hintText: 'EX)dsss@email.com'
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: Center(
+          child: SizedBox(
+            width: 300,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset('images/logo_non.png', width: 250),
+                const SizedBox(height: 100),
+                TextField(
+                  controller: emailController,
+                  decoration: const InputDecoration(
+                    labelText: '이메일',
+                    hintText: 'EX)dsss@email.com'
+                  ),
                 ),
-              ),
-              const SizedBox(height: 30),
-              TextField(
-                obscureText: true,
-                controller: pwController,
-                decoration: const InputDecoration(labelText: '비밀번호'),
-              ),
-              const SizedBox(height: 50),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 50),
+                const SizedBox(height: 30),
+                TextField(
+                  obscureText: true,
+                  controller: pwController,
+                  decoration: const InputDecoration(labelText: '비밀번호'),
                 ),
-                onPressed: () => loginAction(), // 수정된 부분: 검증 로직 실행
-                child: const Text('로그인')
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton.icon(
-                  icon: const Icon(Icons.g_mobiledata, size: 45),
-                  label: const Text('Google로 계속하기'),
+                const SizedBox(height: 50),
+                ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 50),
-                    side: const BorderSide(color: Colors.grey),
                   ),
-                  onPressed: _handleGoogleSignIn,
+                  onPressed: () => loginAction(), // 수정된 부분: 검증 로직 실행
+                  child: const Text('로그인')
                 ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
+                const SizedBox(height: 10),
+                ElevatedButton.icon(
+                    icon: const Icon(Icons.g_mobiledata, size: 45),
+                    label: const Text('Google로 계속하기'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(145, 50),
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      minimumSize: const Size(double.infinity, 50),
+                      side: const BorderSide(color: Colors.grey),
                     ),
-                    onPressed: () => Get.to(() => const Regist()),
-                    child: const Text('회원가입')
+                    onPressed: _handleGoogleSignIn,
                   ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(145, 50),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(145, 50),
+                      ),
+                      onPressed: () => Get.to(() => const Regist()),
+                      child: const Text('회원가입')
                     ),
-                    onPressed: () {
-                      Get.to(FindIdPw());
-                    },
-                    child: const Text('ID / Pw 찾기')
-                  ),
-                ],
-              ),
-            ],
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(145, 50),
+                      ),
+                      onPressed: () {
+                        Get.to(FindIdPw());
+                      },
+                      child: const Text('ID / Pw 찾기')
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -131,7 +140,10 @@ class _LoginState extends State<Login> {
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         if (data['results'] == 'OK') {
-          Get.offAll(() => const Tabbar()); // 로그인 성공 시 이동
+        Customer loggedInUser = Customer.fromJson(data['customer_data']); 
+        userController.login(loggedInUser);
+        Get.offAll(() => const Tabbar());
+        
         } else {
           _errorSnackBar('이메일 또는 비밀번호가 일치하지 않습니다.');
         }
