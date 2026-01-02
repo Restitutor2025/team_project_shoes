@@ -58,7 +58,7 @@ async def insert(pid: int, body: SizeList):
         conn.close()
         
 @router.post("/update")
-async def update(pid: int, inputsize: list[int]):
+async def update(pid: int, body: SizeList):
     conn = connect()
     curs = conn.cursor()
 
@@ -71,7 +71,7 @@ async def update(pid: int, inputsize: list[int]):
             VALUES (%s, %s)
         """
 
-        data = [(pid, size) for size in inputsize]
+        data = [(pid, size) for size in body.inputsize]
         curs.execute(sql1, (pid,))
         curs.executemany(sql2, data)
 
