@@ -1,8 +1,10 @@
+import 'package:customer_app/model/usercontroller.dart';
 import 'package:customer_app/view/home/home.dart';
 import 'package:customer_app/view/map/map_select.dart';
 import 'package:customer_app/view/mypage/mypage.dart';
 import 'package:customer_app/view/shoppingcart/shoppingcart.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class Tabbar extends StatefulWidget {
   const Tabbar({super.key});
@@ -12,10 +14,9 @@ class Tabbar extends StatefulWidget {
 }
 
 class _TabbarState extends State<Tabbar> {
-  // 현재 선택된 탭의 인덱스
+  final userController = Get.find<UserController>();
   int _selectedIndex = 0;
 
-  // 1. 여기에 각 탭을 눌렀을 때 보여줄 페이지들을 넣으세요.
   final List<Widget> _pages = [
     Home(),
     MapSelect(),
@@ -31,6 +32,8 @@ class _TabbarState extends State<Tabbar> {
 
   @override
   Widget build(BuildContext context) {
+    int? userId = userController.user?.id;
+    print(userId);
     return Scaffold(
       // 현재 선택된 인덱스의 페이지를 보여줌
       body: _pages[_selectedIndex],
