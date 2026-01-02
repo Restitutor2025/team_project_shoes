@@ -17,6 +17,30 @@ def connect():
         cursorclass=pymysql.cursors.DictCursor
     )
     return conn
+@router.get("/selectcart")
+async def get_shopping():
+    conn = connect()
+    try:
+        curs = conn.cursor()
+
+        sql = """
+            SELECT  quantity, price, date, ename
+            FROM product
+           
+        """
+        curs.execute(sql,)
+        rows = curs.fetchall()
+
+        return {"results": rows}
+
+    except Exception as e:
+        print(" selectcart error:", e)
+        return {"error": str(e)}
+
+    finally:
+        conn.close()
+
+
 
 @router.post("/select")
 async def get_products():
