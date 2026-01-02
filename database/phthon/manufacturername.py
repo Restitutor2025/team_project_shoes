@@ -42,3 +42,21 @@ async def upload(pid:int=Form(...),name:str=Form(...)):
     except Exception as e:
         print("Error",e)
         return{'result':"Error"}
+
+@router.delete("/delete") # 또는 @router.post("/delete")
+async def delete_manufacturename(pid: int, name: str):
+    conn = connect()
+    curs = conn.cursor()
+    try:
+        sql = "DELETE FROM manufacturername WHERE pid = %s AND name = %s"
+        curs.execute(sql, (pid, name))
+        conn.commit()
+        if curs.rowcount > 0:
+            return {'result': 'OK', 'message': f'Deleted {name} for product {pid}'}
+        else:
+            return {'result': 'NoData', 'message': '일치하는 데이터가 없습니다.'}
+    except Exception as e:
+        print("Error during delete:", e)
+        return {'result': 'Error'}
+    finally:
+        conn.close()
