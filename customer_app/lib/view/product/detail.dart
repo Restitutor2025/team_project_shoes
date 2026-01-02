@@ -69,8 +69,8 @@ class _DetailState extends State<Detail> {
     var response = await http.get(url2);
     var dataConvertdJSON = json.decode(utf8.decode(response.bodyBytes));
 
-    List productName = dataConvertdJSON['results'];
-    colorList.addAll(productName);
+    List nameResult = dataConvertdJSON['results'];
+    productName.addAll(nameResult);
     setState(() {});
   }
 
@@ -136,10 +136,10 @@ class _DetailState extends State<Detail> {
                           fontSize: 20.0
                         ),
                         ),
-                      Text(
-                        productName.isNotEmpty
-                        ? productName[(product.id)!-1]["name"]
-                        : "",
+                      Text( 
+                         productName.isNotEmpty
+                          ? productName[0]["name"].toString()
+                          : ""
                         ),
                       Text(
                         product.ename,
@@ -216,7 +216,7 @@ class _DetailState extends State<Detail> {
                             child: Column(
                               children: [
                                 Text(
-                                  "킨 재스퍼 여성 스니커즈 발라드",
+                                  productName[0]["name"].toString(),
                                 style: TextStyle(
                                 fontWeight: FontWeight.bold),),
                                 Text('KEEN'),
