@@ -1,4 +1,5 @@
 import 'package:customer_app/model/product.dart';
+import 'package:customer_app/view/product/detail.dart';
 import 'package:flutter/material.dart';
 import 'package:customer_app/util/pcolor.dart';
 import 'package:get/get.dart';
@@ -122,6 +123,7 @@ class _HomeState extends State<Home> {
                   final bool isActive =
                       index == _currentPage;
 
+                  ///슬라이드 바 디자인 코드
                   return AnimatedScale(
                     scale: isActive ? 1.0 : 0.9,
                     duration: const Duration(
@@ -204,7 +206,6 @@ class _HomeState extends State<Home> {
   }
 }
 
-// 지금은 더미 나중에 DB 연결 예정
 class _ProductCard extends StatelessWidget {
   final Product product; //  >>>>>>>>>>>모델 연결
 
@@ -212,47 +213,52 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 140,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Center(
-              child: Image.network(
-                '65645645', //상품이미지
-                fit: BoxFit.contain,
+    return GestureDetector(
+      onTap: () {
+        Get.to(Detail(), arguments: product);
+      },
+      child: Container(
+        width: 140,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 5,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Center(
+                child: Image.network(
+                  'http://172.16.250.183:8008/productimage/view?pid=${product.id}&position=main', //상품이미지
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            product.ename, //>>>>>>>>>>상품name
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 13),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${product.price}', //>>>>>>>>>>상품price
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
+            const SizedBox(height: 8),
+            Text(
+              product.ename, //>>>>>>>>>>상품name
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 13),
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              '${product.price}', //>>>>>>>>>>상품price
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
