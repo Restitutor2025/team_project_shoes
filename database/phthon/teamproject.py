@@ -23,11 +23,11 @@ import pymysql
 
 
 app = FastAPI()
-app.include_router(color_router,prefix='/color', tags=['color'])
+app.include_router(color_router,prefix='/productcolor', tags=['color'])
 app.include_router(commission_router,prefix='/commission', tags=['commission'])
 app.include_router(customer_router,prefix='/customer', tags=['customer'])
 app.include_router(employee_router,prefix='/employee', tags=['employee'])
-app.include_router(image_router,prefix='/image', tags=['image'])
+app.include_router(image_router,prefix='/productimage', tags=['image'])
 app.include_router(manufacturer_router,prefix='/manufacturer', tags=['manufacturer'])
 app.include_router(manufacturername_router,prefix='/manufacturername', tags=['manufacturername'])
 app.include_router(name_router,prefix='/name', tags=['name'])
@@ -36,7 +36,7 @@ app.include_router(purchase_router,prefix='/purchase', tags=['purchase'])
 app.include_router(receive_router,prefix='/receive', tags=['receive'])
 app.include_router(refund_router,prefix='/refund', tags=['refund'])
 app.include_router(request_router,prefix='/request', tags=['request'])
-app.include_router(size_router,prefix='/size', tags=['size'])
+app.include_router(size_router,prefix='/productsize', tags=['size'])
 app.include_router(store_router,prefix='/store', tags=['store'])
 
 def connect():
