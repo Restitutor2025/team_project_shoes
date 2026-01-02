@@ -1,9 +1,18 @@
 from fastapi import APIRouter, Form
 from pydantic import BaseModel
+from typing import Optional
 import config
 import pymysql
 
 router = APIRouter()
+
+    #  purchase CRUD
+    #Create: 02/01/2026 17:46, Creator: Chansol, Park
+    #Update log: 
+    #  DUMMY 00/00/0000 00:00, 'Point X, Description', Creator: Chansol, Park
+    #Version: 1.0
+    #Dependency: 
+    #Desc: purchase CRUD
 
 def connect():
     conn = pymysql.connect(

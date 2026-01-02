@@ -6,7 +6,7 @@ import config
 import pymysql
 
     #  product_image CRUD
-    #Create: 31/12/2025 15:06, Creator: Chansol, Park
+    #Create: 02/01/2025 15:06, Creator: Chansol, Park
     #Update log: 
     #  DUMMY 00/00/0000 00:00, 'Point X, Description', Creator: Chansol, Park
     #Version: 1.0
