@@ -15,21 +15,21 @@
 class Product {
   //  Property
   int? id;
-  int mid;  //  FK from Product
+  int? mid; //  FK from Product
   int quantity;
   int price;
-  DateTime date;  //  Register date?
+  DateTime date; //  Register date?
   String ename; //  English name
 
   //  Constructor
   Product({
-    this.id, 
-    required this.mid, 
+    this.id,
+    this.mid,
     required this.quantity,
     required this.price,
     required this.date,
-    required this.ename
-    });
+    required this.ename,
+  });
 
   //  Decode from Json type
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -39,19 +39,19 @@ class Product {
       quantity: json['quantity'],
       price: json['price'],
       date: DateTime.parse(json['date']),
-      ename: json['ename']
+      ename: json['ename'],
     );
   }
 
   //  Encode to Json type
-  Map<String, dynamic> toJson(){
+  Map<String, dynamic> toJson() {
     return {
-      'id':id,
-      'mid':mid,
-      'quantity':quantity,
-      'price':price,
-      'date':date.toIso8601String(),
-      'ename':ename
+      'id': id,
+      'mid': mid,
+      'quantity': quantity,
+      'price': price,
+      'date': date.toIso8601String(),
+      'ename': ename,
     };
   }
 }
