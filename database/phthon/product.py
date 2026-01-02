@@ -25,7 +25,7 @@ async def get_products():
 
     try:
         # SQL 실행
-        sql = "SELECT id, mid, quantity, price, date, ename FROM product"
+        sql = "SELECT id, quantity, price, date, ename FROM product"
         curs.execute(sql)
         results = curs.fetchall()
 
@@ -44,20 +44,31 @@ async def get_products():
 
 
 @router.post("/insert")
-async def insert(quantity : str = Form(...), price : str = Form(...), date : str = Form(...), ename : str = Form(...)):
-        try:
-            conn = connect()
-            curs = conn.cursor()
-            sql = "insert into product(id, mid, quantity, price, date, ename) values (%s,%s,%s,%s,%s,%s)"
-            curs.execute(sql, (
-                quantity,
-                price,
-                date,
-                ename,
-            ))
-            conn.commit()
-            conn.close()
-            return {'results': 'OK'}
-        except Exception as e:
-            print(f"Error: {e}")
+async def insert(
+    quantity: str = Form(...), 
+    price: str = Form(...), 
+    ename: str = Form(...)
+):
+    conn = None
+    try:
+        conn = connect()
+        curs = conn.cursor()
+        
+        sql = "INSERT INTO product(quantity, price, date, ename) VALUES (%s, %s, NOW(), %s)"
+        
+        curs.execute(sql, (
+            quantity,
+            price,
+            ename
+        ))
+        
+        conn.commit()
+        return {'results': 'OK'}
+        
+    except Exception as e:
+        print(f"Error: {e}") 
         return {'results': 'Error'}
+        
+    finally:
+        if conn:
+            conn.close()
