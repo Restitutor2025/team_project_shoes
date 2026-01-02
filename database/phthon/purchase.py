@@ -26,48 +26,41 @@ def connect():
     return conn
 
 @router.get("/select")
-async def select(cid:int, id:Optional[int] = None):
-    conn=connect()
-    curs=conn.cursor()
-    if id is None:
-        sql = "SELECT * FROM Purchase WHERE cid = %s"
-        curs.execute(sql, (cid,))
-    else:
-        sql = "SELECT * FROM Purchase WHERE cid = %s AND id = %s"
-        curs.execute(sql, (cid, id))
-        
-    rows =curs.fetchall()
-    conn.close()
-    return{'results':rows}
-
-@router.post("/insert")
-async def insert_purchase(pid:int=Form(...), cid:int=Form(...), eid:int=Form(...),quantity:int=Form(...), finalprice:int=Form(...), pickupdate:str=Form(...), purchasedate:str=Form(...)):
-    try:
-        conn=connect()
-        curs=conn.cursor()
-        sql="INSERT INTO Purchase(pid, cid, eid, quantity, finalprice, pickupdate, purchasedate) values(%s,%s,%s,%s,%s,%s,%s)"
-        curs.execute(sql,(pid, cid, eid, quantity, finalprice, pickupdate, purchasedate))
-        conn.commit()
-        conn.close()
-        return{'result':'OK'}
-    except Exception as e:
-        print("Error",e)
-        return{'result':"Error"}
-    
-@router.delete("/delete") # 또는 @router.post("/delete")
-async def delete_purchase(id: int, cid: int):
+async def select():
     conn = connect()
     curs = conn.cursor()
+    curs.execute("SELECT seq, pid, cid, eid, quantity, finalPrice, pickupDate, purchaseDate, code FROM purchase ORDER BY purchaseDate")
+    rows = curs.fetchall()
+    conn.close()
+    result = [{'seq':row[0], 'pid':row[1],'cid':row[2],'eid':row[3],'quantity':row[4],'finalPrice':row[5],'pickupDate':row[6],'purchaseDate':row[7],'code':row[8],} for row in rows]
+    return{'results':result}
+
+@router.post("/insert")
+async def insert(quantity: int = Form(...), finalprice: int = Form(...), code: str = Form(...)):
     try:
-        sql = "DELETE FROM Purchase WHERE id = %s AND cid = %s"
-        curs.execute(sql, (id, cid))
+        conn = connect() 
+        curs = conn.cursor()
+        sql = "INSERT INTO purchase (quantity,finalprice,purchasedate,code) VALUES (%s,%s,CURDATE(),%s)"
+        curs.execute(sql, (quantity,finalprice,code,))
         conn.commit()
-        if curs.rowcount > 0:
-            return {'result': 'OK'}
-        else:
-            return {'result': 'NoData', 'message': '일치하는 데이터가 없습니다.'}
-    except Exception as e:
-        print("Error during delete:", e)
-        return {'result': 'Error'}
-    finally:
         conn.close()
+        return{"result": "OK"}
+    except Exception as e:
+        print("Error:", e)
+        print("Error details:", e)
+        return {'result': "Error"}
+
+
+@router.post("/insertPickupDate")
+async def insertPickupDate():
+    try:
+        conn = connect() 
+        curs = conn.cursor()
+        sql = "INSERT INTO purchase (pickupDate) VALUES (CURDATE())"
+        curs.execute(sql, ())
+        conn.commit()
+        conn.close()
+        return{"result": "OK"}
+    except Exception as e:
+        print("Error:", e)
+        return {'result': "Error"}
