@@ -215,25 +215,7 @@ class _DetailState extends State<Detail> {
                     );
                   }
               ),
-            )
-          ],
-        ),
-      )
-    );
-
-  }
-
-  void colorSheet(){
-    Get.bottomSheet(
-      Container(
-        width: 500,
-        height: 300,
-        color: Pcolor.basebackgroundColor,
-        child: Column(
-          children: [
-            Icon(Icons.horizontal_rule_sharp),
-            Text("색깔"),
-            SizedBox(height: 12),
+            ),
             SizedBox(
               width: 200,
               height: 50,
@@ -261,6 +243,25 @@ class _DetailState extends State<Detail> {
                 },
                 ),
             ),
+          ],
+        ),
+      )
+    );
+
+  }
+
+  void colorSheet(){
+    Get.bottomSheet(
+      Container(
+        width: 500,
+        height: 300,
+        color: Pcolor.basebackgroundColor,
+        child: Column(
+          children: [
+            Icon(Icons.horizontal_rule_sharp),
+            Text("색깔"),
+            SizedBox(height: 12),
+            
             
           Column(
           children: [
