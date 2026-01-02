@@ -1,4 +1,5 @@
 import 'package:customer_app/config.dart' as config;
+import 'package:customer_app/model/purchase.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -10,27 +11,40 @@ class PurchaseList extends StatefulWidget {
 }
 
 class _PurchaseListState extends State<PurchaseList> {
-  //  Dummies
-  final Map<String, Object?> purchase1 = {
-    "id": 1,
-    "quantity": 1,
-    "price": 10000,
-    "date": DateTime.now(),
-  };
-  final Map<String, Object?> purchase2 = {
-    "id": 2,
-    "quantity": 3,
-    "price": 50000,
-    "date": DateTime.now(),
-  };
-
-  final List<Map<String, Object?>> totalPurchases = [];
+  //  Property
+  late List<dynamic> totalPurchases = [];
 
   @override
   void initState() {
     super.initState();
-    totalPurchases.add(purchase1);
-    totalPurchases.add(purchase2);
+    setPurchaseList();
+  }
+
+  void setPurchaseList() async {
+    try {
+      final data = await config.getJSONData('/purchase');
+
+      if (!mounted) {
+        debugPrint('ERROR: widget already disposed');
+
+        return;
+      }
+      setState(() {
+        totalPurchases = data;
+      });
+    } catch (e, stack) {
+      debugPrint('setPurchaseList error: $e');
+      debugPrint('$stack');
+
+      if (!mounted) {
+        debugPrint('ERROR: widget already disposed');
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('구매 내역을 불러오지 못했습니다')));
+    }
   }
 
   @override
@@ -47,9 +61,12 @@ class _PurchaseListState extends State<PurchaseList> {
           child: Container(height: 1, color: Colors.grey.shade300),
         ),
       ),
-      body: ListView.builder(
+      body: totalPurchases.isEmpty
+      ? CircularProgressIndicator()
+      : ListView.builder(
         itemCount: totalPurchases.length,
         itemBuilder: (context, index) {
+          final purchase = totalPurchases[index];
           return SizedBox(
             width: MediaQuery.of(context).size.width * 0.9,
             height: 180,
