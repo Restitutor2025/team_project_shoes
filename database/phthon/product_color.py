@@ -26,8 +26,7 @@ async def select(pid:int):
     curs.execute(sql,(pid,))
     rows =curs.fetchall()
     conn.close()
-    result=[rows]
-    return{'results':result}
+    return{'results':rows}
 
 @router.post("/uproad")
 async def upload(pid:int=Form(...),color:str=Form(...)):
