@@ -27,6 +27,8 @@ class _MapDetailState extends State<MapDetail> {
   late Position currentPosition;
   double latData = 0.0;
   double longData = 0.0;
+  double mylatData = 0.0;
+  double mylongData = 0.0;
 
 @override
 void initState() {
@@ -66,14 +68,14 @@ void initState() {
   void getCurrentLocation() async{
     Position position = await Geolocator.getCurrentPosition();
     currentPosition = position;
-    latData = currentPosition.latitude;
-    longData = currentPosition.longitude;
+    mylatData = currentPosition.latitude;
+    mylongData = currentPosition.longitude;
     canRun = true;
     setState(() {});
   }
 
   Future<void> loadStoreData() async {
-    var url = Uri.parse("http://172.16.250.184:8008/store/select");
+    var url = Uri.parse("http://172.16.250.193:8008/store/select");
     var response = await http.get(url);
     storeList.clear();
     var dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));
@@ -105,7 +107,7 @@ void initState() {
                         heroTag: "c",
                         child: Icon(Icons.my_location),
                         onPressed: () => mapController.move(
-                          latlng.LatLng(latData, longData),
+                          latlng.LatLng(mylatData, mylongData),
                           mapController.camera.zoom
                         ),
                       ),
@@ -133,7 +135,7 @@ void initState() {
       Marker(
         width: 100,
         height: 100,
-        point: latlng.LatLng(latData, longData),
+        point: latlng.LatLng(mylatData, mylongData),
         child: Column(
           children: [
             Text(

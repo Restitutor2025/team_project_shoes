@@ -11,8 +11,6 @@ import 'package:flutter/services.dart';
 
 import 'package:http/http.dart' as http;
 
-final snack = CustomSnackbar();
-
 class ImageAppPage extends StatefulWidget {
   const ImageAppPage({super.key});
 
@@ -43,6 +41,7 @@ class _ImageAppPageState extends State<ImageAppPage> {
   File? sideImage;
   File? backImage;
 
+  // 제조사 테스트 데이터 (나중에 DB로 교체)
   final List<String> manufacturers = [
     '나이키',
     '퓨마',
@@ -77,41 +76,21 @@ class _ImageAppPageState extends State<ImageAppPage> {
   }
 
   Future<void> insertAction() async {
-    if (selectedManufacturer == null) {
-      //errorSnackBar("제조사를 선택해주세요.");
-      return;
-    }
     var request = http.MultipartRequest(
       'POST',
       Uri.parse(
         'http://172.16.250.183:8008/product/insert',
       ),
     );
-    request.fields['ename'] =
-        productNameController.text; //상품명
-    request.fields['color'] = selectedColorlist!; // 칼라
-    request.fields['size'] = selectedSizes.join(',');
-    String price = priceController.text.replaceAll(',', '');
-    request.fields['price'] = price; // 상품가격
-    request.fields['manufacturer'] =
-        selectedManufacturer!; //제조사
+    request.fields['ename'] = productNameController.text;
+    request.fields['price'] = priceController.text;
 
-    try {
-      var response = await request.send();
-      if (response.statusCode == 200) {
-        var respStr = await response.stream.bytesToString();
-        var data = json.decode(respStr);
-        int newpid = data['pid'];
-        await uploadImages(newpid);
+    var response = await request.send();
+    if (response.statusCode == 200) {
+      var respStr = await response.stream.bytesToString();
+      var data = json.decode(respStr);
 
-        snack.okSnackBar('등록성공', '상품이 성공적으로 등록되었습니다.');
-
-        return data['pid'];
-      } else {
-        snack.errorSnackBar('등록실패', '등록 중 에러가 발생했습니다: $e');
-      }
-    } catch (e) {
-      print("insert error: $e");
+      return data['pid'];
     }
   }
 
@@ -333,9 +312,9 @@ class _ImageAppPageState extends State<ImageAppPage> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: selectedColorlist,
+                value: selectedManufacturer,
                 hint: const Text('칼라를 선택하세요'),
-                items: colorlist
+                items: manufacturers
                     .map(
                       (e) => DropdownMenuItem(
                         value: e,
@@ -345,7 +324,7 @@ class _ImageAppPageState extends State<ImageAppPage> {
                     .toList(),
                 onChanged: (value) {
                   setState(() {
-                    selectedColorlist = value;
+                    selectedManufacturer = value;
                   });
                 },
                 decoration: InputDecoration(

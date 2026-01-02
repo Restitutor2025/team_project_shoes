@@ -16,10 +16,13 @@ class _ShoppingcartState extends State<Shoppingcart> {
   List namedata=[];
   List sizedata=[];
   
+  late int count;
   @override
   void initState() {
     super.initState();
     getJSONData();
+    // getJSONDataimage();
+    count=0;
   }
 
   Future<void> getJSONData()async{
@@ -34,7 +37,7 @@ class _ShoppingcartState extends State<Shoppingcart> {
 
   }
    Future<void> getJSONDataimage()async{
-    var url=Uri.parse("http://172.16.250.199:8008/image/select");
+    var url=Uri.parse("http://172.16.250.199:8008/productimage/view2");
     var response =await http.get(url);
     imagedata.clear();
     var dataConvertedJSON =json.decode(utf8.decode(response.bodyBytes));
@@ -44,39 +47,39 @@ class _ShoppingcartState extends State<Shoppingcart> {
 
   }
 
- Future<void> getJSONDatacolor()async{
-    var url=Uri.parse("http://172.16.250.199:8008/color/select");
-    var response =await http.get(url);
-    colordata.clear();
-    var dataConvertedJSON =json.decode(utf8.decode(response.bodyBytes));
-    List result =dataConvertedJSON['results'];
-    colordata.addAll(result);
-    setState(() {});
+//  Future<void> getJSONDatacolor()async{
+//     var url=Uri.parse("http://172.16.250.199:8008/color/select");
+//     var response =await http.get(url);
+//     colordata.clear();
+//     var dataConvertedJSON =json.decode(utf8.decode(response.bodyBytes));
+//     List result =dataConvertedJSON['results'];
+//     colordata.addAll(result);
+//     setState(() {});
 
-  }
+//   }
 
- Future<void> getJSONDataname()async{
-    var url=Uri.parse("http://172.16.250.199:8008/name/select");
-    var response =await http.get(url);
-    namedata.clear();
-    var dataConvertedJSON =json.decode(utf8.decode(response.bodyBytes));
-    List result =dataConvertedJSON['results'];
-    namedata.addAll(result);
-    setState(() {});
+//  Future<void> getJSONDataname()async{
+//     var url=Uri.parse("http://172.16.250.199:8008/name/select");
+//     var response =await http.get(url);
+//     namedata.clear();
+//     var dataConvertedJSON =json.decode(utf8.decode(response.bodyBytes));
+//     List result =dataConvertedJSON['results'];
+//     namedata.addAll(result);
+//     setState(() {});
 
-  }
+//   }
 
 
-Future<void> getJSONDatasize()async{
-    var url=Uri.parse("http://172.16.250.199:8008/size/select");
-    var response =await http.get(url);
-    sizedata.clear();
-    var dataConvertedJSON =json.decode(utf8.decode(response.bodyBytes));
-    List result =dataConvertedJSON['results'];
-    sizedata.addAll(result);
-    setState(() {});
+// Future<void> getJSONDatasize()async{
+//     var url=Uri.parse("http://172.16.250.199:8008/size/select");
+//     var response =await http.get(url);
+//     sizedata.clear();
+//     var dataConvertedJSON =json.decode(utf8.decode(response.bodyBytes));
+//     List result =dataConvertedJSON['results'];
+//     sizedata.addAll(result);
+//     setState(() {});
 
-  }
+//   }
 
 
   @override
@@ -112,16 +115,16 @@ Future<void> getJSONDatasize()async{
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    /// 이미지
-                    // ClipRRect(
-                    //   borderRadius: BorderRadius.circular(8),
-                    //   child: Image.network(
-                    //     imagedata[index]['path'],
-                    //     width: 80,
-                    //     height: 80,
-                    //     fit: BoxFit.cover,
-                    //   ),
-                    // ),
+                    
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      // child: Image.network(
+                      //   imagedata[0]['path'],
+                      //   width: 80,
+                      //   height: 80,
+                      //   fit: BoxFit.cover,
+                      // ),
+                    ),
          
                     const SizedBox(width: 12),
          

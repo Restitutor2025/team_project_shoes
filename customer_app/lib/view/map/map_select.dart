@@ -69,7 +69,7 @@ class _MapSelectState extends State<MapSelect> {
   }
 
   Future<void> loadStoreData() async {
-    var url = Uri.parse("http://172.16.250.184:8008/store/select");
+    var url = Uri.parse("http://172.16.250.193:8008/store/select");
     var response = await http.get(url);
     storeList.clear();
     var dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));
