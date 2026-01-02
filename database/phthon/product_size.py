@@ -16,14 +16,10 @@ def connect():
     )
     return conn
 
-class ProductSize(BaseModel):
-    pid: int
-    size: int
+class SizeList(BaseModel):
+    inputsize: list[int] # [230,235,240] range(230, 275+1, 5)
 
-class ProductSizeOnly(BaseModel):
-    size: int
-
-@router.get("/select", response_model=list[ProductSizeOnly])
+@router.get("/select")
 async def select(pid: int):
     conn = connect()
     curs = conn.cursor()
@@ -38,7 +34,7 @@ async def select(pid: int):
     return {'results':rows}
 
 @router.post("/insert")
-async def insert(pid: int, inputsize: list[int]):
+async def insert(pid: int, body: SizeList):
     conn = connect()
     curs = conn.cursor()
 
@@ -48,7 +44,7 @@ async def insert(pid: int, inputsize: list[int]):
             VALUES (%s, %s)
         """
 
-        data = [(pid, size) for size in inputsize]
+        data = [(pid, size) for size in body.inputsize]
         curs.executemany(sql, data)
 
         conn.commit()
@@ -61,28 +57,30 @@ async def insert(pid: int, inputsize: list[int]):
     finally:
         conn.close()
         
-# @router.post("/update")
-# async def update(pid: int, inputsize: list[int]):
-#     conn = connect()
-#     curs = conn.cursor()
+@router.post("/update")
+async def update(pid: int, inputsize: list[int]):
+    conn = connect()
+    curs = conn.cursor()
 
-#     try:
-#         sql1 = """
-#             DELETE FROM ProductSize WHERE pid = %s
-            
-#             INSERT INTO ProductSize (pid, size)
-#             VALUES (%s, %s)
-#         """
+    try:
+        sql1 = """
+            DELETE FROM ProductSize WHERE pid = %s
+        """
+        sql2 = """
+            INSERT INTO ProductSize (pid, size)
+            VALUES (%s, %s)
+        """
 
-#         data = [(pid, pid, size) for size in inputsize]
-#         curs.executemany(sql, data)
+        data = [(pid, size) for size in inputsize]
+        curs.execute(sql1, (pid,))
+        curs.executemany(sql2, data)
 
-#         conn.commit()
-#         return {"results": "OK"}
+        conn.commit()
+        return {"results": "OK"}
 
-#     except Exception as e:
-#         conn.rollback()
-#         return {"results": "Error", "detail": str(e)}
+    except Exception as e:
+        conn.rollback()
+        return {"results": "Error", "detail": str(e)}
 
-#     finally:
-#         conn.close()
+    finally:
+        conn.close()
