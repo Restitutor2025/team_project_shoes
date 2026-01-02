@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:customer_app/database/selected_store_database.dart';
 import 'package:customer_app/util/pcolor.dart';
 import 'package:customer_app/util/snackbar.dart';
 import 'package:customer_app/view/map/map_detail.dart';
@@ -5,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart' as latlng;
 
 class MapSelect extends StatefulWidget {
@@ -21,18 +25,22 @@ class _MapSelectState extends State<MapSelect> {
   int kindChoice = 0;
   bool canRun = false;
   int? selectedStoreId;
+  String query = '';
 
-  List<Map<String, dynamic>> storeList = [];
+  List storeList = [];
 
   late Position currentPosition;
   double latData = 0.0;
   double longData = 0.0;
+
+  final SelectedStoreDatabase selectedStoreDB = SelectedStoreDatabase();
 
   @override
   void initState() {
     super.initState();
     checkLocationPermission();
     loadStoreData();
+    loadSelectedStoreId();
   }
 
   void checkLocationPermission() async {
@@ -56,34 +64,46 @@ class _MapSelectState extends State<MapSelect> {
     latData = currentPosition.latitude;
     longData = currentPosition.longitude;
     canRun = true;
+    await loadStoreData();
     setState(() {});
   }
 
   Future<void> loadStoreData() async {
-    storeList = [
-      {
-        'id': 1,
-        'name': '강남역점',
-        'lat': 37.4979,
-        'lng': 127.0276,
-        'address': '서울특별시 강남구 강남대로 78길'
-      },
-      {
-        'id': 2,
-        'name': '동작구점',
-        'lat': 37.5124,
-        'lng': 126.9393,
-        'address': '서울특별시 동작구'
-      },
-      {
-        'id': 3,
-        'name': '송파구점',
-        'lat': 37.5146,
-        'lng': 127.1058,
-        'address': '서울특별시 송파구'
-      },
-    ];
-    setState(() {});
+    var url = Uri.parse("http://172.16.250.184:8008/store/select");
+    var response = await http.get(url);
+    storeList.clear();
+    var dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));
+    List result = dataConvertedJSON['results'];
+    if (query.isEmpty) {
+      storeList.addAll(result);
+    } else {
+      storeList = result.where((store) => store['name'].toString().contains(query)).toList();
+    }
+    if (canRun) {
+      storeList.sort((a, b) {
+        final double aLat = (a['lat'] as num).toDouble();
+        final double aLng = (a['long'] as num).toDouble();
+        final double bLat = (b['lat'] as num).toDouble();
+        final double bLng = (b['long'] as num).toDouble();
+
+        final double distA = Geolocator.distanceBetween(latData, longData, aLat, aLng);
+        final double distB = Geolocator.distanceBetween(latData, longData, bLat, bLng);
+
+        return distA.compareTo(distB);
+      });
+    }
+
+      setState(() {});
+    }
+
+  Future<void> loadSelectedStoreId() async {
+    final sid = await selectedStoreDB.queryStoreId();
+    print('앱 시작 시 DB에서 읽어온 매장 id: $sid');
+
+    if (sid != null) {
+      selectedStoreId = sid;
+      setState(() {});
+    }
   }
 
   @override
@@ -100,18 +120,22 @@ class _MapSelectState extends State<MapSelect> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(30, 20, 30, 0),
+              padding: const EdgeInsets.fromLTRB(10, 20, 10, 0),
               child: TextField(
                 controller: searchController,
                 decoration: InputDecoration(
-                  hintText: '주문 검색',
+                  hintText: '매장 검색',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                   suffixIcon: IconButton(
                     icon: Icon(Icons.search),
                     color: Colors.black,
-                    onPressed: () {},
+                    onPressed: () async{
+                      query = searchController.text.trim();
+                      await loadStoreData();
+                      setState(() {});
+                    },
                   ),
                 ),
               ),
@@ -120,12 +144,12 @@ class _MapSelectState extends State<MapSelect> {
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: SizedBox(
                 width: MediaQuery.of(context).size.width * 0.9,
-                height: 400,
+                height: 250,
                 child: Stack(
-                  children: [
+                  children: [ 
                     canRun
-                        ? flutterMap()
-                        : Center(child: CircularProgressIndicator()),
+                      ? flutterMap()
+                      : Center(child: CircularProgressIndicator()),
                     Positioned(
                       right: 10,
                       bottom: 10,
@@ -144,7 +168,27 @@ class _MapSelectState extends State<MapSelect> {
                             child: FloatingActionButton(
                               heroTag: "b",
                               child: Icon(Icons.zoom_out_map_outlined),
-                              onPressed: () => Get.to(MapDetail()),
+                              onPressed: () {
+                                double? targetLat;
+                                double? targetLng;
+                                
+                                if (selectedStoreId != null) {
+                                  final matches = storeList.where((s) => s['id'] == selectedStoreId);
+                                  if (matches.isNotEmpty) {
+                                    final store = matches.first as Map<String, dynamic>;
+                                    targetLat = (store['lat'] as num).toDouble();
+                                    targetLng = (store['long'] as num).toDouble();
+                                  }
+                                }
+
+                                Get.to(
+                                  MapDetail(),
+                                  arguments: {
+                                    'lat': targetLat,
+                                    'lng': targetLng,
+                                  },
+                                );
+                              },
                             ),
                           ),
                         ],
@@ -155,19 +199,20 @@ class _MapSelectState extends State<MapSelect> {
               ),
             ),
             Expanded(
-              child: ListView.builder(
+              child: storeList.isEmpty ? Center(child: Text('결과가 없습니다.'))
+              : ListView.builder(
                 itemCount: storeList.length,
                 itemBuilder: (context, index) {
                   final store = storeList[index];
                   final int storeId = store['id'];
                   final bool isSelected = (selectedStoreId == storeId);
                   final double storeLat = store['lat'];
-                  final double storeLng = store['lng'];
-
+                  final double storeLng = store['long'];
+      
                   final double distance = canRun
                       ? Geolocator.distanceBetween(latData, longData, storeLat, storeLng)
                       : 0.0;
-
+      
                   return GestureDetector(
                     onTap: () => selectStore(store),
                     child: Card(
@@ -202,17 +247,15 @@ class _MapSelectState extends State<MapSelect> {
                                 } else {
                                   selectedStoreId = storeId;
                                 }
-
-                                final double lat =
-                                    store['lat'];
-                                final double lng =
-                                    store['lng'];
-
+      
+                                final double lat = store['lat'];
+                                final double lng = store['long'];
+      
                                 mapController.move(
                                   latlng.LatLng(lat, lng),
                                   mapController.camera.zoom,
                                 );
-
+      
                                 setState(() {});
                               },
                               icon: Icon(
@@ -266,7 +309,7 @@ class _MapSelectState extends State<MapSelect> {
         final int storeId = store['id'];
         final String storeName = store['name'];
         final double lat = store['lat'];
-        final double lng = store['lng'];
+        final double lng = store['long'];
         final bool isSelected = (selectedStoreId == storeId);
         return Marker(
           width: 200,
@@ -335,8 +378,13 @@ class _MapSelectState extends State<MapSelect> {
       textCancel: '취소',
       confirmTextColor: Colors.white,
       onConfirm: () async {
-        // + SQLite에 저장하기
-        selectedStoreId = store['id'];
+        final int storeId = store['id'];
+
+        final result = await selectedStoreDB.insertStoreId(storeId);
+        print('선택 매장 저장 결과: $result');
+
+        selectedStoreId = storeId;
+
         setState(() {});
         Get.back();
         Snackbar().okSnackBar('성공', '매장이 선택 되었습니다.');
