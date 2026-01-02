@@ -28,7 +28,8 @@ class _DetailState extends State<Detail> {
   ScrollController scrollController = ScrollController();
   List<String> sizeList = []; // 사이즈 데이터 받아올 곳
   List<String> colorList = []; // 컬러 데이터 받아올 곳
-  late int count = 0; // 제품 수량
+  late int count = 1; // 제품 수량
+  Color changeSizeColor = Pcolor.appBarForegroundColor;
 
   
   @override
@@ -185,23 +186,29 @@ class _DetailState extends State<Detail> {
                   ),
                 ),
             SizedBox(
-              height: 300,
+              height: 150,
               child: GridView.builder(
                   controller: scrollController,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 4,
-                    crossAxisSpacing: 1,
-                    mainAxisSpacing: 1,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 0.01,
+                    childAspectRatio: 2.0
                   ), 
                   itemCount: sizeList.length,
                   itemBuilder: (context, index) {
                     return SizedBox(
+                      height: 30,
                       child: Center(
                         child: GestureDetector(
                           onTap: () {
-                            colorSheet();
+                            // colorSheet();
+                            sizeList[index].isNotEmpty
+                            ? changeSizeColor = Pcolor.errorBackColor
+                            : changeSizeColor = Pcolor.appBarForegroundColor;
                           },
                           child: Card(
+                            color: changeSizeColor,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -214,28 +221,10 @@ class _DetailState extends State<Detail> {
                     );
                   }
               ),
-            )
-          ],
-        ),
-      )
-    );
-
-  }
-
-  void colorSheet(){
-    Get.bottomSheet(
-      Container(
-        width: 500,
-        height: 300,
-        color: Pcolor.basebackgroundColor,
-        child: Column(
-          children: [
-            Icon(Icons.horizontal_rule_sharp),
-            Text("색깔"),
-            SizedBox(height: 12),
+            ),
             SizedBox(
               width: 200,
-              height: 50,
+              height: 70,
               child: GridView.builder(
                 itemCount: colorList.length,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -246,6 +235,7 @@ class _DetailState extends State<Detail> {
                 controller: scrollController,
                 itemBuilder: (context, index) {
                   return Container(
+                    height: 10,
                     decoration: BoxDecoration(
                       color: Pcolor.effectBackColor,
                       borderRadius: BorderRadius.circular(15)
@@ -260,9 +250,6 @@ class _DetailState extends State<Detail> {
                 },
                 ),
             ),
-            
-          Column(
-          children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -283,30 +270,99 @@ class _DetailState extends State<Detail> {
                 ),
               ]
             ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  //
-                },
-                 child: Text("장바구니"),
-                 ),
-              ElevatedButton(
-                onPressed: () {
-                  //
-                },
-                 child: Text("구매하기"),
-                 ),
-            ],
-          ),
-          ]
-          )
-          ]
-          ,)
-      ),
+          ],
+        ),
+      )
     );
+
   }
+
+  // void colorSheet(){
+  //   Get.bottomSheet(
+  //     Container(
+  //       width: 500,
+  //       height: 300,
+  //       color: Pcolor.basebackgroundColor,
+  //       child: Column(
+  //         children: [
+  //           Icon(Icons.horizontal_rule_sharp),
+  //           Text("색깔"),
+  //           SizedBox(height: 12),
+  //           SizedBox(
+  //             width: 200,
+  //             height: 70,
+  //             child: GridView.builder(
+  //               itemCount: colorList.length,
+  //               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+  //               crossAxisCount: 3,
+  //               crossAxisSpacing: 10,
+  //               mainAxisSpacing: 10,
+  //               ), 
+  //               controller: scrollController,
+  //               itemBuilder: (context, index) {
+  //                 return Container(
+  //                   height: 10,
+  //                   decoration: BoxDecoration(
+  //                     color: Pcolor.effectBackColor,
+  //                     borderRadius: BorderRadius.circular(15)
+  //                   ),
+  //                   child: Card(
+  //                     child: Center(
+  //                       child:
+  //                         Text(colorList[index])
+  //                     ),
+  //                   ),
+  //                 );
+  //               },
+  //               ),
+  //           ),
+            
+  //         Column(
+  //         children: [
+  //           Row(
+  //             mainAxisAlignment: MainAxisAlignment.end,
+  //             children: [
+  //               TextButton(
+  //                 onPressed: () {
+  //                   count--;
+  //                   setState(() {});
+  //                 },
+  //                 child: Text('-'),
+  //               ),
+  //               Text("$count"),
+  //               TextButton.icon(
+  //                 label: Icon(Icons.add),
+  //                 onPressed: () {
+  //                   count++;
+  //                   setState(() {});
+  //                 },
+  //               ),
+  //             ]
+  //           ),
+  //         Row(
+  //           mainAxisAlignment: MainAxisAlignment.center,
+  //           children: [
+  //             ElevatedButton(
+  //               onPressed: () {
+  //                 //
+  //               },
+  //                child: Text("장바구니"),
+  //                ),
+  //             ElevatedButton(
+  //               onPressed: () {
+  //                 //
+  //               },
+  //                child: Text("구매하기"),
+  //                ),
+  //           ],
+  //         ),
+  //         ]
+  //         )
+  //         ]
+  //         ),
+  //     ),
+  //   );
+  // }
 
 
 
