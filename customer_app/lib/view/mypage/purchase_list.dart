@@ -1,4 +1,7 @@
 import 'package:customer_app/config.dart' as config;
+import 'package:customer_app/model/name.dart';
+import 'package:customer_app/model/product.dart';
+import 'package:customer_app/model/product_image.dart';
 import 'package:customer_app/model/purchase.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -12,7 +15,10 @@ class PurchaseList extends StatefulWidget {
 
 class _PurchaseListState extends State<PurchaseList> {
   //  Property
-  late List<dynamic> totalPurchases = [];
+  late List<Purchase> totalPurchases = [];
+  late List<dynamic> totalProducts = [];
+  late List<dynamic> totalImages = [];
+  late List<dynamic> totalNames = [];
 
   @override
   void initState() {
@@ -22,7 +28,12 @@ class _PurchaseListState extends State<PurchaseList> {
 
   void setPurchaseList() async {
     try {
-      final data = await config.getJSONData('/purchase');
+      final List<Purchase> data = await config.getJSONData('purchase') as List<Purchase>;
+      List<int> searchIds = data.map((e) => e.pid).toList();
+
+      final List<Product>data2 = await config.getJSONData('product') as List<Product>;
+      final List<Name>data3 = await config.getJSONData('productname') as List<Name>;
+      final List<ProductImage>data4 = await config.getJSONData('productimage') as List<ProductImage>;
 
       if (!mounted) {
         debugPrint('ERROR: widget already disposed');
@@ -31,6 +42,7 @@ class _PurchaseListState extends State<PurchaseList> {
       }
       setState(() {
         totalPurchases = data;
+        totalProducts = data2;
       });
     } catch (e, stack) {
       debugPrint('setPurchaseList error: $e');
@@ -40,10 +52,6 @@ class _PurchaseListState extends State<PurchaseList> {
         debugPrint('ERROR: widget already disposed');
         return;
       }
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('구매 내역을 불러오지 못했습니다')));
     }
   }
 
@@ -62,107 +70,118 @@ class _PurchaseListState extends State<PurchaseList> {
         ),
       ),
       body: totalPurchases.isEmpty
-      ? CircularProgressIndicator()
-      : ListView.builder(
-        itemCount: totalPurchases.length,
-        itemBuilder: (context, index) {
-          final purchase = totalPurchases[index];
-          return SizedBox(
-            width: MediaQuery.of(context).size.width * 0.9,
-            height: 180,
-            child: Card(
-              color: Colors.white,
-              child: Row(
-                children: [
-                  Image.asset(
-                    config.rlogoImage,
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.contain,
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+          ? Center(child: CircularProgressIndicator(),)
+          : ListView.builder(
+              itemCount: totalPurchases.length,
+              itemBuilder: (context, index) {
+                final purchase = totalPurchases[index];
+                final product = totalProducts[index];
+                final pName = totalNames[index];
+                return SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  height: 180,
+                  child: Card(
+                    color: Colors.white,
+                    child: Row(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(10, 30, 0, 0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        Image.asset(
+                          config.rlogoImage,
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.contain,
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('\$상품 이름?', style: TextStyle(fontSize: 15)),
-                              Text('X개', style: TextStyle(fontSize: 15)),
-                              Text(
-                                config.formatter.format(
-                                  totalPurchases[index]["price"],
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  10,
+                                  30,
+                                  0,
+                                  0,
                                 ),
-                                style: TextStyle(fontSize: 15),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    Text(
+                                      '\$상품 이름',
+                                      style: TextStyle(fontSize: 15),
+                                    ),
+                                    Text('${config.formatter.format(purchase.quantity)}개', style: TextStyle(fontSize: 15)),
+                                    Text(
+                                      '총 구매액: ${config.formatter.format(purchase.finalprice)}',
+                                      style: TextStyle(fontSize: 15),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Text(
+                                    '구매 날짜: ${DateFormat(config.dateFormat).format(totalPurchases[index].purchasedate)}',
+                                    style: TextStyle(fontSize: 15),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: SizedBox(
+                                      width: 100,
+                                      height: 35,
+                                      child: ElevatedButton(
+                                        onPressed: () {},
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.white,
+                                          elevation: 1,
+                                        ),
+                                        child: Text(
+                                          '반품 신청',
+                                          style: TextStyle(fontSize: 12),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Text(
+                                    '수령 날짜: ${DateFormat(config.dateFormat).format(totalPurchases[index].pickupdate)}',
+                                    style: TextStyle(fontSize: 15),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: SizedBox(
+                                      width: 100,
+                                      height: 35,
+                                      child: ElevatedButton(
+                                        onPressed: () {},
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.white,
+                                          elevation: 1,
+                                        ),
+                                        child: Text(
+                                          '리뷰 하기',
+                                          style: TextStyle(fontSize: 12),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                         ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Text(
-                              '구매 날짜: ${DateFormat(config.dateFormat).format(totalPurchases[index]['date'] as DateTime)}',
-                              style: TextStyle(fontSize: 15),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: SizedBox(
-                                width: 100,
-                                height: 35,
-                                child: ElevatedButton(
-                                  onPressed: () {},
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    elevation: 1,
-                                  ),
-                                  child: Text(
-                                    '반품 신청',
-                                    style: TextStyle(fontSize: 12),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Text(
-                              '수령 날짜: ${DateFormat(config.dateFormat).format(totalPurchases[index]['date'] as DateTime)}',
-                              style: TextStyle(fontSize: 15),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: SizedBox(
-                                width: 100,
-                                height: 35,
-                                child: ElevatedButton(
-                                  onPressed: () {},
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    elevation: 1,
-                                  ),
-                                  child: Text(
-                                    '리뷰 하기',
-                                    style: TextStyle(fontSize: 12),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
                   ),
-                ],
-              ),
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 }

@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:customer_app/model/name.dart';
+import 'package:customer_app/model/product.dart';
+import 'package:customer_app/model/product_image.dart';
 import 'package:customer_app/model/purchase.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -24,14 +27,13 @@ const String rDBName = 'teamproject';  //  Database Name
 const String rDBFileExt = '.db';
 //  Point 3
 const hostip='172.16.250.193';
-const String purchase = '/purchase';
 //  Point 2
 const String rDBFull = rDBName+rDBFileExt;
 const int rVersion = 1;
 
 //  Point 3
 Future<List<dynamic>> getJSONData(String page) async {
-    var url = Uri.parse("http://$hostip:8000/select");
+    var url = Uri.parse("http://$hostip:8000/$page");
     var response = await http.get(url);
 
     var dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));
@@ -42,7 +44,10 @@ Future<List<dynamic>> getJSONData(String page) async {
 
   List<dynamic> procData(String input, data){
     switch(input){
-      case '/purchase': return data.map((e) => Purchase.fromJson(e)).toList();
+      case 'purchase': return data.map((e) => Purchase.fromJson(e)).toList() as List<Purchase>;
+      case 'name': return data.map((e) => Name.fromJson(e)).toList();
+      case 'product': return data.map((e) => Product.fromJson(e)).toList();
+      case 'productimage': return data.map((e) => ProductImage.fromJson(e)).toList();
       default: return [];
     }
   }
