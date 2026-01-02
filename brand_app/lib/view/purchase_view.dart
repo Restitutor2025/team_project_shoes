@@ -6,6 +6,84 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+class PurchaseSummary {
+  final int pcid;
+  final int cid;
+  final String cemail;
+  final String cname;
+  final String pname;
+  final int finalprice;
+  final int size;
+  final String color;
+  final int quantity;
+  final String sname;
+  final int? rid;
+  final DateTime? purchasedate;
+  final DateTime? pickupdate;
+  final DateTime? refunddate;
+
+  PurchaseSummary({
+    required this.pcid,
+    required this.cid,
+    required this.cemail,
+    required this.cname,
+    required this.pname,
+    required this.finalprice,
+    required this.size,
+    required this.color,
+    required this.quantity,
+    required this.sname,
+    this.rid,
+    this.purchasedate,
+    this.pickupdate,
+    this.refunddate,
+  });
+
+  factory PurchaseSummary.fromJson(Map<String, dynamic> json) {
+    DateTime? parseDate(dynamic v) {
+      if (v == null) return null;
+      return DateTime.parse(v.toString());
+    }
+
+    return PurchaseSummary(
+      pcid: json['pcid'] as int,
+      cid: json['cid'] as int,
+      cemail: json['cemail'] as String,
+      cname: json['cname'] as String,
+      pname: json['pname'] as String,
+      finalprice: json['finalprice'] as int,
+      size: json['size'] as int,
+      color: json['color'] as String,
+      quantity: json['quantity'] as int,
+      sname: json['sname'] as String,
+      rid: json['rid'] as int?,
+      purchasedate: parseDate(json['purchasedate']),
+      pickupdate: parseDate(json['pickupdate']),
+      refunddate: parseDate(json['refunddate']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+
+    return {
+      'pcid': pcid,
+      'cid': cid,
+      'cemail': cemail,
+      'cname': cname,
+      'pname': pname,
+      'finalprice': finalprice,
+      'size': size,
+      'color': color,
+      'quantity': quantity,
+      'sname': sname,
+      'rid': rid,
+      'purchasedate': purchasedate!.toIso8601String(),
+      'pickupdate': pickupdate!.toIso8601String(),
+      'refunddate': refunddate!.toIso8601String(),
+    };
+  }
+}
+
 class PurchaseView extends StatefulWidget {
   const PurchaseView({super.key});
 
@@ -15,6 +93,28 @@ class PurchaseView extends StatefulWidget {
 
 class _PurchaseViewState extends State<PurchaseView> {
   TextEditingController searchController = TextEditingController();
+
+  String currentStatus(Map<String, Object?> item) {
+    final hasPurchaseDate = item['purchasedate'] != null;
+    final hasPickupDate = item['pickupdate'] != null;
+
+    final hasRefundId = item['rid'] != null; 
+    final hasRefundDate = item['refunddate'] != null;
+
+    if (hasRefundId && hasRefundDate) {
+      return '반품완료';
+    }
+    if (hasRefundId) {
+      return '반품대기';
+    }
+    if (hasPurchaseDate && hasPickupDate) {
+      return '수령완료';
+    }
+    if (hasPurchaseDate) {
+      return '수령대기';
+    }
+    return '알수없음';
+  }
 
   String formatDate(dynamic x) {
     if (x == null) return '-';
@@ -32,7 +132,7 @@ class _PurchaseViewState extends State<PurchaseView> {
 
   Color _statusColor(String status) {
     switch (status) {
-      case '주문완료':
+      case '알수없음':
         return Colors.blueGrey;
       case '수령대기':
         return Colors.blue;
@@ -58,8 +158,8 @@ class _PurchaseViewState extends State<PurchaseView> {
     "size": 245,
     "color": 'White',
     "quantity": 3,
-    "pstatus": '수령대기',
     "sname": '강북점',
+    "rid": null,
     "purchasedate": DateTime(2026, 1, 1, 18, 00, 00),
     "pickupdate": DateTime(2026, 1, 2, 18, 00, 00),
     "refunddate": null,
@@ -75,8 +175,8 @@ class _PurchaseViewState extends State<PurchaseView> {
     "size": 255,
     "color": 'White',
     "quantity": 4,
-    "pstatus": '반품완료',
     "sname": '강남점',
+    "rid": 1,
     "purchasedate": DateTime(2026, 1, 2, 18, 00, 00),
     "pickupdate": DateTime(2026, 1, 3, 14, 30, 00),
     "refunddate": DateTime(2026, 1, 7, 16, 00, 00),
@@ -92,8 +192,8 @@ class _PurchaseViewState extends State<PurchaseView> {
     "size": 270,
     "color": 'Red',
     "quantity": 2,
-    "pstatus": '반품대기',
     "sname": '송파점',
+    "rid": 2,
     "purchasedate": DateTime(2025, 12, 30, 18, 00, 00),
     "pickupdate": DateTime(2026, 1, 1, 11, 00, 00),
     "refunddate": null,
@@ -109,8 +209,8 @@ class _PurchaseViewState extends State<PurchaseView> {
     "size": 235,
     "color": 'White',
     "quantity": 3,
-    "pstatus": '주문완료',
     "sname": '마포점',
+    "rid": null,
     "purchasedate": DateTime(2026, 1, 4, 18, 00, 00),
     "pickupdate": null,
     "refunddate": null,
@@ -126,8 +226,8 @@ class _PurchaseViewState extends State<PurchaseView> {
     "size": 245,
     "color": 'White',
     "quantity": 1,
-    "pstatus": '수령완료',
     "sname": '구로점',
+    "rid": null,
     "purchasedate": DateTime(2026, 1, 1, 12, 00, 00),
     "pickupdate": DateTime(2026, 1, 3, 10, 00, 00),
     "refunddate": null,
@@ -169,7 +269,6 @@ class _PurchaseViewState extends State<PurchaseView> {
               ),
             ),
           ),
-          // 리스트
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(15.0),
@@ -177,7 +276,7 @@ class _PurchaseViewState extends State<PurchaseView> {
                 itemCount: data.length,
                 itemBuilder: (context, index) {
                   final item = data[index];
-                  final String status = item['pstatus']?.toString() ?? '';
+                  final String status = currentStatus(item);
 
                   return Padding(
                     padding: const EdgeInsets.all(5.0),
@@ -191,17 +290,6 @@ class _PurchaseViewState extends State<PurchaseView> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.only(right: 12),
-                              child: Container(
-                                width: 100,
-                                height: 100,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,8 +379,7 @@ class _PurchaseViewState extends State<PurchaseView> {
                                         backgroundColor: Colors.black,
                                         foregroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadiusGeometry.circular(5),
+                                          borderRadius: BorderRadius.circular(5)
                                         ),
                                       ),
                                       child: Text('자세히 보기'),

@@ -333,94 +333,93 @@ class _AskChatState extends State<AskChat> {
 
                     return Padding(
                       padding: const EdgeInsets.all(5.0),
-                      child: Card(
-                        elevation: isSelected ? 4 : 1,
-                        shape: RoundedRectangleBorder(
-                          side: BorderSide(
-                            color: isSelected
-                                ? Colors.blueAccent
-                                : Colors.transparent,
-                            width: 2,
+                      child: GestureDetector(
+                        onTap: () {
+                          _selectedInquiryId = inquiry.id;
+                          setState(() {});
+                        },
+                        child: Card(
+                          elevation: isSelected ? 4 : 1,
+                          shape: RoundedRectangleBorder(
+                            side: BorderSide(
+                              color: isSelected
+                                  ? Colors.blueAccent
+                                  : Colors.transparent,
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(10, 10, 0, 10),
-                              child: Container(
-                                color: Colors.grey,
-                                width: 120,
-                                height: 90,
-                              ),
-                            ),
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8.0,
-                                  horizontal: 4.0,
+                          child: Row(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(10, 10, 0, 10),
+                                child: Container(
+                                  color: Colors.grey,
+                                  width: 120,
+                                  height: 90,
                                 ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.only(bottom: 6),
-                                      child: Text(
-                                        inquiry.cemail,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 20,
+                              ),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8.0,
+                                    horizontal: 4.0,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(bottom: 6),
+                                        child: Text(
+                                          inquiry.cemail,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 20,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        SizedBox(
-                                          width: screenWidth * 0.15,
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text('고객 이름 : ${inquiry.cname}'),
-                                              Text('지점 위치 : ${inquiry.sname}'),
-                                              Text('제품 번호 : ${inquiry.pid}'),
-                                              Text(
-                                                '제품명 : ${inquiry.pname}',
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          SizedBox(
+                                            width: screenWidth * 0.15,
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text('고객 이름 : ${inquiry.cname}'),
+                                                Text('지점 위치 : ${inquiry.sname}'),
+                                                Text('제품 번호 : ${inquiry.pid}'),
+                                                Text(
+                                                  '제품명 : ${inquiry.pname}',
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                        SizedBox(
-                                          width: screenWidth * 0.15,
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text('제조사 : ${inquiry.mname}'),
-                                              Text('색상 : ${inquiry.color}'),
-                                              Text('사이즈 : ${inquiry.size}'),
-                                              Text('수량 : ${inquiry.quantity}'),
-                                            ],
+                                          SizedBox(
+                                            width: screenWidth * 0.15,
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text('제조사 : ${inquiry.mname}'),
+                                                Text('색상 : ${inquiry.color}'),
+                                                Text('사이즈 : ${inquiry.size}'),
+                                                Text('수량 : ${inquiry.quantity}'),
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  _selectedInquiryId = inquiry.id;
-                                });
-                              },
-                              icon: Icon(Icons.arrow_forward_ios_outlined),
-                            ),
-                          ],
+                              Icon(Icons.arrow_forward_ios_outlined),
+                            ],
+                          ),
                         ),
                       ),
                     );
