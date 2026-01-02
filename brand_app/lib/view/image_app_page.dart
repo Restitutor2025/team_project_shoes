@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:brand_app/util/pcolor.dart';
+import 'package:brand_app/util/snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -41,13 +43,17 @@ class _ImageAppPageState extends State<ImageAppPage> {
 
   // 제조사 테스트 데이터 (나중에 DB로 교체)
   final List<String> manufacturers = [
-    '삼성',
-    'LG',
-    'Apple',
-    'Sony',
+    '나이키',
+    '퓨마',
+    '아디다스',
+    '스니커즈',
+    '뉴발란스',
   ];
 
-  String? selectedManufacturer;
+  final List<String> colorlist = ['화이트', '레드', '블랙', '브라운'];
+
+  String? selectedManufacturer; // 제조사 드랍다운
+  String? selectedColorlist; // 칼라값 드랍다운
 
   // 상품명 컨트롤러
   final TextEditingController productNameController =
@@ -520,6 +526,27 @@ class _ImageAppPageState extends State<ImageAppPage> {
                   ),
                   onPressed: () {
                     // 콤마 제거 후 실제 숫자값
+                    if (productNameController
+                            .text
+                            .isEmpty ||
+                        selectedManufacturer == null ||
+                        selectedColorlist == null) {
+                      snack.errorSnackBar(
+                        "입력 오류",
+                        "모든 필수 항목을 입력해주세요.",
+                      );
+                      return;
+                    }
+
+                    //
+
+                    CustomSnackbar.showConfirmDialog(
+                      title: '상품등록',
+                      message: '입력하신 정보로 상품등록 하시겠습니까?',
+                      onConfirm: () async {
+                        await insertAction();
+                      },
+                    );
                     final price = int.parse(
                       priceController.text.replaceAll(
                         ',',
