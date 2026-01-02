@@ -60,3 +60,23 @@ async def delete_manufacturename(pid: int, name: str):
         return {'result': 'Error'}
     finally:
         conn.close()
+
+
+@router.post("/insert")
+async def insert_product(
+    ename: str = Form(...),
+    price: int = Form(...),
+    manufacturer: str = Form(...)
+):
+    conn = connect()
+    try:
+        curs = conn.cursor()
+        sql = "INSERT INTO Product (ename, price, manufacturer) VALUES (%s, %s, %s)"
+        curs.execute(sql, (ename, price, manufacturer))
+        conn.commit()
+        
+        new_pid = curs.lastrowid 
+        
+        return {"result": "OK", "pid": new_pid}
+    finally:
+        conn.close()

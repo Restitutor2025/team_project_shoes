@@ -1,13 +1,17 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:brand_app/util/pcolor.dart';
+import 'package:brand_app/util/snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:flutter/services.dart';
 
 import 'package:http/http.dart' as http;
+
+final snack = CustomSnackbar();
 
 class ImageAppPage extends StatefulWidget {
   const ImageAppPage({super.key});
@@ -39,15 +43,18 @@ class _ImageAppPageState extends State<ImageAppPage> {
   File? sideImage;
   File? backImage;
 
-  // 제조사 테스트 데이터 (나중에 DB로 교체)
   final List<String> manufacturers = [
-    '삼성',
-    'LG',
-    'Apple',
-    'Sony',
+    '나이키',
+    '퓨마',
+    '아디다스',
+    '스니커즈',
+    '뉴발란스',
   ];
 
-  String? selectedManufacturer;
+  final List<String> colorlist = ['화이트', '레드', '블랙', '브라운'];
+
+  String? selectedManufacturer; // 제조사 드랍다운
+  String? selectedColorlist; // 칼라값 드랍다운
 
   // 상품명 컨트롤러
   final TextEditingController productNameController =
@@ -70,21 +77,41 @@ class _ImageAppPageState extends State<ImageAppPage> {
   }
 
   Future<void> insertAction() async {
+    if (selectedManufacturer == null) {
+      //errorSnackBar("제조사를 선택해주세요.");
+      return;
+    }
     var request = http.MultipartRequest(
       'POST',
       Uri.parse(
         'http://172.16.250.183:8008/product/insert',
       ),
     );
-    request.fields['ename'] = productNameController.text;
-    request.fields['price'] = priceController.text;
+    request.fields['ename'] =
+        productNameController.text; //상품명
+    request.fields['color'] = selectedColorlist!; // 칼라
+    request.fields['size'] = selectedSizes.join(',');
+    String price = priceController.text.replaceAll(',', '');
+    request.fields['price'] = price; // 상품가격
+    request.fields['manufacturer'] =
+        selectedManufacturer!; //제조사
 
-    var response = await request.send();
-    if (response.statusCode == 200) {
-      var respStr = await response.stream.bytesToString();
-      var data = json.decode(respStr);
+    try {
+      var response = await request.send();
+      if (response.statusCode == 200) {
+        var respStr = await response.stream.bytesToString();
+        var data = json.decode(respStr);
+        int newpid = data['pid'];
+        await uploadImages(newpid);
 
-      return data['pid'];
+        snack.okSnackBar('등록성공', '상품이 성공적으로 등록되었습니다.');
+
+        return data['pid'];
+      } else {
+        snack.errorSnackBar('등록실패', '등록 중 에러가 발생했습니다: $e');
+      }
+    } catch (e) {
+      print("insert error: $e");
     }
   }
 
@@ -306,9 +333,9 @@ class _ImageAppPageState extends State<ImageAppPage> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: selectedManufacturer,
+                value: selectedColorlist,
                 hint: const Text('칼라를 선택하세요'),
-                items: manufacturers
+                items: colorlist
                     .map(
                       (e) => DropdownMenuItem(
                         value: e,
@@ -318,7 +345,7 @@ class _ImageAppPageState extends State<ImageAppPage> {
                     .toList(),
                 onChanged: (value) {
                   setState(() {
-                    selectedManufacturer = value;
+                    selectedColorlist = value;
                   });
                 },
                 decoration: InputDecoration(
@@ -520,6 +547,27 @@ class _ImageAppPageState extends State<ImageAppPage> {
                   ),
                   onPressed: () {
                     // 콤마 제거 후 실제 숫자값
+                    if (productNameController
+                            .text
+                            .isEmpty ||
+                        selectedManufacturer == null ||
+                        selectedColorlist == null) {
+                      snack.errorSnackBar(
+                        "입력 오류",
+                        "모든 필수 항목을 입력해주세요.",
+                      );
+                      return;
+                    }
+
+                    //
+
+                    CustomSnackbar.showConfirmDialog(
+                      title: '상품등록',
+                      message: '입력하신 정보로 상품등록 하시겠습니까?',
+                      onConfirm: () async {
+                        await insertAction();
+                      },
+                    );
                     final price = int.parse(
                       priceController.text.replaceAll(
                         ',',
