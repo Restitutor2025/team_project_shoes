@@ -1,4 +1,5 @@
 import 'package:customer_app/util/pcolor.dart';
+import 'package:customer_app/util/snackbar.dart';
 import 'package:customer_app/view/map/map_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -16,6 +17,7 @@ class MapSelect extends StatefulWidget {
 class _MapSelectState extends State<MapSelect> {
   // Property
   MapController mapController = MapController();
+  TextEditingController searchController = TextEditingController();
   int kindChoice = 0;
   bool canRun = false;
   int? selectedStoreId;
@@ -33,22 +35,22 @@ class _MapSelectState extends State<MapSelect> {
     loadStoreData();
   }
 
-  void checkLocationPermission() async{
+  void checkLocationPermission() async {
     LocationPermission permission = await Geolocator.checkPermission();
-    
-    if(permission == LocationPermission.denied){
+
+    if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
-    if(permission == LocationPermission.deniedForever){
+    if (permission == LocationPermission.deniedForever) {
       return;
     }
-    if(permission == LocationPermission.whileInUse || 
-       permission == LocationPermission.always){
-        getCurrentLocation();
+    if (permission == LocationPermission.whileInUse ||
+        permission == LocationPermission.always) {
+      getCurrentLocation();
     }
   }
 
-  void getCurrentLocation() async{
+  void getCurrentLocation() async {
     Position position = await Geolocator.getCurrentPosition();
     currentPosition = position;
     latData = currentPosition.latitude;
@@ -57,31 +59,31 @@ class _MapSelectState extends State<MapSelect> {
     setState(() {});
   }
 
-  Future<void> loadStoreData() async{
-  storeList = [
-    {
-      'id': 1,
-      'name': '강남역점',
-      'lat': 37.4979,
-      'lng': 127.0276,
-      'address': '서울특별시 강남구 강남대로 78길'
-    },
-    {
-      'id': 2,
-      'name': '동작구점',
-      'lat': 37.5124,
-      'lng': 126.9393,
-      'address': '서울특별시 동작구'
-    },
-    {
-      'id': 3,
-      'name': '송파구점',
-      'lat': 37.5146,
-      'lng': 127.1058,
-      'address': '서울특별시 송파구'
-    },
-  ];
-  setState(() {});
+  Future<void> loadStoreData() async {
+    storeList = [
+      {
+        'id': 1,
+        'name': '강남역점',
+        'lat': 37.4979,
+        'lng': 127.0276,
+        'address': '서울특별시 강남구 강남대로 78길'
+      },
+      {
+        'id': 2,
+        'name': '동작구점',
+        'lat': 37.5124,
+        'lng': 126.9393,
+        'address': '서울특별시 동작구'
+      },
+      {
+        'id': 3,
+        'name': '송파구점',
+        'lat': 37.5146,
+        'lng': 127.1058,
+        'address': '서울특별시 송파구'
+      },
+    ];
+    setState(() {});
   }
 
   @override
@@ -98,31 +100,58 @@ class _MapSelectState extends State<MapSelect> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Container(
-                color: Colors.grey,
-                width: MediaQuery.of(context).size.width*0.8,
-                height: 50,
-                child: Text('검색창'),
+              padding: const EdgeInsets.fromLTRB(30, 20, 30, 0),
+              child: TextField(
+                controller: searchController,
+                decoration: InputDecoration(
+                  hintText: '주문 검색',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(Icons.search),
+                    color: Colors.black,
+                    onPressed: () {},
+                  ),
+                ),
               ),
             ),
-            SizedBox(
-              width: MediaQuery.of(context).size.width*0.9,
-              height: 400,
-              child: Stack(
-                children: [
-                  canRun
-                    ? flutterMap()
-                    : Center(child: CircularProgressIndicator()),
-                  Positioned(
-                    right: 10,
-                    bottom: 10,
-                    child: FloatingActionButton(
-                      child: Icon(Icons.zoom_out_map_outlined),
-                      onPressed: () => Get.to(MapDetail()),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.9,
+                height: 400,
+                child: Stack(
+                  children: [
+                    canRun
+                        ? flutterMap()
+                        : Center(child: CircularProgressIndicator()),
+                    Positioned(
+                      right: 10,
+                      bottom: 10,
+                      child: Column(
+                        children: [
+                          FloatingActionButton(
+                            heroTag: "a",
+                            child: Icon(Icons.my_location),
+                            onPressed: () => mapController.move(
+                              latlng.LatLng(latData, longData),
+                              mapController.camera.zoom,
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: FloatingActionButton(
+                              heroTag: "b",
+                              child: Icon(Icons.zoom_out_map_outlined),
+                              onPressed: () => Get.to(MapDetail()),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             Expanded(
@@ -130,13 +159,17 @@ class _MapSelectState extends State<MapSelect> {
                 itemCount: storeList.length,
                 itemBuilder: (context, index) {
                   final store = storeList[index];
-                  final int storeId = store['id'] as int;
+                  final int storeId = store['id'];
                   final bool isSelected = (selectedStoreId == storeId);
-                  final double storeLat = store['lat'] as double;
-                  final double storeLng = store['lng'] as double;
-                  final double distance = Geolocator.distanceBetween(latData, longData, storeLat, storeLng);
+                  final double storeLat = store['lat'];
+                  final double storeLng = store['lng'];
+
+                  final double distance = canRun
+                      ? Geolocator.distanceBetween(latData, longData, storeLat, storeLng)
+                      : 0.0;
+
                   return GestureDetector(
-                    onTap: () => selectStore(),
+                    onTap: () => selectStore(store),
                     child: Card(
                       color: Pcolor.basebackgroundColor,
                       child: Row(
@@ -147,9 +180,16 @@ class _MapSelectState extends State<MapSelect> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(store['name'], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                                Text(
+                                  store['name'],
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                                ),
                                 Text(store['address']),
-                                Text(canRun ? '${distance.toStringAsFixed(0)} m' : '- m', style: TextStyle(fontWeight: FontWeight.bold)),
+                                Text(
+                                  canRun
+                                      ? '${distance.toStringAsFixed(0)} m'
+                                      : '- m',
+                                  style: TextStyle(fontWeight: FontWeight.bold)),
                               ],
                             ),
                           ),
@@ -162,15 +202,17 @@ class _MapSelectState extends State<MapSelect> {
                                 } else {
                                   selectedStoreId = storeId;
                                 }
-                                    
-                                final double lat = store['lat'] as double;
-                                final double lng = store['lng'] as double;
-                                    
+
+                                final double lat =
+                                    store['lat'];
+                                final double lng =
+                                    store['lng'];
+
                                 mapController.move(
                                   latlng.LatLng(lat, lng),
                                   mapController.camera.zoom,
                                 );
-                                    
+
                                 setState(() {});
                               },
                               icon: Icon(
@@ -190,12 +232,12 @@ class _MapSelectState extends State<MapSelect> {
             ),
           ],
         ),
-      )
+      ),
     );
   } // build
 
   // Functions -------------------------------------
-  FlutterMap flutterMap(){
+  FlutterMap flutterMap() {
     final List<Marker> markers = [];
 
     markers.add(
@@ -205,7 +247,10 @@ class _MapSelectState extends State<MapSelect> {
         point: latlng.LatLng(latData, longData),
         child: Column(
           children: [
-            Text('현위치', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+            Text(
+              '현위치',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+            ),
             Icon(
               Icons.my_location,
               size: 40,
@@ -218,10 +263,10 @@ class _MapSelectState extends State<MapSelect> {
 
     markers.addAll(
       storeList.map((store) {
-        final int storeId = store['id'] as int;
-        final String storeName = store['name'] as String;
-        final double lat = store['lat'] as double;
-        final double lng = store['lng'] as double;
+        final int storeId = store['id'];
+        final String storeName = store['name'];
+        final double lat = store['lat'];
+        final double lng = store['lng'];
         final bool isSelected = (selectedStoreId == storeId);
         return Marker(
           width: 200,
@@ -255,17 +300,15 @@ class _MapSelectState extends State<MapSelect> {
       mapController: mapController,
       options: MapOptions(
         initialCenter: latlng.LatLng(latData, longData),
-        initialZoom: 17.0
+        initialZoom: 17.0,
       ),
       children: [
         TileLayer(
           urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
           userAgentPackageName: "com.tj.gpsmapapp",
         ),
-        MarkerLayer(
-          markers: markers
-        ),
-      ]
+        MarkerLayer(markers: markers),
+      ],
     );
   }
 
@@ -284,8 +327,20 @@ class _MapSelectState extends State<MapSelect> {
     );
   }
 
-  void selectStore() {
-    //
+  void selectStore(Map<String, dynamic> store) {
+    Get.defaultDialog(
+      title: '매장 선택',
+      middleText: '${store['name']} 매장을 선택하시겠습니까?',
+      textConfirm: '선택',
+      textCancel: '취소',
+      confirmTextColor: Colors.white,
+      onConfirm: () async {
+        // + SQLite에 저장하기
+        selectedStoreId = store['id'];
+        setState(() {});
+        Get.back();
+        Snackbar().okSnackBar('성공', '매장이 선택 되었습니다.');
+      },
+    );
   }
-
 } // class
