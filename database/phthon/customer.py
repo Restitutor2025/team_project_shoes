@@ -59,24 +59,26 @@ async def idInsert(customer: Customer):
         conn.close()
 
 #로그인 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# FastAPI의 /login 부분 수정
 @router.post("/login")
 async def login(request: LoginRequest):
     conn = connect()
     curs = conn.cursor()
     
     try:
-        sql = "SELECT email, password FROM customer WHERE email = %s AND password = %s"
+        sql = "SELECT id, email, password, name, phone, date, address FROM customer WHERE email = %s AND password = %s"
         curs.execute(sql, (request.email, request.password))
         user = curs.fetchone() 
 
         if user:
+            if user['date']:
+                user['date'] = user['date'].isoformat()
+
             return {
                 'results': 'OK',
-                'email': user['email'],
-                'password': user['password']
+                'customer_data': user  
             }
         else:
-            # 일치하는 정보가 없다면 (이메일이 틀렸거나, 비번이 틀렸거나)
             return {'results': 'Fail'}
             
     except Exception as e:

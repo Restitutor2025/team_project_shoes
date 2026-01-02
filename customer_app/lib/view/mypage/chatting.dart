@@ -59,7 +59,7 @@ class _ChattingState extends State<Chatting> {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('❌ Firestore error:\n${snapshot.error}'));
+            return Center(child: Text('Firestore error:\n${snapshot.error}'));
           }
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -69,7 +69,7 @@ class _ChattingState extends State<Chatting> {
           }
           final totalChates = snapshot.data!.docs;
           if (totalChates.isEmpty) {
-            return Center(child: Text('문서가 0개야 (ask 컬렉션 비었거나 권한/프로젝트 문제 가능)'));
+            return Center(child: Text('No data in firebase'));
           }
           return ListView.builder(
             itemCount: totalChates.length,
