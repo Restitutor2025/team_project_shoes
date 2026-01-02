@@ -242,6 +242,32 @@ class _BoardReviewState extends State<BoardReview> {
       contents: tEC1.text.trim(),
       star: reviewScore,
     );
+
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('review')
+        .where('cid', isEqualTo: dPurchase.cid)
+        .where('pcid', isEqualTo: dPurchase.id)
+        .limit(1)
+        .get();
+        
+    if (querySnapshot.docs.isNotEmpty) {
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('리뷰 작성 불가'),
+          content: Text('이미 이 구매에 대한 리뷰를 작성하셨습니다.'),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: Text('확인'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
     {
       await FirebaseFirestore.instance.collection('review').add(review.toMap());
       if (!mounted) return;
@@ -254,7 +280,7 @@ class _BoardReviewState extends State<BoardReview> {
     }
   }
 
-  Future<void> reviewDialog() async{
+  Future<void> reviewDialog() async {
     final String desc;
     if (starChosen == false) {
       desc = "별점을 입력하지 않았습니다.";

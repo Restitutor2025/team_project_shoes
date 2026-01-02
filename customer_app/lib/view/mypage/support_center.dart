@@ -55,93 +55,12 @@ class _SupportCenterState extends State<SupportCenter> {
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Card(
-                color: Colors.white,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                      child: Text(
-                        '상품',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text('상품에 관련된 궁금한 점을 물어주세요.'),
-                    ),
-                    Row(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 4,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.grey.shade400,
-                                width: 1,
-                              ),
-                              borderRadius: BorderRadius.circular(2),
-                              color: Colors.transparent,
-                            ),
-                            child: Text(
-                              '예시',
-                              style: TextStyle(
-                                color: Colors.grey.shade700,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(0, 0, 8, 8),
-                          child: Text('상품 사이즈 및 옵션에 대해서 궁금해요'),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 4,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.grey.shade400,
-                                width: 1,
-                              ),
-                              borderRadius: BorderRadius.circular(2),
-                              color: Colors.transparent,
-                            ),
-                            child: Text(
-                              '예시',
-                              style: TextStyle(
-                                color: Colors.grey.shade700,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(0, 0, 8, 8),
-                          child: Text('상품 수령 방식에 대해서 궁금해요'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+              child: Column(
+                children: [
+                  rCards('상품', '상품 사이즈 및 옵션에 대해서 궁금해요.', '상품 수령 방식에 대해서 궁금해요.'),
+                  rCards('주문', '교환 / 반품에 대해서 궁금해요.', '상품 수령 방식에 대해서 궁금해요.'),
+                  rCards('기타', '회원 등급에 대해 궁금해요.', '쿠폰과 포인트에 대해 궁금해요.'),
+                ],
               ),
             ),
           ],
@@ -162,5 +81,91 @@ class _SupportCenterState extends State<SupportCenter> {
         ),
       ),
     );
+  } //  build
+
+  //  Widget
+  Widget rCards(String title, String ex1, String ex2) {
+    return Card(
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+            child: Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text('$title 관련된 궁금한 점을 물어주세요.'),
+          ),
+          Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade400, width: 1),
+                    borderRadius: BorderRadius.circular(2),
+                    color: Colors.transparent,
+                  ),
+                  child: Text(
+                    '예시',
+                    style: TextStyle(
+                      color: Colors.grey.shade700,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0, 0, 8, 8),
+                child: Text(ex1),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade400, width: 1),
+                    borderRadius: BorderRadius.circular(2),
+                    color: Colors.transparent,
+                  ),
+                  child: Text(
+                    '예시',
+                    style: TextStyle(
+                      color: Colors.grey.shade700,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0, 0, 8, 8),
+                child: Text(ex2),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
-}
+} //  class

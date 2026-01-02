@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
+from typing import Optional
 import config
 import pymysql
 
@@ -34,9 +35,13 @@ async def select(pid: int):
     return {'results':rows}
 
 @router.post("/insert")
-async def insert(pid: int, body: SizeList):
+async def insert(pid: int, body: Optional[SizeList] = None):
     conn = connect()
     curs = conn.cursor()
+    if body is None:
+        sizes = list(range(230, 276, 5))  # 230 ~ 275
+    else:
+        sizes = body.inputsize
 
     try:
         sql = """
@@ -44,7 +49,7 @@ async def insert(pid: int, body: SizeList):
             VALUES (%s, %s)
         """
 
-        data = [(pid, size) for size in body.inputsize]
+        data = [(pid, size) for size in sizes]
         curs.executemany(sql, data)
 
         conn.commit()

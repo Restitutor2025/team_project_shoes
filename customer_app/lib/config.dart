@@ -1,4 +1,11 @@
+import 'dart:convert';
+
+import 'package:customer_app/model/name.dart';
+import 'package:customer_app/model/product.dart';
+import 'package:customer_app/model/product_image.dart';
+import 'package:customer_app/model/purchase.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 //  Configuration of the App
@@ -8,6 +15,7 @@ import 'package:intl/intl.dart';
     DUMMY 00/00/0000 00:00, 'Point X, Description', Creator: Chansol, Park
     30/12/2025 14:10, 'Point 1, Chatting chatDateFormat', Creator: Chansol Park
     31/12/2025 10:17, 'Point 2, rDBName changed', Creator: Chansol Park
+    02/01/2026 15:55, 'Point 3, created getJSONdata', Creator: Chansol Park
   Version: 1.0
   Desc: Configuration of the App
 */
@@ -17,9 +25,32 @@ import 'package:intl/intl.dart';
 //  '${rDBName}${rDBFileExt}';
 const String rDBName = 'teamproject';  //  Database Name
 const String rDBFileExt = '.db';
+//  Point 3
+const hostip='172.16.250.193';
 //  Point 2
 const String rDBFull = rDBName+rDBFileExt;
 const int rVersion = 1;
+
+//  Point 3
+Future<List<dynamic>> getJSONData(String page) async {
+    var url = Uri.parse("http://$hostip:8000/$page");
+    var response = await http.get(url);
+
+    var dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));
+    List result = dataConvertedJSON["results"];
+    procData(page, result);
+    return procData(page, result);
+  }
+
+  List<dynamic> procData(String input, data){
+    switch(input){
+      case 'purchase': return data.map((e) => Purchase.fromJson(e)).toList() as List<Purchase>;
+      case 'name': return data.map((e) => Name.fromJson(e)).toList();
+      case 'product': return data.map((e) => Product.fromJson(e)).toList();
+      case 'productimage': return data.map((e) => ProductImage.fromJson(e)).toList();
+      default: return [];
+    }
+  }
 
 
 
