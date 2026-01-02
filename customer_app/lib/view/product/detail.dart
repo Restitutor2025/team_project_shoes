@@ -30,6 +30,7 @@ class _DetailState extends State<Detail> {
   List<String> colorList = []; // 컬러 데이터 받아올 곳
   late int count = 1; // 제품 수량
   Color changeSizeColor = Pcolor.appBarForegroundColor;
+  int? indexNum;
 
   
   @override
@@ -197,18 +198,21 @@ class _DetailState extends State<Detail> {
                   ), 
                   itemCount: sizeList.length,
                   itemBuilder: (context, index) {
+                    final bool choiseCardIndex = (indexNum==index);
                     return SizedBox(
                       height: 30,
                       child: Center(
                         child: GestureDetector(
                           onTap: () {
                             // colorSheet();
-                            sizeList[index].isNotEmpty
-                            ? changeSizeColor = Pcolor.errorBackColor
-                            : changeSizeColor = Pcolor.appBarForegroundColor;
+                            indexNum=index;
+                            
+                            setState(() {});
                           },
                           child: Card(
-                            color: changeSizeColor,
+                            color: choiseCardIndex 
+                              ? Pcolor.errorBackColor
+                              : Pcolor.basebackgroundColor,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -237,7 +241,7 @@ class _DetailState extends State<Detail> {
                   return Container(
                     height: 10,
                     decoration: BoxDecoration(
-                      color: Pcolor.effectBackColor,
+                      color: Pcolor.appBarBackgroundColor,
                       borderRadius: BorderRadius.circular(15)
                     ),
                     child: Card(
