@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Form
 from pydantic import BaseModel
 import config
 import pymysql
@@ -15,3 +15,27 @@ def connect():
         cursorclass=pymysql.cursors.DictCursor
     )
     return conn
+
+@router.get("/select")
+async def select():
+    conn=connect()
+    curs=conn.cursor()
+    curs.execute("select productcolor from color order by pid ")
+    rows =curs.fetchall()
+    conn.close()
+    result=[{'color':row[0]for row in rows}]
+    return{'results':result}
+
+router.post("/uproad")
+async def upload(color:str=Form(...)):
+    try:
+        conn=connect()
+        curs=conn.cursor()
+        sql="insert into productcolor(color,) values(%s,)"
+        curs.execute(sql,(color))
+        conn.commit()
+        conn.close()
+        return{'result':'OK'}
+    except Exception as e:
+        print("Error",e)
+        return{'result':"Error"}
