@@ -1,5 +1,9 @@
+import 'package:customer_app/model/product.dart';
 import 'package:flutter/material.dart';
 import 'package:customer_app/util/pcolor.dart';
+import 'package:get/get.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -9,14 +13,48 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  final PageController _pageController = PageController(
+  PageController _pageController = PageController(
     viewportFraction: 0.82,
   );
   int _currentPage = 0; //추천상품 슬라이더 페이지
 
-  List<dynamic> recentProducts = [];
+  List<Product> data = [];
   //<<<<<<<<<나중에 DB에 채워질 최근 본 상품
   //<<<<<<<<<<<<
+
+  @override
+  void initState() {
+    super.initState();
+    getJSONdata();
+  }
+
+  Future<void> getJSONdata() async {
+    var url = Uri.parse(
+      'http://172.16.250.193:8000/product/list',
+    );
+    try {
+      var response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({'limit': 10}),
+      );
+      if (response.statusCode == 200) {
+        var dataConvertedJSON = json.decode(
+          utf8.decode(response.bodyBytes),
+        );
+        data.clear();
+        setState(() {});
+
+        if (dataConvertedJSON is List) {
+          data = dataConvertedJSON
+              .map((json) => Product.fromJson(json))
+              .toList();
+        }
+      }
+    } catch (e) {
+      print('$e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -149,17 +187,17 @@ class _HomeState extends State<Home> {
             const SizedBox(height: 24),
 
             // 신상상품 섹션
-            ProductSection(title: '신상상품'),
+            ProductSection(title: '신상상품', product: []),
 
             const SizedBox(height: 32),
 
             // 인기상품 섹션
-            ProductSection(title: '오늘의 인기상품'),
+            ProductSection(title: '오늘의 인기상품', product: []),
 
             // >>>>>>>>👇 나중에 DB 붙이면 최근 본 상품 조건부
-            if (recentProducts.isNotEmpty) ...[
+            if (data.isNotEmpty) ...[
               const SizedBox(height: 32),
-              ProductSection(title: '최근 본 상품'),
+              ProductSection(title: '최근 본 상품', product: []),
             ],
 
             const SizedBox(height: 32),
@@ -172,6 +210,10 @@ class _HomeState extends State<Home> {
 
 // 지금은 더미 나중에 DB 연결 예정
 class _ProductCard extends StatelessWidget {
+  final Product product; //  >>>>>>>>>>>모델 연결
+
+  const _ProductCard({required this.product});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -193,22 +235,22 @@ class _ProductCard extends StatelessWidget {
         children: [
           Expanded(
             child: Center(
-              child: Image.asset(
-                'images/logo_non.png', //상품이미지
+              child: Image.network(
+                '65645645', //상품이미지
                 fit: BoxFit.contain,
               ),
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            '나이키 에어맥스', //상품name
+          Text(
+            product.ename, //>>>>>>>>>>상품name
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(fontSize: 13),
           ),
           const SizedBox(height: 4),
-          const Text(
-            '119,000원', //상품price
+          Text(
+            '${product.price}', //>>>>>>>>>>상품price
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 14,
@@ -223,8 +265,13 @@ class _ProductCard extends StatelessWidget {
 // 상품 카드 섹션
 class ProductSection extends StatelessWidget {
   final String title;
+  final List<Product> product;
 
-  const ProductSection({super.key, required this.title});
+  const ProductSection({
+    super.key,
+    required this.title,
+    required this.product,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -254,15 +301,19 @@ class ProductSection extends StatelessWidget {
             padding: const EdgeInsets.symmetric(
               horizontal: 16,
             ),
-            itemCount: 5,
+            itemCount: product.length,
             separatorBuilder: (_, __) =>
                 const SizedBox(width: 12),
             itemBuilder: (context, index) {
-              return _ProductCard();
+              return _ProductCard(product: product[index]);
             },
           ),
         ),
       ],
     );
   }
+
+  ///
+
+  ///
 }
