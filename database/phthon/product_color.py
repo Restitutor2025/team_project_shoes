@@ -45,7 +45,7 @@ async def upload(pid:int=Form(...),color:str=Form(...)):
     
 
 @router.delete("/delete") # 또는 @router.post("/delete")
-async def delete_color(pid: int, color: str):
+async def delete_productcolor(pid: int, color: str):
     conn = connect()
     curs = conn.cursor()
     try:
