@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:customer_app/ip/ipaddress.dart';
 import 'package:customer_app/model/customer.dart';
 import 'package:customer_app/model/usercontroller.dart';
 import 'package:customer_app/view/home/tabbar.dart';
@@ -127,7 +128,7 @@ class _LoginState extends State<Login> {
     }
 
     try {
-      final url = Uri.parse('http://172.16.250.193:8008/customer/login');
+      final url = Uri.parse('${IpAddress.baseUrl}/customer/login');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
