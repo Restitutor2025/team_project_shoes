@@ -17,22 +17,25 @@ def connect():
     return conn
 
 @router.get("/select")
-async def select():
+async def select(pid:int):
     conn=connect()
     curs=conn.cursor()
-    curs.execute("select productcolor from color order by pid ")
+    sql = """
+    SELECT color FROM PRODUCTCOLOR WHERE pid = %s
+    """
+    curs.execute(sql,(pid,))
     rows =curs.fetchall()
     conn.close()
-    result=[{'color':row[0]for row in rows}]
+    result=[rows]
     return{'results':result}
 
-router.post("/uproad")
-async def upload(color:str=Form(...)):
+@router.post("/uproad")
+async def upload(pid:int=Form(...),color:str=Form(...)):
     try:
         conn=connect()
         curs=conn.cursor()
-        sql="insert into productcolor(color,) values(%s,)"
-        curs.execute(sql,(color))
+        sql="insert into productcolor(pid,color) values(%s,%s)"
+        curs.execute(sql,(pid,color))
         conn.commit()
         conn.close()
         return{'result':'OK'}
