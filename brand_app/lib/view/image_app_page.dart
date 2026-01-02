@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:brand_app/util/pcolor.dart';
@@ -38,8 +39,7 @@ class _ImageAppPageState extends State<ImageAppPage> {
   File? sideImage;
   File? backImage;
 
-  ///
-  ///// 제조사 테스트 데이터 (나중에 DB로 교체)
+  // 제조사 테스트 데이터 (나중에 DB로 교체)
   final List<String> manufacturers = [
     '삼성',
     'LG',
@@ -73,11 +73,49 @@ class _ImageAppPageState extends State<ImageAppPage> {
     var request = http.MultipartRequest(
       'POST',
       Uri.parse(
-        'http://172.16.250.183:8008/productimage/upload',
+        'http://172.16.250.183:8008/product/insert',
       ),
     );
-    request.fields['pid'] = '1';
-    request.fields['position'] = 'main';
+    request.fields['ename'] = productNameController.text;
+    request.fields['price'] = priceController.text;
+
+    var response = await request.send();
+    if (response.statusCode == 200) {
+      var respStr = await response.stream.bytesToString();
+      var data = json.decode(respStr);
+
+      return data['pid'];
+    }
+  }
+
+  Future<void> uploadImages(int newPid) async {
+    List<Map<String, dynamic>> imageTasks = [
+      {'pos': 'main', 'file': mainImage},
+      {'pos': 'top', 'file': topImage},
+      {'pos': 'side', 'file': sideImage},
+      {'pos': 'back', 'file': backImage},
+    ];
+
+    for (var task in imageTasks) {
+      if (task['file'] == null) continue;
+
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse(
+          'http://172.16.250.183:8008/productimage/upload',
+        ),
+      );
+      request.fields['pid'] = newPid.toString();
+      request.fields['position'] = task['pos'];
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'file',
+          task['file'].path,
+        ),
+      );
+
+      await request.send();
+    }
   }
 
   @override

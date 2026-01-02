@@ -1,4 +1,5 @@
 import 'package:brand_app/firebase_options.dart';
+import 'package:brand_app/view/image_app_page.dart';
 import 'package:brand_app/view/request.dart';
 import 'package:brand_app/view/staff_main_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -14,9 +15,12 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   ); //  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-  print("Firebase apps = ${Firebase.apps.map((e) => e.name).toList()}");
+  print(
+    "Firebase apps = ${Firebase.apps.map((e) => e.name).toList()}",
+  );
   try {
-    final cred = await FirebaseAuth.instance.signInAnonymously();
+    final cred = await FirebaseAuth.instance
+        .signInAnonymously();
     print("ANON OK uid=${cred.user?.uid}");
   } catch (e) {
     print("ANON FAIL $e");
@@ -28,7 +32,9 @@ void main() async {
   }
 
   final user = FirebaseAuth.instance.currentUser;
-  print("AUTH UID = ${user?.uid}, isAnon=${user?.isAnonymous}");
+  print(
+    "AUTH UID = ${user?.uid}, isAnon=${user?.isAnonymous}",
+  );
 
   FirebaseFirestore.instance
       .collection('ask')
@@ -53,7 +59,7 @@ class MyApp extends StatelessWidget {
           seedColor: Colors.deepPurple,
         ),
       ),
-      home: const Request(),
+      home: const ImageAppPage(),
     );
   }
 }
