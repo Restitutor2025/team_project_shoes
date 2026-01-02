@@ -1,7 +1,10 @@
+import 'dart:developer';
+
 import 'package:brand_app/util/pcolor.dart';
 import 'package:brand_app/view/purchase_detail_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 class PurchaseView extends StatefulWidget {
   const PurchaseView({super.key});
@@ -11,74 +14,123 @@ class PurchaseView extends StatefulWidget {
 }
 
 class _PurchaseViewState extends State<PurchaseView> {
-  // Property
-
   TextEditingController searchController = TextEditingController();
 
+  String formatDate(dynamic x) {
+    if (x == null) return '-';
+    if (x is DateTime) {
+      return DateFormat('yyyy-MM-dd HH:mm').format(x);
+    }
+    try {
+      final parsed = DateTime.parse(x.toString());
+      return DateFormat('yyyy-MM-dd HH:mm').format(parsed);
+    } catch (e) {
+      log('date parse error: $e');
+      return x.toString();
+    }
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case '주문완료':
+        return Colors.blueGrey;
+      case '수령대기':
+        return Colors.blue;
+      case '수령완료':
+        return Colors.green;
+      case '반품대기':
+        return Colors.orange;
+      case '반품완료':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // 더미 데이터
   final Map<String, Object?> pc1 = {
     "pcid": 1,
     "cid": 1,
     "cemail": 'kimbobbbbb@xyz.com',
     "cname": '김밥',
     "pname": '나이키 아디다스',
-    "pdate": DateTime(2025, 12, 31, 11, 10, 33),
     "finalprice": 540000,
     "size": 245,
     "color": 'White',
     "quantity": 3,
-    "pstatus": '수령대기'
+    "pstatus": '수령대기',
+    "sname": '강북점',
+    "purchasedate": DateTime(2026, 1, 1, 18, 00, 00),
+    "pickupdate": DateTime(2026, 1, 2, 18, 00, 00),
+    "refunddate": null,
   };
+
   final Map<String, Object?> pc2 = {
     "pcid": 2,
     "cid": 2,
     "cemail": 'stststst@iii.com',
-    "cname": '스티커',
+    "cname": '앤서니키디스',
     "pname": '나이키 아디다스',
-    "pdate": DateTime(2025, 12, 31, 08, 19, 20),
-    "finalprice": 540000,
+    "finalprice": 600000,
     "size": 255,
     "color": 'White',
-    "quantity": 3,
-    "pstatus": '반품완료'
+    "quantity": 4,
+    "pstatus": '반품완료',
+    "sname": '강남점',
+    "purchasedate": DateTime(2026, 1, 2, 18, 00, 00),
+    "pickupdate": DateTime(2026, 1, 3, 14, 30, 00),
+    "refunddate": DateTime(2026, 1, 7, 16, 00, 00),
   };
+
   final Map<String, Object?> pc3 = {
     "pcid": 3,
     "cid": 3,
     "cemail": '348957340@uyssre.com',
-    "cname": '김상준',
+    "cname": '지미페이지',
     "pname": '나이키 아디다스',
-    "pdate": DateTime(2025, 12, 30, 16, 10, 51),
-    "finalprice": 540000,
+    "finalprice": 400000,
     "size": 270,
     "color": 'Red',
-    "quantity": 3,
-    "pstatus": '반품대기'
+    "quantity": 2,
+    "pstatus": '반품대기',
+    "sname": '송파점',
+    "purchasedate": DateTime(2025, 12, 30, 18, 00, 00),
+    "pickupdate": DateTime(2026, 1, 1, 11, 00, 00),
+    "refunddate": null,
   };
+
   final Map<String, Object?> pc4 = {
     "pcid": 4,
     "cid": 4,
-    "cemail": 'asdas344as@neves.com',
-    "cname": '데이비드 길모어',
+    "cemail": 'asdas34as@neves.com',
+    "cname": '데이비드길모어',
     "pname": '나이키 아디다스',
-    "pdate": DateTime(2025, 12, 29, 21, 50, 08),
     "finalprice": 540000,
     "size": 235,
     "color": 'White',
     "quantity": 3,
-    "pstatus": '주문완료'
+    "pstatus": '주문완료',
+    "sname": '마포점',
+    "purchasedate": DateTime(2026, 1, 4, 18, 00, 00),
+    "pickupdate": null,
+    "refunddate": null,
   };
+
   final Map<String, Object?> pc5 = {
     "pcid": 5,
     "cid": 5,
     "cemail": '390dfs909fd@kingfd.com',
-    "cname": '크리스 마틴',
+    "cname": '크리스마틴',
     "pname": '나이키 아디다스',
-    "pdate": DateTime(2025, 12, 30, 11, 14, 24),
     "finalprice": 140000,
     "size": 245,
     "color": 'White',
     "quantity": 1,
-    "pstatus": '수령완료'
+    "pstatus": '수령완료',
+    "sname": '구로점',
+    "purchasedate": DateTime(2026, 1, 1, 12, 00, 00),
+    "pickupdate": DateTime(2026, 1, 3, 10, 00, 00),
+    "refunddate": null,
   };
 
   late final List<Map<String, Object?>> data;
@@ -86,9 +138,8 @@ class _PurchaseViewState extends State<PurchaseView> {
   @override
   void initState() {
     super.initState();
-    data = [pc1, pc2, pc3, pc4, pc5];
+    data = [pc1, pc2, pc3, pc4, pc5]; // 더미
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -102,108 +153,156 @@ class _PurchaseViewState extends State<PurchaseView> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-            child: Stack(
-              children: [
-                SizedBox(
-                  width: MediaQuery.of(context).size.width*0.9,
-                  child: TextField(
-                    controller: searchController,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25)
-                      ),
-                    ),
-                  ),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: TextField(
+              controller: searchController,
+              decoration: InputDecoration(
+                hintText: '주문 검색',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                Positioned(
-                  right: 10,
-                  child: IconButton(
-                    onPressed: () {
-                      //
-                    },
-                    icon: Icon(Icons.search, size: 40),
-                    color: Colors.black,
-                  ),
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.search),
+                  color: Colors.black,
+                  onPressed: () {},
                 ),
-              ],
+              ),
             ),
           ),
+          // 리스트
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(15.0),
               child: ListView.builder(
                 itemCount: data.length,
                 itemBuilder: (context, index) {
+                  final item = data[index];
+                  final String status = item['pstatus']?.toString() ?? '';
+
                   return Padding(
                     padding: const EdgeInsets.all(5.0),
                     child: Card(
-                      child: Row(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(10, 10, 15, 10),
-                            child: Container(
-                              color: Colors.grey,
-                              width: 120,
-                              height: 100,
-                            ),
-                          ),
-                          Expanded(
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    SizedBox(
-                                      width: MediaQuery.of(context).size.width*0.25,
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text('id: ${data[index]['cemail']}', style: TextStyle(fontWeight: FontWeight.bold)),
-                                          Text('이름 : ${data[index]['cname']}'),
-                                          Text('구매번호 : ${data[index]['pcid']}'),
-                                          Text('제품명 : ${data[index]['pname']}'),
-                                          Text('구매날짜 : ${data[index]['pdate']}'),
-                                        ],
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: MediaQuery.of(context).size.width*0.15,
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text('주문금액 : ${data[index]['finalprice']}'),
-                                          Text('사이즈 : ${data[index]['size']}'),
-                                          Text('색상 : ${data[index]['color']}'),
-                                          Text('수량 : ${data[index]['quantity']}'),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          Text('현재 상태: ${data[index]['pstatus']}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                          Padding(
-                            padding: const EdgeInsets.all(25.0),
-                            child: ElevatedButton(
-                              onPressed: () => Get.to(
-                                PurchaseDetailView(),
-                                arguments: data[index]
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.black,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadiusGeometry.circular(5)
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Container(
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                              child: Text('자세히 보기')
                             ),
-                          ),
-                        ],
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            item['cemail'].toString(),
+                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(right: 8),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text('이름 : ${item['cname']}'),
+                                              Text('구매번호 : ${item['pcid']}'),
+                                              Text('제품명 : ${item['pname']}', overflow: TextOverflow.ellipsis),
+                                              Text('주문날짜 : ${formatDate(item['purchasedate'])}'),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(left: 8),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text('주문금액 : ${item['finalprice']}'),
+                                              Text('사이즈 : ${item['size']}'),
+                                              Text('색상 : ${item['color']}'),
+                                              Text('수량 : ${item['quantity']}'),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(0, 15, 0, 20),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: _statusColor(status).withOpacity(0.08),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: _statusColor(status), width: 0.7),
+                                      ),
+                                      child: Text(
+                                        status,
+                                        style: TextStyle(
+                                          color: _statusColor(status),
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: ElevatedButton(
+                                      onPressed: () => Get.to(
+                                        PurchaseDetailView(),
+                                        arguments: item,
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.black,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadiusGeometry.circular(5),
+                                        ),
+                                      ),
+                                      child: Text('자세히 보기'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
