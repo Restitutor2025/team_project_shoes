@@ -25,22 +25,6 @@ class Chatting extends StatefulWidget {
 
 class _ChattingState extends State<Chatting> {
   //  Dummies
-  final Map<String, Object?> chat1 = {
-    "id": 1,
-    "cid": 1,
-    "iid": null,
-    "timeStamp": DateTime(2025, 12, 29, 13, 11, 12),
-    "content": '이 상품을 공짜로 주면 유혈 사태는 일어나지 않을 것입니다.',
-    "title": '주문 문의',
-  };
-  final Map<String, Object?> chat2 = {
-    "id": 2,
-    "cid": null,
-    "iid": 1,
-    "timeStamp": DateTime(2025, 12, 29, 13, 11, 15),
-    "content": '혹시 미친놈이세요?',
-    "title": '주문 문의',
-  };
 
   @override
   void initState() {
@@ -74,14 +58,23 @@ class _ChattingState extends State<Chatting> {
             .orderBy("timestamp", descending: false)
             .snapshots(),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text('❌ Firestore error:\n${snapshot.error}'));
+          }
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
           if (!snapshot.hasData) {
             return Center(child: CircularProgressIndicator());
           }
           final totalChates = snapshot.data!.docs;
+          if (totalChates.isEmpty) {
+            return Center(child: Text('문서가 0개야 (ask 컬렉션 비었거나 권한/프로젝트 문제 가능)'));
+          }
           return ListView.builder(
             itemCount: totalChates.length,
             itemBuilder: (context, index) {
-              final chattime = totalChates[index]['timeStamp'].toDate();
+              final chattime = totalChates[index]['timestamp'].toDate();
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisAlignment: totalChates[index]['cid'] == null
@@ -92,9 +85,7 @@ class _ChattingState extends State<Chatting> {
                     Align(
                       alignment: Alignment.bottomCenter,
                       child: Text(
-                        DateFormat(
-                          config.chatDateFormat,
-                        ).format(chattime),
+                        DateFormat(config.chatDateFormat).format(chattime),
                       ),
                     ),
                   Padding(
@@ -117,9 +108,7 @@ class _ChattingState extends State<Chatting> {
                     Align(
                       alignment: Alignment.bottomCenter,
                       child: Text(
-                        DateFormat(
-                          config.chatDateFormat,
-                        ).format(chattime),
+                        DateFormat(config.chatDateFormat).format(chattime),
                       ),
                     ),
                 ],
