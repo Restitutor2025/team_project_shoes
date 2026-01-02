@@ -97,14 +97,30 @@ class _MapDetailState extends State<MapDetail> {
           canRun
             ? flutterMap()
             : Center(child: CircularProgressIndicator()),
-          Positioned(
-            right: 10,
-            bottom: 10,
-            child: FloatingActionButton(
-              child: Icon(Icons.zoom_out_map_outlined),
-              onPressed: () => Get.back(),
-            ),
-          ),
+                  Positioned(
+                    right: 10,
+                    bottom: 10,
+                    child: Column(
+                      children: [
+                        FloatingActionButton(
+                          heroTag: "c",
+                          child: Icon(Icons.my_location),
+                          onPressed: () => mapController.move(
+                            latlng.LatLng(latData, longData),
+                            mapController.camera.zoom
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: FloatingActionButton(
+                            heroTag: "d",
+                            child: Icon(Icons.zoom_out_map_outlined),
+                            onPressed: () => Get.back(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
         ],
       ),
     );
@@ -116,23 +132,31 @@ class _MapDetailState extends State<MapDetail> {
 
     markers.add(
       Marker(
-        width: 60,
-        height: 60,
+        width: 100,
+        height: 100,
         point: latlng.LatLng(latData, longData),
-        child: Icon(
-          Icons.my_location,
-          size: 40,
-          color: Colors.blue,
+        child: Column(
+          children: [
+            Text(
+              '현위치',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+            ),
+            Icon(
+              Icons.my_location,
+              size: 40,
+              color: Colors.red,
+            ),
+          ],
         ),
       ),
     );
 
     markers.addAll(
       storeList.map((store) {
-        final int storeId = store['id'] as int;
-        final String storeName = store['name'] as String;
-        final double lat = store['lat'] as double;
-        final double lng = store['lng'] as double;
+        final int storeId = store['id'];
+        final String storeName = store['name'];
+        final double lat = store['lat'];
+        final double lng = store['lng'];
         final bool isSelected = (selectedStoreId == storeId);
         return Marker(
           width: isSelected ? 120 : 100,
