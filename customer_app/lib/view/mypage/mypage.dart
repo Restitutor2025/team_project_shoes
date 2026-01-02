@@ -22,6 +22,19 @@ class Mypage extends StatefulWidget {
 }
 
 class _MypageState extends State<Mypage> {
+  //  Property
+  late int purchases;
+  late int reviews;
+  late int asks;
+
+  @override
+  void initState() {
+    super.initState();
+    purchases = 0;
+    reviews = 0;
+    asks = 0;
+  }
+  //  Query by using FKs from cid
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,7 +73,7 @@ class _MypageState extends State<Mypage> {
                         children: [
                           Icon(Icons.shopping_cart),
                           Text('구매 내역'),
-                          Text('0'),
+                          Text(purchases.toString()),
                         ],
                       ),
                     ),
@@ -70,7 +83,7 @@ class _MypageState extends State<Mypage> {
                         children: [
                           Icon(Icons.note_add),
                           Text('리뷰 내역'),
-                          Text('0'),
+                          Text(reviews.toString()),
                         ],
                       ),
                     ),
@@ -80,7 +93,7 @@ class _MypageState extends State<Mypage> {
                         children: [
                           Icon(Icons.headphones),
                           Text('고객 센터'),
-                          Text('0'),
+                          Text(asks.toString()),
                         ],
                       ),
                     ),
