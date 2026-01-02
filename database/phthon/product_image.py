@@ -27,7 +27,7 @@ def connect():
     return conn
 
 @router.get("/view")
-async def view(pid: int, position: int):
+async def view(pid: int, position: str):
     conn = connect()
     try:
         curs = conn.cursor()
@@ -61,7 +61,7 @@ async def upload(
         return {"result":"OK"}
     except Exception as e:
         print("Error: ", e)
-        return {"result": "Error"}
+        return {"result": "Error", "detail": str(e)}
     
 @router.delete("/delete")
 async def delete(pid: int, position: str):
