@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:customer_app/util/pcolor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart' as latlng;
 
 class MapDetail extends StatefulWidget {
@@ -19,18 +22,31 @@ class _MapDetailState extends State<MapDetail> {
   bool canRun = false;
   int? selectedStoreId;
 
-  List<Map<String, dynamic>> storeList = [];
+  List storeList = [];
 
   late Position currentPosition;
   double latData = 0.0;
   double longData = 0.0;
 
-  @override
-  void initState() {
-    super.initState();
-    checkLocationPermission();
-    loadStoreData();
+@override
+void initState() {
+  super.initState();
+
+  final value = Get.arguments;
+
+  if (value != null) {
+    final double? argLat = (value['lat']);
+    final double? argLng = (value['lng']);
+
+    if (argLat != null && argLng != null) {
+      latData = argLat;
+      longData = argLng;
+      canRun = true;
+    }
   }
+  checkLocationPermission();
+  loadStoreData();
+}
 
   void checkLocationPermission() async{
     LocationPermission permission = await Geolocator.checkPermission();
@@ -56,32 +72,15 @@ class _MapDetailState extends State<MapDetail> {
     setState(() {});
   }
 
-  Future<void> loadStoreData() async{
-  storeList = [
-    {
-      'id': 1,
-      'name': '강남역점',
-      'lat': 37.4979,
-      'lng': 127.0276,
-      'address': '서울특별시 강남구 강남대로 78길'
-    },
-    {
-      'id': 2,
-      'name': '동작구점',
-      'lat': 37.5124,
-      'lng': 126.9393,
-      'address': '서울특별시 동작구'
-    },
-    {
-      'id': 3,
-      'name': '송파구점',
-      'lat': 37.5146,
-      'lng': 127.1058,
-      'address': '서울특별시 송파구'
-    },
-  ];
-  setState(() {});
-  }
+  Future<void> loadStoreData() async {
+    var url = Uri.parse("http://172.16.250.184:8008/store/select");
+    var response = await http.get(url);
+    storeList.clear();
+    var dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));
+    List result = dataConvertedJSON['results'];
+    storeList.addAll(result);
+    setState(() {});
+    }
 
   @override
   Widget build(BuildContext context) {
@@ -97,30 +96,30 @@ class _MapDetailState extends State<MapDetail> {
           canRun
             ? flutterMap()
             : Center(child: CircularProgressIndicator()),
-                  Positioned(
-                    right: 10,
-                    bottom: 10,
-                    child: Column(
-                      children: [
-                        FloatingActionButton(
-                          heroTag: "c",
-                          child: Icon(Icons.my_location),
-                          onPressed: () => mapController.move(
-                            latlng.LatLng(latData, longData),
-                            mapController.camera.zoom
-                          ),
+                Positioned(
+                  right: 10,
+                  bottom: 10,
+                  child: Column(
+                    children: [
+                      FloatingActionButton(
+                        heroTag: "c",
+                        child: Icon(Icons.my_location),
+                        onPressed: () => mapController.move(
+                          latlng.LatLng(latData, longData),
+                          mapController.camera.zoom
                         ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 10),
-                          child: FloatingActionButton(
-                            heroTag: "d",
-                            child: Icon(Icons.zoom_out_map_outlined),
-                            onPressed: () => Get.back(),
-                          ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: FloatingActionButton(
+                          heroTag: "d",
+                          child: Icon(Icons.zoom_out_map_outlined),
+                          onPressed: () => Get.back(),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                ),
         ],
       ),
     );
@@ -156,7 +155,7 @@ class _MapDetailState extends State<MapDetail> {
         final int storeId = store['id'];
         final String storeName = store['name'];
         final double lat = store['lat'];
-        final double lng = store['lng'];
+        final double lng = store['long'];
         final bool isSelected = (selectedStoreId == storeId);
         return Marker(
           width: isSelected ? 120 : 100,
@@ -201,21 +200,6 @@ class _MapDetailState extends State<MapDetail> {
           markers: markers
         ),
       ]
-    );
-  }
-
-  // 거리 계산
-  double calcDistance({
-    required double startLat,
-    required double startLng,
-    required double endLat,
-    required double endLng,
-  }) {
-    return Geolocator.distanceBetween(
-      startLat,
-      startLng,
-      endLat,
-      endLng,
     );
   }
 
