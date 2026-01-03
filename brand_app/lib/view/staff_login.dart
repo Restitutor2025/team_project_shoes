@@ -109,41 +109,50 @@ class _StaffLoginState extends State<StaffLogin> {
     );
   }//build
 
-  Future<void> loginAction() async {
-    if (staffcode.text.trim().isEmpty || staffpassword.text.trim().isEmpty) {
-      _errorSnackBar('아이디와 비밀번호를 입력해주세요.');
-      return;
-    }
+Future<void> loginAction() async {
+  if (staffcode.text.trim().isEmpty || staffpassword.text.trim().isEmpty) {
+    _errorSnackBar('아이디와 비밀번호를 입력해주세요.');
+    return;
+  }
 
-    try {
-      final url = Uri.parse('${IpAddress.baseUrl}/employee/login');
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'email': staffcode.text.trim(),
-          'password': staffpassword.text.trim(),
-        }),
-      );
+  try {
+    final url = Uri.parse('${IpAddress.baseUrl}/employee/login');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'email': staffcode.text.trim(),
+        'password': staffpassword.text.trim(),
+      }),
+    );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(utf8.decode(response.bodyBytes));
-        if (data['results'] == 'OK') {
-        Employee loggedInEmployee = Employee.fromJson(data['employee_data']); 
-        employeeController.login(loggedInEmployee);
-        Get.offAll(() => const StaffMainpage());
-       
-        
-        } else {
-          _errorSnackBar('이메일 또는 비밀번호가 일치하지 않습니다.');
+    print("Response Status: ${response.statusCode}"); // 상태 코드 확인
+    print("Response Body: ${utf8.decode(response.bodyBytes)}"); // 응답 내용 확인
+
+    if (response.statusCode == 200) {
+      final data = json.decode(utf8.decode(response.bodyBytes));
+      
+      if (data['results'] == 'OK') {
+        // 이 부분에서 모델 파싱 에러가 많이 납니다.
+        try {
+          Employee loggedInEmployee = Employee.fromJson(data['employee_data']); 
+          employeeController.login(loggedInEmployee);
+          Get.offAll(() => const StaffMainpage());
+        } catch (parseError) {
+          print("파싱 에러: $parseError");
+          _errorSnackBar('데이터 모델 변환 중 에러가 발생했습니다.');
         }
       } else {
-        _errorSnackBar('서버 연결 실패');
+        _errorSnackBar('이메일 또는 비밀번호가 일치하지 않습니다.');
       }
-    } catch (e) {
-      _errorSnackBar('네트워크 에러가 발생했습니다.');
+    } else {
+      _errorSnackBar('서버 연결 실패 (Status: ${response.statusCode})');
     }
+  } catch (e) {
+    print("네트워크 에러: $e");
+    _errorSnackBar('네트워크 에러가 발생했습니다.');
   }
+}
 
   void _errorSnackBar(String message) {
     Get.snackbar(

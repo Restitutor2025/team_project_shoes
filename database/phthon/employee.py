@@ -29,23 +29,19 @@ def connect():
 async def login(request: LoginRequest):
     conn = connect()
     curs = conn.cursor()
-    
     try:
         sql = "SELECT id, role, name, email, password, storenumber, phone FROM employee WHERE email = %s AND password = %s"
         curs.execute(sql, (request.email, request.password))
         employee = curs.fetchone() 
-
         if employee:
             # 보안상 비밀번호는 내려주지 않는 걸 추천
             employee.pop("password", None)
-
             return {
                 "results": "OK",
                 "employee_data": employee
             }
         else:
             return {'results': 'Fail'}
-            
     except Exception as e:
         print(f"로그인 처리 중 에러 발생: {e}")
         return {'results': 'Error'}
