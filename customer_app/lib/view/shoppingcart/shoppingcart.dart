@@ -1,7 +1,13 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+
+import 'package:customer_app/database/cartdatabasehandler.dart';
+import 'package:customer_app/model/cart.dart';
+import 'package:customer_app/ip/ipaddress.dart';
+
 class Shoppingcart extends StatefulWidget {
   const Shoppingcart({super.key});
 
@@ -10,265 +16,270 @@ class Shoppingcart extends StatefulWidget {
 }
 
 class _ShoppingcartState extends State<Shoppingcart> {
-  List data=[];
-  List imagedata=[];
-  List colordata=[];
-  List namedata=[];
-  List sizedata=[];
-  
-  late int count;
+  final Cartdatabasehandler handler = Cartdatabasehandler();
+
+  Map<String, dynamic>? incomingItem;
+  late Future<List<Cart>> cartFuture;
+
+  /// ✅ cart.id → qty
+  final Map<int, int> quantityMap = {};
+
   @override
   void initState() {
     super.initState();
-    getJSONData();
-    // getJSONDataimage();
-    count=0;
+
+    incomingItem = Get.arguments;
+
+    if (incomingItem != null && incomingItem!['pid'] != null) {
+      handler.insertCart(
+        Cart(cartid: incomingItem!['pid']),
+      );
+    }
+
+    cartFuture = handler.queryCart();
   }
 
-  Future<void> getJSONData()async{
-    var url=Uri.parse("http://172.16.250.199:8008/product/selectcart");
-    var response =await http.get(url);
-    data.clear();
-    var dataConvertedJSON =json.decode(utf8.decode(response.bodyBytes));
-    print("결과$dataConvertedJSON");
-    final List  result =dataConvertedJSON['results'];
-    data.addAll(result);
-    setState(() {});
+  // ================= pid → 상품 상세 =================
+  Future<List<Map<String, dynamic>>> getProductDetail(int pid) async {
+    final url =
+        Uri.parse("${IpAddress.baseUrl}/product/selectdetail?pid=$pid");
 
-  }
-   Future<void> getJSONDataimage()async{
-    var url=Uri.parse("http://172.16.250.199:8008/productimage/view2");
-    var response =await http.get(url);
-    imagedata.clear();
-    var dataConvertedJSON =json.decode(utf8.decode(response.bodyBytes));
-    List result =dataConvertedJSON['results'];
-    imagedata.addAll(result);
-    setState(() {});
+    final response = await http.get(url);
+    final dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));
 
+    final List results = dataConvertedJSON['results'];
+    return results
+        .map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e))
+        .toList();
   }
 
-//  Future<void> getJSONDatacolor()async{
-//     var url=Uri.parse("http://172.16.250.199:8008/color/select");
-//     var response =await http.get(url);
-//     colordata.clear();
-//     var dataConvertedJSON =json.decode(utf8.decode(response.bodyBytes));
-//     List result =dataConvertedJSON['results'];
-//     colordata.addAll(result);
-//     setState(() {});
+  // ================= 주문 데이터 =================
+  List<Map<String, dynamic>> buildOrderItems(List<Cart> carts) {
+    return carts.map((cart) {
+      return {
+        "cart_id": cart.id,
+        "pid": cart.cartid,
+        "qty": quantityMap[cart.id] ?? 1,
+      };
+    }).toList();
+  }
 
-//   }
+  // ================= 장바구니 삭제 =================
+  Future<void> deleteCartItem(int cartRowId) async {
+    await handler.deleteCart(cartRowId);
 
-//  Future<void> getJSONDataname()async{
-//     var url=Uri.parse("http://172.16.250.199:8008/name/select");
-//     var response =await http.get(url);
-//     namedata.clear();
-//     var dataConvertedJSON =json.decode(utf8.decode(response.bodyBytes));
-//     List result =dataConvertedJSON['results'];
-//     namedata.addAll(result);
-//     setState(() {});
+    // 수량 Map에서도 제거
+    quantityMap.remove(cartRowId);
 
-//   }
-
-
-// Future<void> getJSONDatasize()async{
-//     var url=Uri.parse("http://172.16.250.199:8008/size/select");
-//     var response =await http.get(url);
-//     sizedata.clear();
-//     var dataConvertedJSON =json.decode(utf8.decode(response.bodyBytes));
-//     List result =dataConvertedJSON['results'];
-//     sizedata.addAll(result);
-//     setState(() {});
-
-//   }
-
+    // 장바구니 다시 로드
+    setState(() {
+      cartFuture = handler.queryCart();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "장바구니",
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
+        title: const Text("장바구니"),
         centerTitle: true,
       ),
+      body: FutureBuilder<List<Cart>>(
+        future: cartFuture,
+        builder: (context, cartSnapshot) {
+          if (cartSnapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-      /// ================= 리스트 =================
-      body:
-       Center(
-        
-         child: data.isEmpty
-         ?Center(child: Text("데이터가 없습니다"),)
-         :ListView.builder(
-          itemCount: data.length,
-          itemBuilder: (context, index) {
-            
-         
-            return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              elevation: 3,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      // child: Image.network(
-                      //   imagedata[0]['path'],
-                      //   width: 80,
-                      //   height: 80,
-                      //   fit: BoxFit.cover,
-                      // ),
-                    ),
-         
-                    const SizedBox(width: 12),
-         
-                    /// 상품 정보
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Text(
-                          //   namedata[index]['name'],
-                          //   style: const TextStyle(
-                          //     fontWeight: FontWeight.bold,
-                          //     fontSize: 14,
-                          //   ),
-                          // ),
-                          const SizedBox(height: 4),
-                          Text(
-                            data[index]['ename'],
-                            style: const TextStyle(fontSize: 13),
+          if (!cartSnapshot.hasData || cartSnapshot.data!.isEmpty) {
+            return const Center(child: Text("장바구니가 비어있습니다"));
+          }
+
+          final carts = cartSnapshot.data!;
+
+          return Column(
+            children: [
+              /// ================= 상품 리스트 =================
+              Expanded(
+                child: ListView.builder(
+                  itemCount: carts.length,
+                  itemBuilder: (context, index) {
+                    final cart = carts[index];
+                    final int cartRowId = cart.id!;
+                    final int pid = cart.cartid;
+
+                    // 처음 row는 수량 1
+                    quantityMap.putIfAbsent(cartRowId, () => 1);
+
+                    return FutureBuilder<List<Map<String, dynamic>>>(
+                      future: getProductDetail(pid),
+                      builder: (context, productSnapshot) {
+                        if (!productSnapshot.hasData) {
+                          return const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: Text("상품 정보 불러오는 중..."),
+                          );
+                        }
+
+                        final productList = productSnapshot.data!;
+                        if (productList.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+
+                        final item = productList[0];
+
+                        final int price = (item['price'] is int)
+                            ? item['price']
+                            : int.tryParse("${item['price']}") ?? 0;
+                        final int qty = quantityMap[cartRowId] ?? 1;
+
+                        /// ================= 카드 UI =================
+                        return Card(
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          elevation: 3,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-         
-                          const SizedBox(height: 6),
-         
-                          /// 사이즈 & 색상
-                          // Text(
-                          //   "사이즈: ${sizedata[index]['size']} / 색상: ${colordata[index]['color']}",
-                          //   style: TextStyle(
-                          //     fontSize: 12,
-                          //     color: Colors.grey[700],
-                          //   ),
-                          // ),
-         
-                          const SizedBox(height: 10),
-         
-                          /// 수량 조절
-                          Row(
-                            children: [
-                              IconButton(
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                onPressed: () {
-                                    if (data[index]['quantity'] > 1) {
-                                      data[index]['quantity']--;
-                                    }
-         
-                                  setState(() {
-                                  });
-                                },
-                                icon: const Icon(Icons.remove),
-                              ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8),
-                                child: Text(
-                                  "${data[index]['quantity']}",
-                                  style: const TextStyle(fontSize: 16),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                /// 이미지
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    '${IpAddress.baseUrl}/productimage/view?pid=$pid&position=main',
+                                    width: 80,
+                                    height: 80,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            const Icon(
+                                      Icons.image_not_supported,
+                                      size: 80,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              IconButton(
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                onPressed: () {
-                                  setState(() {
-                                    data[index]['quantity']++;
-                                  });
-                                },
-                                icon: const Icon(Icons.add),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-         
-                    /// 가격 + 삭제
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                             
-                            });
-                          },
-                          child: const Icon(Icons.close, size: 20),
-                        ),
-                        const SizedBox(height: 40),
-                        Text(
-                          "${data[index]['price']}원",
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-               ),
-       ),
 
-      /// ================= 하단 결제 =================
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(
-              "총결제금액: 원",
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-          ),
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
+                                const SizedBox(width: 12),
+
+                                /// 상품 정보
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item['name'] ?? '',
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                          "제조사: ${item['manufacturer'] ?? ''}"),
+                                      Text(
+                                          "사이즈: ${item['size'] ?? ''} / 색상: ${item['color'] ?? ''}"),
+                                      const SizedBox(height: 8),
+
+                                      /// 수량 조절
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.remove,
+                                                size: 18),
+                                            onPressed: () {
+                                              setState(() {
+                                                if ((quantityMap[cartRowId] ??
+                                                        1) >
+                                                    1) {
+                                                  quantityMap[cartRowId] =
+                                                      (quantityMap[cartRowId] ??
+                                                              1) -
+                                                          1;
+                                                }
+                                              });
+                                            },
+                                          ),
+                                          Text(
+                                            "$qty",
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.add,
+                                                size: 18),
+                                            onPressed: () {
+                                              setState(() {
+                                                quantityMap[cartRowId] =
+                                                    (quantityMap[cartRowId] ??
+                                                            1) +
+                                                        1;
+                                              });
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                /// 오른쪽 영역 (가격 + 삭제)
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.red),
+                                      onPressed: () {
+                                        deleteCartItem(cartRowId);
+                                      },
+                                    ),
+                                    Text(
+                                      "${price * qty}원",
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
-              child: const Text("구매하기"),
-            ),
-          ),
-        ],
+
+              /// ================= 하단 결제 버튼 =================
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final orderItems = buildOrderItems(carts);
+                      debugPrint("ORDER ITEMS => $orderItems");
+
+                      // Get.toNamed("/payment", arguments: orderItems);
+                    },
+                    child: const Text("결제하기"),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
-
-  // ================= 총 결제 금액 =================
-  // int totalPrice() {
-  //   int total = 0;
-  //   for (var item in ) {
-  //     total += item['price'] * item['quantity']as int;
-  //   }
-  //   return total;
-  // }
 }
