@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:customer_app/config.dart' as config;
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 //  Chatting - ask
@@ -24,11 +25,23 @@ class Chatting extends StatefulWidget {
 }
 
 class _ChattingState extends State<Chatting> {
-  //  Dummies
+  //  Property
+  late int cid;
+  var values = Get.arguments;
+  late TextEditingController tEC1;
+  final String roomId = 'simple_chat';
 
   @override
   void initState() {
     super.initState();
+    tEC1 = TextEditingController();
+    cid = 1;  //  dummy
+  }
+
+  @override
+  void dispose() {
+    tEC1.dispose();
+    super.dispose();
   }
 
   @override
@@ -37,12 +50,12 @@ class _ChattingState extends State<Chatting> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: Text("\$브랜드이름", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text("상품 문의", style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: Colors.grey.shade300),
+          child: Container(height: 1, color: Colors.grey[300]),
         ),
         actions: [
           Padding(
@@ -100,7 +113,7 @@ class _ChattingState extends State<Chatting> {
                           color: Colors.grey[100],
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: Text(totalChates[index]['contents'] as String),
+                        child: Text('${totalChates[index]['title']} 관련 상품 문의입니다. \n${totalChates[index]['contents'] as String}'),
                       ),
                     ),
                   ),
@@ -117,8 +130,67 @@ class _ChattingState extends State<Chatting> {
           );
         },
       ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Colors.grey.shade300)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: tEC1,
+                  minLines: 1,
+                  maxLines: 4,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => _send(),
+                  decoration: InputDecoration(
+                    hintText: '메시지를 입력하세요',
+                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 48,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _send,
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    shape: CircleBorder(),
+                    backgroundColor: Colors.black,
+                  ),
+                  child: Icon(Icons.send, color: Colors.white, size: 20),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
-  //  Widget
+  Future<void> _send() async {
+    final text = tEC1.text.trim();
+    if (text.isEmpty) return;
+
+    tEC1.clear();
+
+    await FirebaseFirestore.instance
+        .collection('ask')
+        .add({
+      'cid': cid,
+      'eid': null,
+      'contents': text,
+      'timestamp': FieldValue.serverTimestamp(),
+      'title': '${values.productName} 문의'
+    });
+  }
 }

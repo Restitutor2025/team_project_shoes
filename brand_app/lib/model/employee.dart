@@ -19,7 +19,7 @@ class Employee {
   String role;
   String name;
   String email;
-  String password;
+  String? password;
   String storenumber;
   String phone;
 
@@ -30,7 +30,7 @@ class Employee {
     required this.role,
     required this.name,
     required this.email,
-    required this.password,
+     this.password,
     required this.storenumber,
     required this.phone
     });
