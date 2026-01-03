@@ -23,7 +23,7 @@ class _RequestState extends State<Request> {
   String? _selectedSize;
   String? _selectedColor;
 
-  List<String> _makers = [];
+  List<String> manufacturers = [];
   List<String> _products = [];
   bool _isLoadingProducts = false;
   bool _isLoadingmakers = false;
@@ -83,58 +83,48 @@ class _RequestState extends State<Request> {
     setState(() => _isLoadingmakers = true);
 
     try {
-      // 1. 이미지(image_4ea2e5.png)상 경로는 manufacturername(r 포함)이며 GET 방식입니다.
-      // 2. pid가 필수(required)라고 되어 있으므로 ?pid=1를 붙여서 테스트합니다.
-      final url = Uri.parse(
-        '${IpAddress.baseUrl}/manufacturername/select?pid?',
+      // 서버의 /all 또는 전체 조회 API 호출 (없을 경우를 대비해 예외처리 포함)
+      final mRes = await http.get(
+        Uri.parse(
+          '${IpAddress.baseUrl}/manufacturername/all',
+        ),
+      );
+      final cRes = await http.get(
+        Uri.parse('${IpAddress.baseUrl}/productcolor/all'),
       );
 
-      print("제조사 요청 시작: $url");
-
-      // GET 방식으로 요청
-      final response = await http.get(url);
-
-      print("제조사 응답 코드: ${response.statusCode}");
-      print("제조사 응답 본문: ${response.body}");
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json
-            .decode(utf8.decode(response.bodyBytes));
-
-        // 1. "results" 키의 값을 가져옵니다. (이 시점에서 [[{name: 나이키}...]] 형태)
-        final dynamic results = responseData['results'];
-
-        List<dynamic> dataList = [];
-
-        // 2. 이중 리스트 구조를 한 겹 벗겨냅니다.
-        if (results is List && results.isNotEmpty) {
-          if (results[0] is List) {
-            dataList =
-                results[0]; // 안쪽 리스트 [{name: 나이키}, {name: 나이키}] 추출
-          } else {
-            dataList = results;
-          }
-        }
-
+      if (mRes.statusCode == 200 &&
+          cRes.statusCode == 200) {
         setState(() {
-          // 3. 이제 dataList는 [{name: 나이키}] 형태이므로 'name' 키로 접근이 가능합니다.
-          _makers = dataList
-              .map((item) => item['name'].toString())
-              .toSet() // 중복 제거 (나이키가 두 번 있으므로 한 번만 남김)
-              .toList();
-
-          _makers.sort();
-          _isLoadingmakers = false;
+          manufacturers = List<String>.from(
+            json.decode(
+              utf8.decode(mRes.bodyBytes),
+            )['results'],
+          );
+          colorlist = List<String>.from(
+            json.decode(
+              utf8.decode(cRes.bodyBytes),
+            )['results'],
+          );
         });
-        print("최종 파싱된 제조사 리스트: $_makers");
       }
     } catch (e) {
-      print("제조사 로드 최종 에러: $e");
-      setState(() => _isLoadingmakers = false);
+      debugPrint("데이터 로드 실패: $e");
+      // 서버 API가 아직 준비되지 않았을 경우를 위한 기본값 유지
+      setState(() {
+        manufacturers = [
+          '나이키',
+          '퓨마',
+          '아디다스',
+          '스니커즈',
+          '뉴발란스',
+        ];
+        colorlist = ['화이트', '레드', '블랙', '브라운'];
+      });
     }
   }
 
-  final List<String> _colors = ['화이트', '레드', '블랙', '브라운'];
+  List<String> colorlist = ['화이트', '레드', '블랙', '브라운'];
   final List<String> _sizes = List.generate(
     13,
     (i) => (230 + (i * 5)).toString(),
@@ -211,7 +201,9 @@ class _RequestState extends State<Request> {
             const SizedBox(height: 20),
 
             _buildLabel('제조사명'),
-            _buildDropdown(_makers, _selectedMaker, (val) {
+            _buildDropdown(manufacturers, _selectedMaker, (
+              val,
+            ) {
               setState(() => _selectedMaker = val);
             }),
             const SizedBox(height: 20),
@@ -237,7 +229,9 @@ class _RequestState extends State<Request> {
             const SizedBox(height: 20),
 
             _buildLabel('컬러'),
-            _buildDropdown(_colors, _selectedColor, (val) {
+            _buildDropdown(colorlist, _selectedColor, (
+              val,
+            ) {
               setState(() => _selectedColor = val);
             }),
             const SizedBox(height: 24),
