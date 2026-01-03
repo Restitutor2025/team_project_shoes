@@ -30,10 +30,10 @@ def connect():
 async def select():
     conn = connect()
     curs = conn.cursor()
-    curs.execute("SELECT seq, pid, cid, eid, quantity, finalPrice, pickupDate, purchaseDate, code FROM purchase ORDER BY purchaseDate")
+    curs.execute("SELECT id, pid, cid, eid, quantity, finalPrice, pickupDate, purchaseDate, code FROM purchase ORDER BY purchaseDate")
     rows = curs.fetchall()
     conn.close()
-    result = [{'seq':row[0], 'pid':row[1],'cid':row[2],'eid':row[3],'quantity':row[4],'finalPrice':row[5],'pickupDate':row[6],'purchaseDate':row[7],'code':row[8],} for row in rows]
+    result = [{'id':row[0], 'pid':row[1],'cid':row[2],'eid':row[3],'quantity':row[4],'finalPrice':row[5],'pickupDate':row[6],'purchaseDate':row[7],'code':row[8],} for row in rows]
     return{'results':result}
 
 @router.post("/insert")
