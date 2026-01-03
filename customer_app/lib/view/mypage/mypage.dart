@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:customer_app/config.dart' as config;
 import 'package:flutter/material.dart';
 
@@ -33,7 +34,65 @@ class _MypageState extends State<Mypage> {
     purchases = 0;
     reviews = 0;
     asks = 0;
+    _loadCounts();
   }
+
+  Future<void> _loadCounts() async {
+    final int cid = 1; // Actual customer id in release
+
+    try {
+      final purchaseList = (await config.getJSONData(
+        'purchase/select?cid=$cid',
+      ));
+      final int purchaseCount = purchaseList.length;
+
+      final int reviewCount = await _countFirestoreByCid(
+        collection: 'review',
+        cid: cid,
+      );
+
+      final int askCount = await _countFirestoreByCid(
+        collection: 'ask',
+        cid: cid,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        purchases = purchaseCount;
+        reviews = reviewCount;
+        asks = askCount;
+      });
+    } catch (e, st) {
+      debugPrint('mypage count error: $e\n$st');
+    }
+  }
+
+  Future<int> _countFirestoreByCid({
+    required String collection,
+    required int cid,
+  }) async {
+    final fs = FirebaseFirestore.instance;
+
+    final q1 = await fs
+        .collection(collection)
+        .where('cid', isEqualTo: cid)
+        .get();
+    final q2 = await fs
+        .collection(collection)
+        .where('cid', isEqualTo: cid.toString())
+        .get();
+
+    final ids = <String>{};
+    for (final d in q1.docs) {
+      ids.add(d.id);
+    }
+    for (final d in q2.docs) {
+      ids.add(d.id);
+    }
+
+    return ids.length;
+  }
+
   //  Query by using FKs from cid
   @override
   Widget build(BuildContext context) {
