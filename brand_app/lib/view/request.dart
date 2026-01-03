@@ -79,49 +79,57 @@ class _RequestState extends State<Request> {
     }
   }
 
-  // API 호출 함수
   Future<void> _fetchMakers() async {
     setState(() => _isLoadingmakers = true);
-    print(
-      "데이터 요청 시작: ${IpAddress.baseUrl}/manufacturename/upload",
-    );
 
     try {
-      final response = await http.post(
-        Uri.parse(
-          '${IpAddress.baseUrl}/manufacturername/select?pid=1',
-        ),
-        headers: {"Content-Type": "application/json"},
+      // 1. 이미지(image_4ea2e5.png)상 경로는 manufacturername(r 포함)이며 GET 방식입니다.
+      // 2. pid가 필수(required)라고 되어 있으므로 ?pid=1를 붙여서 테스트합니다.
+      final url = Uri.parse(
+        '${IpAddress.baseUrl}/manufacturername/select?pid?',
       );
 
-      print("응답 상태 코드: ${response.statusCode}");
+      print("제조사 요청 시작: $url");
+
+      // GET 방식으로 요청
+      final response = await http.get(url);
+
+      print("제조사 응답 코드: ${response.statusCode}");
+      print("제조사 응답 본문: ${response.body}");
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(
-          utf8.decode(response.bodyBytes),
-        );
-        print("가져온 데이터 원본: $data");
+        final Map<String, dynamic> responseData = json
+            .decode(utf8.decode(response.bodyBytes));
+
+        // 1. "results" 키의 값을 가져옵니다. (이 시점에서 [[{name: 나이키}...]] 형태)
+        final dynamic results = responseData['results'];
+
+        List<dynamic> dataList = [];
+
+        // 2. 이중 리스트 구조를 한 겹 벗겨냅니다.
+        if (results is List && results.isNotEmpty) {
+          if (results[0] is List) {
+            dataList =
+                results[0]; // 안쪽 리스트 [{name: 나이키}, {name: 나이키}] 추출
+          } else {
+            dataList = results;
+          }
+        }
 
         setState(() {
-          List<String> rawNames = data
+          // 3. 이제 dataList는 [{name: 나이키}] 형태이므로 'name' 키로 접근이 가능합니다.
+          _makers = dataList
               .map((item) => item['name'].toString())
+              .toSet() // 중복 제거 (나이키가 두 번 있으므로 한 번만 남김)
               .toList();
 
-          // 2. toSet()을 사용하여 중복 제거 후 다시 리스트로 변환
-          _makers = rawNames.toSet().toList();
-
-          // 3. (선택) 보기 좋게 정렬
           _makers.sort();
-
           _isLoadingmakers = false;
         });
-        print("파싱된 상품 리스트: $_makers");
-      } else {
-        print("서버 에러 응답: ${response.body}");
-        throw Exception('Failed to load products');
+        print("최종 파싱된 제조사 리스트: $_makers");
       }
     } catch (e) {
-      print("상품 목록 로드 에러 발생: $e");
+      print("제조사 로드 최종 에러: $e");
       setState(() => _isLoadingmakers = false);
     }
   }
