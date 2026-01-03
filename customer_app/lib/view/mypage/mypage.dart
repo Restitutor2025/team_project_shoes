@@ -24,16 +24,13 @@ class Mypage extends StatefulWidget {
 
 class _MypageState extends State<Mypage> {
   //  Property
-  late int purchases;
-  late int reviews;
-  late int asks;
+  int purchases = 0;
+  int reviews = 0;
+  int asks = 0;
 
   @override
   void initState() {
     super.initState();
-    purchases = 0;
-    reviews = 0;
-    asks = 0;
     _loadCounts();
   }
 
