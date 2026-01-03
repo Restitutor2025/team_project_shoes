@@ -174,3 +174,28 @@ async def update_mid(
         return {'result': 'Error', 'message': str(e)}
     finally:
         if conn: conn.close()
+
+# [추가] 영문명(ename)으로 기존에 등록된 mid가 있는지 조회하는 API
+@router.get("/get_mid")
+async def get_mid(ename: str):
+    conn = None
+    try:
+        conn = connect()
+        curs = conn.cursor()
+        
+        # 해당 영문명을 가진 상품 중 mid가 0이 아니거나 본인 id와 같은 대표 mid를 조회
+        sql = "SELECT mid FROM product WHERE ename = %s AND mid != '0' LIMIT 1"
+        curs.execute(sql, (ename,))
+        result = curs.fetchone()
+        
+        if result:
+            return {"mid": result['mid']}
+        else:
+            return {"mid": None}
+            
+    except Exception as e:
+        print(f"get_mid Error: {e}")
+        return {"mid": None}
+    finally:
+        if conn:
+            conn.close()
