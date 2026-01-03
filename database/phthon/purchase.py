@@ -6,13 +6,14 @@ import pymysql
 
 router = APIRouter()
 
-    #  purchase CRUD
-    #Create: 02/01/2026 17:46, Creator: Chansol, Park
-    #Update log: 
-    #  DUMMY 00/00/0000 00:00, 'Point X, Description', Creator: Chansol, Park
-    #Version: 1.0
-    #Dependency: 
-    #Desc: purchase CRUD
+# 
+# Description : 상품 구매 테이블
+#   - select, insert, insertPickupDate 생성
+#       - insertPickupDate 은 결제 완료 이후 , 
+#         실제 픽업 날짜로 이후 생성 되어 추가 될 예정으로 PickupDate만 들어가게 구성
+# Date : 2025-01-02
+# Author : 지현
+#
 
 def connect():
     conn = pymysql.connect(

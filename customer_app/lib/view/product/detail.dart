@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:customer_app/ip/ipaddress.dart';
 import 'package:customer_app/model/product.dart';
 import 'package:customer_app/util/pcolor.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 
 /* 
 Description : 상품 상세페이지 화면
@@ -28,8 +31,9 @@ class _DetailState extends State<Detail> {
   // late List<Product> productList; 제품 데이터 받아오기
   // List<Map<String, String>> productList = []; // 제품 데이터 받아올 곳
   ScrollController scrollController = ScrollController();
-  List<String> sizeList = []; // 사이즈 데이터 받아올 곳
-  List<String> colorList = []; // 컬러 데이터 받아올 곳
+  List sizeList = []; // 사이즈 데이터 받아올 곳
+  List productName = []; // 제품명 데이터 받아올 곳
+  List colorList = []; // 컬러 데이터 받아올 곳
   late int count = 1; // 제품 수량
   Color changeSizeColor = Pcolor.appBarForegroundColor;
   int? indexNum;
@@ -40,21 +44,47 @@ class _DetailState extends State<Detail> {
   void initState() {
     super.initState();
     // addData(); // 더미 데이터 넣어줄 예정
-    print(sizeList);
-    sizeList = ['230','230','230','230','230','230'];
-    colorList = ['빨강','파랑','노랑'];
+    getJSONData();
+    getJSONNameData();
+    getJSONColorData();
 
   }
-    // void addData() {
-    // productList.add({
-    //   'imageName': 'images/logo.png',
-    //   'detailImageName': 'images/logo_non.png',
-    //   'productPrice': '100,000',
-    //   'productName': '킨 제스퍼 여성화',
-    //   'englishName': 'KEEN JASPER Women Sneakers',
-    // }); 더미 데이터_테스트용
 
-  //}
+  Future<void> getJSONData() async{
+    var url1 = Uri.parse(
+      "${IpAddress.baseUrl}/productsize/select?pid=${product.id}", 
+    ); 
+    var response = await http.get(url1);
+    var dataConvertdJSON = json.decode(utf8.decode(response.bodyBytes));
+
+    List results = dataConvertdJSON['results'];
+    sizeList.addAll(results);
+    setState(() {});
+  }
+
+  Future<void> getJSONNameData() async{
+    var url2 = Uri.parse(
+      "${IpAddress.baseUrl}/productname/select?pid=${product.id}", 
+    ); 
+    var response = await http.get(url2);
+    var dataConvertdJSON = json.decode(utf8.decode(response.bodyBytes));
+
+    List nameResult = dataConvertdJSON['results'];
+    productName.addAll(nameResult);
+    setState(() {});
+  }
+
+  Future<void> getJSONColorData() async{
+    var url3 = Uri.parse(
+      "${IpAddress.baseUrl}/productcolor/select?pid=${product.id}", 
+    ); 
+    var response = await http.get(url3);
+    var dataConvertdJSON = json.decode(utf8.decode(response.bodyBytes));
+
+    List colorResults = dataConvertdJSON['results'];
+    colorList.addAll(colorResults);
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,35 +115,48 @@ class _DetailState extends State<Detail> {
         ]
       ),
       body: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Image.network(
-                  '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=main', //상품이미지
-                  fit: BoxFit.contain,
-                ),
-                Text(
-                  product.ename,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(30, 0, 30, 30),
+          child: Column(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Image.network(
+                    '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=main', //상품이미지
+                    fit: BoxFit.contain,
                   ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "${product.price.toString()}원",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20.0
+                        ),
+                        ),
+                      Text( 
+                         productName.isNotEmpty
+                          ? productName[0]["name"].toString()
+                          : ""
+                        ),
+                      Text(
+                        product.ename,
+                        style: TextStyle(
+                          color: Colors.blueGrey
+                        ),
+                        ),
+                    ],
                   ),
-                Text(
-                  product.ename,
-                  style: TextStyle(
-                    color: Colors.blueGrey
+                ],
+              ),
+              Image.network(
+                    '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=main', //상품이미지
+                    fit: BoxFit.contain,
                   ),
-                  ),
-              ],
-            ),
-            Image.network(
-                  '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=main', //상품이미지
-                  fit: BoxFit.contain,
-                ),
-          ],
+            ],
+          ),
         ),
       ),
       bottomNavigationBar:SizedBox(
@@ -164,14 +207,16 @@ class _DetailState extends State<Detail> {
                             borderRadius: BorderRadius.circular(12),
                             child: Image.network(
                               '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=main', //상품이미지
-                              fit: BoxFit.contain,
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.cover,
                             ),
                           ),
                           Expanded(
                             child: Column(
                               children: [
                                 Text(
-                                  "킨 재스퍼 여성 스니커즈 발라드",
+                                  productName[0]["name"].toString(),
                                 style: TextStyle(
                                 fontWeight: FontWeight.bold),),
                                 Text('KEEN'),
@@ -214,7 +259,7 @@ class _DetailState extends State<Detail> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(sizeList[index]),
+                                Text(sizeList[index]["size"].toString(),),
                               ],
                             ),
                           ),
@@ -245,7 +290,7 @@ class _DetailState extends State<Detail> {
                     child: Card(
                       child: Center(
                         child:
-                          Text(colorList[index])
+                          Text(colorList[index]["color"])
                       ),
                     ),
                   );
