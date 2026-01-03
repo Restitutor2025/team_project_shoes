@@ -183,11 +183,10 @@ class _ChattingState extends State<Chatting> {
 
     tEC1.clear();
 
-    // Firestore에 메시지 추가
     await FirebaseFirestore.instance
         .collection('ask')
         .add({
-      'cid': cid, // int로 통일
+      'cid': cid,
       'eid': null,
       'contents': text,
       'timestamp': FieldValue.serverTimestamp(),
