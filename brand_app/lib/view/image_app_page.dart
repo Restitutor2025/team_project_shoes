@@ -251,7 +251,7 @@ class _ImageAppPageState extends State<ImageAppPage> {
               ),
               const SizedBox(height: 30),
 
-              Row(
+              Row(// * 상품명
                 children: [
                   Text(
                     '*  ',
@@ -272,7 +272,7 @@ class _ImageAppPageState extends State<ImageAppPage> {
               ),
               const SizedBox(height: 12),
 
-              TextField(
+              TextField(// 상품이름 입력
                 controller: productNameController,
                 maxLength: 40,
                 decoration: InputDecoration(
@@ -293,7 +293,7 @@ class _ImageAppPageState extends State<ImageAppPage> {
                 },
               ),
               const SizedBox(height: 30),
-              Row(
+              Row(//* 칼라
                 children: [
                   Text(
                     '*  ',
@@ -316,7 +316,7 @@ class _ImageAppPageState extends State<ImageAppPage> {
               DropdownButtonFormField<String>(
                 value: selectedColorlist,
                 hint: const Text('칼라를 선택하세요'),
-                items: manufacturers
+                items: colorlist
                     .map(
                       (e) => DropdownMenuItem(
                         value: e,
