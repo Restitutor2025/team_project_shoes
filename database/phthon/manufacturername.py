@@ -80,3 +80,13 @@ async def insert_product(
         return {"result": "OK", "pid": new_pid}
     finally:
         conn.close()
+
+@router.get("/all")
+async def get_all_manufacturers():
+    conn = connect()
+    curs = conn.cursor()
+    # 등록된 모든 제조사 이름을 중복 없이 가져옴
+    curs.execute("SELECT DISTINCT name FROM manufacturername")
+    rows = curs.fetchall()
+    conn.close()
+    return {"results": [row['name'] for row in rows]}
