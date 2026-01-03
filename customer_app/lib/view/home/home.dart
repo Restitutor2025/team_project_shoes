@@ -15,14 +15,10 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  PageController _pageController = PageController(
-    viewportFraction: 0.82,
-  );
-  int _currentPage = 0; //추천상품 슬라이더 페이지
-
+  final PageController _pageController = PageController(viewportFraction: 0.82);
+  int _currentPage = 0;
   List<Product> data = [];
-  //<<<<<<<<<나중에 DB에 채워질 최근 본 상품
-  //<<<<<<<<<<<<
+  Map<int, String> koreanNames = {}; 
 
   @override
   void initState() {
@@ -31,27 +27,42 @@ class _HomeState extends State<Home> {
   }
 
   Future<void> getJSONdata() async {
-    var url = Uri.parse(
-      '${IpAddress.baseUrl}/product/select',
-    );
+    var url = Uri.parse('${IpAddress.baseUrl}/product/select');
     try {
       var response = await http.post(url);
       if (response.statusCode == 200) {
-        var dataConvertedJSON = json.decode(
-          utf8.decode(response.bodyBytes),
-        );
-        data.clear();
-        setState(() {});
-
+        var dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));
         if (dataConvertedJSON is List) {
-          data = dataConvertedJSON
-              .map((json) => Product.fromJson(json))
-              .toList();
+          List<Product> fetchedData = dataConvertedJSON.map((json) => Product.fromJson(json)).toList();
+          
+          // 중복 제거 (이름 기준)
+          final Map<String, Product> uniqueMap = {};
+          for (var item in fetchedData) {
+            if (!uniqueMap.containsKey(item.ename)) uniqueMap[item.ename] = item;
+          }
+          
+          data = uniqueMap.values.toList();
+          setState(() {});
+          // 각 상품의 한글 이름 가져오기
+          for (var item in data) { fetchKoreanName(item); }
         }
       }
-    } catch (e) {
-      print('$e');
-    }
+    } catch (e) { debugPrint('Error: $e'); }
+  }
+
+  Future<void> fetchKoreanName(Product product) async {
+    final int targetPid = (product.mid != null && product.mid != 0) ? product.mid! : product.id!;
+    var url = Uri.parse('${IpAddress.baseUrl}/productname/select?pid=$targetPid');
+    try {
+      var response = await http.get(url);
+      if (response.statusCode == 200) {
+        var jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+        List results = jsonResponse['results'];
+        if (results.isNotEmpty) {
+          setState(() { koreanNames[product.id!] = results[0]['name']; });
+        }
+      }
+    } catch (e) { debugPrint('Name Fetch Error: $e'); }
   }
 
   @override
@@ -64,173 +75,111 @@ class _HomeState extends State<Home> {
         elevation: 0,
         leadingWidth: 100,
         leading: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 0, 0),
-          child: Image.asset(
-            'images/logo.png',
-            width: 10,
-            fit: BoxFit.contain,
-          ),
+          padding: const EdgeInsets.only(left: 20),
+          child: Image.asset('images/logo.png', fit: BoxFit.contain),
         ),
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                20,
-                30,
-                20,
-                0,
-              ),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: '상품을 검색해보세요',
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: Colors.grey,
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[200],
-                  contentPadding: EdgeInsets.zero,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Text(
-                '추천상품 🔥',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            SizedBox(
-              height: 240,
-              child: PageView.builder(
-                controller: _pageController,
-                itemCount: data.isEmpty ? 0 : data.length,
-
-                onPageChanged: (value) {
-                  _currentPage = value;
-                  setState(() {});
-                },
-                itemBuilder: (context, index) {
-                  final bool isActive =
-                      index == _currentPage;
-
-                  ///슬라이드 바 디자인 코드
-                  return AnimatedScale(
-                    scale: isActive ? 1.0 : 0.9,
-                    duration: const Duration(
-                      milliseconds: 300,
-                    ),
-
-                    curve: Curves.easeOut,
-                    child: Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius:
-                              BorderRadius.circular(24),
-                        ),
-                        child: _ProductCard(
-                          product: data[index],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            // 슬라이더 인디케이터
-            const SizedBox(height: 8),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(3, (index) {
-                final bool isActive = index == _currentPage;
-
-                return AnimatedContainer(
-                  duration: const Duration(
-                    milliseconds: 300,
-                  ),
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                  ),
-                  width: isActive ? 10 : 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? Colors.black
-                        : Colors.grey[400],
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                );
-              }),
-            ),
-
+            _buildSearchField(),
+            _buildSectionTitle('추천상품 🔥'),
+            _buildSlider(),
+            _buildIndicator(),
             const SizedBox(height: 24),
-
-            // 신상상품 섹션
-            ProductSection(title: '신상상품', product: data),
-
+            ProductSection(title: '신상상품', product: data, koreanNames: koreanNames),
             const SizedBox(height: 32),
-
-            // 인기상품 섹션
-            ProductSection(
-              title: '오늘의 인기상품',
-              product: data,
-            ),
-
-            // >>>>>>>>👇 나중에 DB 붙이면 최근 본 상품 조건부
-            if (data.isNotEmpty) ...[
-              const SizedBox(height: 32),
-              ProductSection(
-                title: '최근 본 상품',
-                product: data,
-              ),
-            ],
-
+            ProductSection(title: '오늘의 인기상품', product: data, koreanNames: koreanNames),
             const SizedBox(height: 32),
           ],
         ),
       ),
     );
   }
+
+  // 1) 검색창 디자인 복구
+  Widget _buildSearchField() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 30, 20, 0),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: '상품을 검색해보세요',
+          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+          filled: true,
+          fillColor: Colors.grey[200],
+          contentPadding: EdgeInsets.zero,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) => Padding(
+    padding: const EdgeInsets.all(20.0),
+    child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+  );
+
+  // 2) 슬라이더 디자인 복구
+  Widget _buildSlider() {
+    return SizedBox(
+      height: 240,
+      child: PageView.builder(
+        controller: _pageController,
+        itemCount: data.length,
+        onPageChanged: (v) => setState(() => _currentPage = v),
+        itemBuilder: (context, index) {
+          return AnimatedScale(
+            scale: index == _currentPage ? 1.0 : 0.9,
+            duration: const Duration(milliseconds: 300),
+            child: Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: _ProductCard(product: data[index], koreanName: koreanNames[data[index].id]),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // 3) 인디케이터 디자인 복구
+  Widget _buildIndicator() {
+    int count = data.length > 5 ? 5 : data.length;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(count, (index) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          width: index == _currentPage ? 10 : 6, height: 6,
+          decoration: BoxDecoration(color: index == _currentPage ? Colors.black : Colors.grey[400], borderRadius: BorderRadius.circular(3)),
+        );
+      }),
+    );
+  }
 }
 
 class _ProductCard extends StatelessWidget {
-  final Product product; //  >>>>>>>>>>>모델 연결
+  final Product product;
+  final String? koreanName;
 
-  const _ProductCard({required this.product});
+  const _ProductCard({required this.product, this.koreanName});
 
   @override
   Widget build(BuildContext context) {
+    final int imageId = (product.mid != null && product.mid != 0) ? product.mid! : product.id!;
+
     return GestureDetector(
-      onTap: () {
-        Get.to(Detail(), arguments: product);
-      },
+      onTap: () => Get.to(
+        () => const Detail(), 
+        arguments: {'product': product, 'koreanName': koreanName} 
+      ),
       child: Container(
         width: 140,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 5,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5, offset: const Offset(0, 4))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,26 +187,21 @@ class _ProductCard extends StatelessWidget {
             Expanded(
               child: Center(
                 child: Image.network(
-                  '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=main', //상품이미지
+                  '${IpAddress.baseUrl}/productimage/view?pid=$imageId&position=main',
                   fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_not_supported, color: Colors.grey),
                 ),
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              product.ename, //>>>>>>>>>>상품name
-              maxLines: 2,
+              koreanName ?? product.ename, 
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 13),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 4),
-            Text(
-              '${product.price}', //>>>>>>>>>>상품price
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-            ),
+            Text('${product.price} 원', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
           ],
         ),
       ),
@@ -265,16 +209,12 @@ class _ProductCard extends StatelessWidget {
   }
 }
 
-// 상품 카드 섹션
 class ProductSection extends StatelessWidget {
   final String title;
   final List<Product> product;
+  final Map<int, String> koreanNames;
 
-  const ProductSection({
-    super.key,
-    required this.title,
-    required this.product,
-  });
+  const ProductSection({super.key, required this.title, required this.product, required this.koreanNames});
 
   @override
   Widget build(BuildContext context) {
@@ -282,41 +222,23 @@ class ProductSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Row(
-            mainAxisAlignment:
-                MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
         SizedBox(
           height: 220,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: product.length,
-            separatorBuilder: (_, __) =>
-                const SizedBox(width: 12),
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
-              return _ProductCard(product: product[index]);
+              final item = product[index];
+              return _ProductCard(product: item, koreanName: koreanNames[item.id]);
             },
           ),
         ),
       ],
     );
   }
-
-  ///
-
-  ///
 }

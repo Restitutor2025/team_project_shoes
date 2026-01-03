@@ -15,37 +15,37 @@
 class Employee {
   //  Property
   int? id;
-  int sid;  //  FK From Store
+  int? sid;  // 🔥 sid가 서버 응답에 없을 수 있으므로 ?를 붙여 null 허용으로 변경
   String role;
   String name;
   String email;
-  String password;
+  String? password;
   String storenumber;
   String phone;
 
   //  Constructor
   Employee({
     this.id, 
-    required this.sid, 
+    this.sid, // 🔥 sid는 required를 제거하고 선택 사항으로 변경
     required this.role,
     required this.name,
     required this.email,
-    required this.password,
+    this.password,
     required this.storenumber,
     required this.phone
-    });
+  });
 
   //  Decode from Json type
   factory Employee.fromJson(Map<String, dynamic> json) {
     return Employee(
-      id: json['id'],
-      sid: json['sid'],
-      role: json['role'],
-      name: json['name'],
-      email: json['email'],
+      id: json['id'] as int?,
+      sid: json['sid'] as int?, // 🔥 데이터가 없어도 에러가 나지 않음
+      role: json['role'] ?? "", // 혹시 몰라 기본값 "" 추가
+      name: json['name'] ?? "",
+      email: json['email'] ?? "",
       password: json['password'],
-      storenumber: json['storenumber'],
-      phone: json['phone']
+      storenumber: json['storenumber'] ?? "",
+      phone: json['phone'] ?? "",
     );
   }
 

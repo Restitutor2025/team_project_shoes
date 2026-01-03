@@ -128,30 +128,74 @@ async def select(pid: int):
         conn.close()
 
 
+# [수정] insert 함수: mid를 Form(None)으로 변경하여 필수 입력을 해제합니다.
 @router.post("/insert")
 async def insert(
     quantity: str = Form(...), 
     price: str = Form(...), 
-    ename: str = Form(...)
+    ename: str = Form(...),
+    mid: str = Form(None)  # 🔥 필수값에서 선택값으로 변경
 ):
     conn = None
     try:
         conn = connect()
         curs = conn.cursor()
-        sql = "INSERT INTO product(quantity, price, date, ename) VALUES (%s, %s, NOW(), %s)"
         
-        curs.execute(sql, (
-            quantity,
-            price,
-            ename
-        ))
+        # mid가 없으면 일단 '0'으로 저장 (첫 번째 상품인 경우)
+        safe_mid = mid if mid else "0"
+        
+        sql = "INSERT INTO product(mid, quantity, price, date, ename) VALUES (%s, %s, %s, NOW(), %s)"
+        curs.execute(sql, (safe_mid, quantity, price, ename))
         conn.commit()
         new_pid = curs.lastrowid 
-        # Flutter 앱이 다음 단계(이미지/상세이름 저장)로 넘어가기 위해 pid를 보내줍니다.
         return {'result': 'OK', 'pid': new_pid}
     except Exception as e:
         print(f"Error: {e}") 
         return {'result': 'Error', 'message': str(e)}
+    finally:
+        if conn: conn.close()
+
+# [추가] Flutter에서 보낸 mid 값을 업데이트하는 API
+@router.post("/updateMid")
+async def update_mid(
+    pid: str = Form(...),
+    mid: str = Form(...)
+):
+    conn = None
+    try:
+        conn = connect()
+        curs = conn.cursor()
+        sql = "UPDATE product SET mid = %s WHERE id = %s"
+        curs.execute(sql, (mid, pid))
+        conn.commit()
+        return {'result': 'OK'}
+    except Exception as e:
+        print(f"Update Error: {e}")
+        return {'result': 'Error', 'message': str(e)}
+    finally:
+        if conn: conn.close()
+
+# [추가] 영문명(ename)으로 기존에 등록된 mid가 있는지 조회하는 API
+@router.get("/get_mid")
+async def get_mid(ename: str):
+    conn = None
+    try:
+        conn = connect()
+        curs = conn.cursor()
+        
+        # 해당 영문명을 가진 상품 중 mid가 0이 아니거나 본인 id와 같은 대표 mid를 조회
+        sql = "SELECT mid FROM product WHERE ename = %s AND mid != '0' LIMIT 1"
+        curs.execute(sql, (ename,))
+        result = curs.fetchone()
+        
+        if result:
+            return {"mid": result['mid']}
+        else:
+            return {"mid": None}
+            
+    except Exception as e:
+        print(f"get_mid Error: {e}")
+        return {"mid": None}
     finally:
         if conn:
             conn.close()
