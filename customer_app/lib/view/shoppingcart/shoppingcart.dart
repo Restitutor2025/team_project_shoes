@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:customer_app/ip/ipaddress.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -29,25 +28,13 @@ class _ShoppingcartState extends State<Shoppingcart> {
   void initState() {
     super.initState();
 
-  Future<void> getJSONData()async{
-    var url=Uri.parse("${IpAddress.baseUrl}/product/selectcart");
-    var response =await http.get(url);
-    data.clear();
-    var dataConvertedJSON =json.decode(utf8.decode(response.bodyBytes));
-    print("결과$dataConvertedJSON");
-    final List  result =dataConvertedJSON['results'];
-    data.addAll(result);
-    setState(() {});
+    incomingItem = Get.arguments;
 
-  }
-   Future<void> getJSONDataimage()async{
-    var url=Uri.parse("${IpAddress.baseUrl}/productimage/view2");
-    var response =await http.get(url);
-    imagedata.clear();
-    var dataConvertedJSON =json.decode(utf8.decode(response.bodyBytes));
-    List result =dataConvertedJSON['results'];
-    imagedata.addAll(result);
-    setState(() {});
+    if (incomingItem != null && incomingItem!['pid'] != null) {
+      handler.insertCart(
+        Cart(cartid: incomingItem!['pid']),
+      );
+    }
 
     cartFuture = handler.queryCart();
   }
