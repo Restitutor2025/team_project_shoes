@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:brand_app/ip/ipaddress.dart';
 import 'package:brand_app/util/pcolor.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +15,6 @@ class Request extends StatefulWidget {
 class _RequestState extends State<Request> {
   final TextEditingController _nameController =
       TextEditingController();
-  // 수량 관리는 컨트롤러 하나로 통합 (초기값 1)
   final TextEditingController _quantityController =
       TextEditingController(text: '1');
 
@@ -25,51 +23,106 @@ class _RequestState extends State<Request> {
   String? _selectedSize;
   String? _selectedColor;
 
-  // 더미 데이터
-  final List<String> _makers = [
-    '나이키',
-    '퓨마',
-    '아디다스',
-    '스니커즈',
-    '뉴발란스',
-  ];
+  List<String> _makers = [];
   List<String> _products = [];
-  bool _isLoadingProducts = false; // 로딩 상태 확인용
+  bool _isLoadingProducts = false;
+  bool _isLoadingmakers = false;
 
   @override
   void initState() {
     super.initState();
-    _fetchProducts(); // 페이지 시작 시 데이터를 가져옵니다.
+    _fetchProducts();
+    _fetchMakers();
   }
 
   // API 호출 함수
   Future<void> _fetchProducts() async {
     setState(() => _isLoadingProducts = true);
+    print("데이터 요청 시작: ${IpAddress.baseUrl}/product/select");
 
     try {
-      final response = await http.get(
+      final response = await http.post(
         Uri.parse('${IpAddress.baseUrl}/product/select'),
+        headers: {"Content-Type": "application/json"},
       );
 
+      print("응답 상태 코드: ${response.statusCode}");
+
       if (response.statusCode == 200) {
-        // 서버 응답이 [ {"pname": "에어맥스"}, {"pname": "574"} ] 형태라고 가정
         final List<dynamic> data = json.decode(
           utf8.decode(response.bodyBytes),
         );
+        print("가져온 데이터 원본: $data");
 
         setState(() {
-          // 서버 데이터에서 'pname' 혹은 'name' 컬럼만 추출하여 리스트화
-          _products = data
+          // 1. 전체 데이터에서 ename만 추출
+          List<String> rawNames = data
               .map((item) => item['ename'].toString())
               .toList();
+
+          // 2. toSet()을 사용하여 중복 제거 후 다시 리스트로 변환
+          _products = rawNames.toSet().toList();
+
+          // 3. (선택) 보기 좋게 정렬
+          _products.sort();
+
           _isLoadingProducts = false;
         });
+        print("파싱된 상품 리스트: $_products");
       } else {
+        print("서버 에러 응답: ${response.body}");
         throw Exception('Failed to load products');
       }
     } catch (e) {
-      print("상품 목록 로드 에러: $e");
+      print("상품 목록 로드 에러 발생: $e");
       setState(() => _isLoadingProducts = false);
+    }
+  }
+
+  // API 호출 함수
+  Future<void> _fetchMakers() async {
+    setState(() => _isLoadingmakers = true);
+    print(
+      "데이터 요청 시작: ${IpAddress.baseUrl}/manufacturename/upload",
+    );
+
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '${IpAddress.baseUrl}/manufacturername/select?pid=1',
+        ),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      print("응답 상태 코드: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(
+          utf8.decode(response.bodyBytes),
+        );
+        print("가져온 데이터 원본: $data");
+
+        setState(() {
+          List<String> rawNames = data
+              .map((item) => item['name'].toString())
+              .toList();
+
+          // 2. toSet()을 사용하여 중복 제거 후 다시 리스트로 변환
+          _makers = rawNames.toSet().toList();
+
+          // 3. (선택) 보기 좋게 정렬
+          _makers.sort();
+
+          _isLoadingmakers = false;
+        });
+        print("파싱된 상품 리스트: $_makers");
+      } else {
+        print("서버 에러 응답: ${response.body}");
+        throw Exception('Failed to load products');
+      }
+    } catch (e) {
+      print("상품 목록 로드 에러 발생: $e");
+      setState(() => _isLoadingmakers = false);
     }
   }
 
@@ -79,36 +132,43 @@ class _RequestState extends State<Request> {
     (i) => (230 + (i * 5)).toString(),
   );
 
-  // 수량 변경 로직 통합
   void _updateQuantity(int amount) {
     int current =
         int.tryParse(_quantityController.text) ?? 0;
     int newValue = current + amount;
-    if (newValue < 1) newValue = 1; // 최소 수량 1 유지
+    if (newValue < 1) newValue = 1;
     setState(() {
       _quantityController.text = newValue.toString();
     });
   }
 
-  //1. 상품 품의 등록
+  // 품의 등록 액션
   Future<int?> insertAction() async {
     try {
+      print(
+        "제출 데이터 확인: ${_nameController.text}, $_selectedMaker, $_selectedProduct, $_selectedSize, $_selectedColor, ${_quantityController.text}",
+      );
+
       var request = http.MultipartRequest(
         'POST',
         Uri.parse('${IpAddress.baseUrl}/imployee/uproad'),
       );
       request.fields['ename'] = _nameController.text;
-      request.fields['pid'] = _selectedMaker.toString();
-      request.fields['ename'] = _selectedProduct.toString();
-      request.fields['size'] = _selectedSize.toString();
-      request.fields['color'] = _selectedColor.toString();
+      request.fields['maker'] =
+          _selectedMaker ?? ""; // 키값 확인 필요 (기존 pid에서 변경)
+      request.fields['pname'] = _selectedProduct ?? "";
+      request.fields['size'] = _selectedSize ?? "";
+      request.fields['color'] = _selectedColor ?? "";
       request.fields['quantity'] = _quantityController.text;
 
       var response = await request.send();
       var respStr = await response.stream.bytesToString();
+
       if (response.statusCode == 200) {
-        var data = json.decode(respStr);
-        return int.tryParse(data['pid'].toString());
+        print("등록 성공: $respStr");
+        return 1;
+      } else {
+        print("등록 실패 (${response.statusCode}): $respStr");
       }
     } catch (e) {
       debugPrint("insertAction 에러: $e");
@@ -144,56 +204,37 @@ class _RequestState extends State<Request> {
 
             _buildLabel('제조사명'),
             _buildDropdown(_makers, _selectedMaker, (val) {
-              setState(() {
-                _selectedMaker = val;
-                _selectedProduct = null;
-                _selectedSize = null;
-                _selectedColor = null;
-              });
+              setState(() => _selectedMaker = val);
             }),
             const SizedBox(height: 20),
 
             _buildLabel('상품명'),
             _isLoadingProducts
-                ? const LinearProgressIndicator() // 로딩 중일 때 표시
+                ? const LinearProgressIndicator()
                 : _buildDropdown(
                     _products,
                     _selectedProduct,
-                    _selectedMaker == null
-                        ? null // 제조사를 먼저 선택해야 활성화
-                        : (val) => setState(
-                            () => _selectedProduct = val,
-                          ),
+                    (val) {
+                      setState(
+                        () => _selectedProduct = val,
+                      );
+                    },
                   ),
             const SizedBox(height: 20),
 
             _buildLabel('사이즈'),
-            _buildDropdown(
-              _sizes,
-              _selectedSize,
-              _selectedProduct == null
-                  ? null
-                  : (val) {
-                      setState(() => _selectedSize = val);
-                    },
-              suffix: '(mm)단위',
-            ),
+            _buildDropdown(_sizes, _selectedSize, (val) {
+              setState(() => _selectedSize = val);
+            }, suffix: '(mm)단위'),
             const SizedBox(height: 20),
 
             _buildLabel('컬러'),
-            _buildDropdown(
-              _colors,
-              _selectedColor,
-              _selectedSize == null
-                  ? null
-                  : (val) {
-                      setState(() => _selectedColor = val);
-                    },
-            ),
+            _buildDropdown(_colors, _selectedColor, (val) {
+              setState(() => _selectedColor = val);
+            }),
             const SizedBox(height: 24),
 
             _buildLabel('발주수량'),
-            // Wrap을 사용하여 버튼들이 화면 너비를 넘어가면 자동으로 줄바꿈되게 처리
             Wrap(
               spacing: 8,
               runSpacing: 10,
@@ -232,9 +273,8 @@ class _RequestState extends State<Request> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _selectedColor != null
-                      ? _showResultSheet
-                      : null,
+                  onPressed:
+                      _showResultSheet, // 조건 없이 항상 실행 가능하게 변경
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(
                       0xFF333333,
@@ -261,7 +301,8 @@ class _RequestState extends State<Request> {
     );
   }
 
-  // 수량 조절 버튼 위젯
+  // --- 기존 위젯 함수들 (_quantityButton, _buildLabel, _buildDropdown, _showResultSheet 동일하게 유지) ---
+
   Widget _quantityButton(int unit) {
     return Container(
       height: 45,
@@ -275,7 +316,6 @@ class _RequestState extends State<Request> {
           IconButton(
             onPressed: () => _updateQuantity(-unit),
             icon: const Icon(Icons.remove, size: 18),
-            constraints: const BoxConstraints(minWidth: 35),
           ),
           Text(
             '$unit',
@@ -286,14 +326,12 @@ class _RequestState extends State<Request> {
           IconButton(
             onPressed: () => _updateQuantity(unit),
             icon: const Icon(Icons.add, size: 18),
-            constraints: const BoxConstraints(minWidth: 35),
           ),
         ],
       ),
     );
   }
 
-  // 공통 라벨 위젯
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
@@ -319,7 +357,6 @@ class _RequestState extends State<Request> {
     );
   }
 
-  // 공통 드롭다운 위젯
   Widget _buildDropdown(
     List<String> items,
     String? value,
@@ -366,101 +403,61 @@ class _RequestState extends State<Request> {
     );
   }
 
-  // 결과 확인 창
   void _showResultSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFF5F5F7),
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(20),
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFFF5F5F7),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(20),
+          ),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-          ),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(10),
+            const SizedBox(height: 20),
+            Text(
+              '입력된 정보 확인',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text('상품명: ${_selectedProduct ?? "미선택"}'),
+            Text('직원: ${_nameController.text}'),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  await insertAction();
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF333333),
+                ),
+                child: const Text(
+                  '제출하기',
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
-              const SizedBox(height: 20),
-              Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(15),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        color: Colors.grey[200],
-                        child: const Icon(
-                          Icons.image,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '$_selectedMaker $_selectedProduct',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              '직원: ${_nameController.text}\n사이즈: $_selectedSize / 컬러: $_selectedColor / 수량: ${_quantityController.text}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(
-                      0xFF333333,
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 15,
-                    ),
-                  ),
-                  child: const Text(
-                    '제출하기',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
