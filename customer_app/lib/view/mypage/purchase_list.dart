@@ -1,6 +1,8 @@
 import 'package:customer_app/config.dart' as config;
 import 'package:customer_app/model/purchase.dart';
+import 'package:customer_app/view/mypage/chatting.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 class PurchaseList extends StatefulWidget {
@@ -160,13 +162,17 @@ class _PurchaseListState extends State<PurchaseList> {
                                       width: 100,
                                       height: 35,
                                       child: ElevatedButton(
-                                        onPressed: () {},
+                                        onPressed: () {
+                                          Get.to(
+                                            Chatting(), arguments: totalPurchases[index]
+                                          )!.then((value) => setState(() {}));
+                                        },
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.white,
                                           elevation: 1,
                                         ),
                                         child: Text(
-                                          '반품 신청',
+                                          '문의 하기',
                                           style: TextStyle(fontSize: 12),
                                         ),
                                       ),
