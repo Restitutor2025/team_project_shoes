@@ -138,7 +138,6 @@ async def insert(
     try:
         conn = connect()
         curs = conn.cursor()
-        
         sql = "INSERT INTO product(quantity, price, date, ename) VALUES (%s, %s, NOW(), %s)"
         
         curs.execute(sql, (
@@ -146,14 +145,13 @@ async def insert(
             price,
             ename
         ))
-        
         conn.commit()
-        return {'results': 'OK'}
-        
+        new_pid = curs.lastrowid 
+        # Flutter 앱이 다음 단계(이미지/상세이름 저장)로 넘어가기 위해 pid를 보내줍니다.
+        return {'result': 'OK', 'pid': new_pid}
     except Exception as e:
         print(f"Error: {e}") 
-        return {'results': 'Error'}
-        
+        return {'result': 'Error', 'message': str(e)}
     finally:
         if conn:
             conn.close()
