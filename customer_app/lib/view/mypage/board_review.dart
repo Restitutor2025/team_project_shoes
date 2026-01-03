@@ -291,7 +291,7 @@ class _BoardReviewState extends State<BoardReview> {
     }
     await showDialog(
       context: context,
-      barrierDismissible: false, // 바깥 터치로 닫기 금지
+      barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
           title: Text('알림'),
@@ -300,7 +300,7 @@ class _BoardReviewState extends State<BoardReview> {
             TextButton(
               onPressed: () async {
                 if (!(starChosen && reviewText)) {
-                  Get.back(); // 다이얼로그만 닫기
+                  Get.back();
                   return;
                 }
                 try {

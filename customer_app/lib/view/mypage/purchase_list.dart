@@ -1,7 +1,4 @@
 import 'package:customer_app/config.dart' as config;
-import 'package:customer_app/model/name.dart';
-import 'package:customer_app/model/product.dart';
-import 'package:customer_app/model/product_image.dart';
 import 'package:customer_app/model/purchase.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -13,46 +10,76 @@ class PurchaseList extends StatefulWidget {
   State<PurchaseList> createState() => _PurchaseListState();
 }
 
+class PurchaseRow {
+  final Purchase purchase;
+  final String? productName;
+  final String? imageUrl; // 또는 path
+
+  PurchaseRow({
+    required this.purchase,
+    required this.productName,
+    required this.imageUrl,
+  });
+}
+
 class _PurchaseListState extends State<PurchaseList> {
   //  Property
-  late List<Purchase> totalPurchases = [];
-  late List<dynamic> totalProducts = [];
-  late List<dynamic> totalImages = [];
-  late List<dynamic> totalNames = [];
+  List<PurchaseRow> totalPurchases = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    setPurchaseList();
+    _init();
   }
 
-  void setPurchaseList() async {
+  Future<void> _init() async {
+    final cid = 1;
     try {
-      final List<Purchase> data = await config.getJSONData('purchase') as List<Purchase>;
-      List<int> searchIds = data.map((e) => e.pid).toList();
-
-      final List<Product>data2 = await config.getJSONData('product') as List<Product>;
-      final List<Name>data3 = await config.getJSONData('productname') as List<Name>;
-      final List<ProductImage>data4 = await config.getJSONData('productimage') as List<ProductImage>;
-
-      if (!mounted) {
-        debugPrint('ERROR: widget already disposed');
-
-        return;
-      }
+      final rows = await setPurchaseList(cid);
+      if (!mounted) return;
       setState(() {
-        totalPurchases = data;
-        totalProducts = data2;
+        totalPurchases = rows;
+        isLoading = false;
       });
-    } catch (e, stack) {
-      debugPrint('setPurchaseList error: $e');
-      debugPrint('$stack');
-
-      if (!mounted) {
-        debugPrint('ERROR: widget already disposed');
-        return;
-      }
+    } catch (e, st) {
+      debugPrint('PurchaseList load error: $e\n$st');
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+      });
     }
+  }
+
+  Future<List<PurchaseRow>> setPurchaseList(int cid) async {
+    final purchases = (await config.getJSONData(
+      'purchase/select?cid=$cid',
+    )).cast<Purchase>();
+    final rows = <PurchaseRow>[];
+
+    for (final p in purchases) {
+      final namesRaw = await config.getJSONData(
+        'productname/select?pid=${p.pid}',
+      );
+      String? name;
+      if (namesRaw.isNotEmpty) {
+        final first = namesRaw.first;
+        if (first is Map && first['name'] != null) {
+          name = first['name'].toString();
+        } else if (first is List && first.isNotEmpty) {
+          name = first[0].toString();
+        } else {
+          name = first.toString();
+        }
+      }
+
+      final imageUrl =
+          'http://${config.hostip}:8000/productimage/view?pid=${p.pid}&position=main';
+
+      rows.add(PurchaseRow(purchase: p, productName: name, imageUrl: imageUrl));
+    }
+
+    return rows;
   }
 
   @override
@@ -69,14 +96,13 @@ class _PurchaseListState extends State<PurchaseList> {
           child: Container(height: 1, color: Colors.grey.shade300),
         ),
       ),
-      body: totalPurchases.isEmpty
-          ? Center(child: CircularProgressIndicator(),)
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : totalPurchases.isEmpty
+          ? Center(child: Text('구매 내역이 없습니다.'))
           : ListView.builder(
               itemCount: totalPurchases.length,
               itemBuilder: (context, index) {
-                final purchase = totalPurchases[index];
-                final product = totalProducts[index];
-                final pName = totalNames[index];
                 return SizedBox(
                   width: MediaQuery.of(context).size.width * 0.9,
                   height: 180,
@@ -84,8 +110,8 @@ class _PurchaseListState extends State<PurchaseList> {
                     color: Colors.white,
                     child: Row(
                       children: [
-                        Image.asset(
-                          config.rlogoImage,
+                        Image.network(
+                          totalPurchases[index].imageUrl ?? '',
                           width: 50,
                           height: 50,
                           fit: BoxFit.contain,
@@ -106,12 +132,15 @@ class _PurchaseListState extends State<PurchaseList> {
                                       MainAxisAlignment.spaceEvenly,
                                   children: [
                                     Text(
-                                      '\$상품 이름',
+                                      '${totalPurchases[index].productName}',
                                       style: TextStyle(fontSize: 15),
                                     ),
-                                    Text('${config.formatter.format(purchase.quantity)}개', style: TextStyle(fontSize: 15)),
                                     Text(
-                                      '총 구매액: ${config.formatter.format(purchase.finalprice)}',
+                                      '${config.formatter.format(totalPurchases[index].purchase.quantity)}개',
+                                      style: TextStyle(fontSize: 15),
+                                    ),
+                                    Text(
+                                      '총 구매액: ${config.formatter.format(totalPurchases[index].purchase.finalprice)}',
                                       style: TextStyle(fontSize: 15),
                                     ),
                                   ],
@@ -122,7 +151,7 @@ class _PurchaseListState extends State<PurchaseList> {
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
                                   Text(
-                                    '구매 날짜: ${DateFormat(config.dateFormat).format(totalPurchases[index].purchasedate)}',
+                                    '구매 날짜: ${DateFormat(config.dateFormat).format(totalPurchases[index].purchase.purchasedate)}',
                                     style: TextStyle(fontSize: 15),
                                   ),
                                   Padding(
@@ -150,7 +179,7 @@ class _PurchaseListState extends State<PurchaseList> {
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
                                   Text(
-                                    '수령 날짜: ${DateFormat(config.dateFormat).format(totalPurchases[index].pickupdate)}',
+                                    '수령 날짜: ${DateFormat(config.dateFormat).format(totalPurchases[index].purchase.pickupdate)}',
                                     style: TextStyle(fontSize: 15),
                                   ),
                                   Padding(
