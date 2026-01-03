@@ -38,7 +38,7 @@ class _ImageAppPageState extends State<ImageAppPage> {
   String? selectedManufacturer; 
   String? selectedColorlist; 
 
-  // --- 이미지 피커 ---
+  // --- 이미지 피커 함수 ---
   Future<void> _pickImage(Function(File) onSelected) async {
     final XFile? picked = await _picker.pickImage(
       source: ImageSource.gallery,
@@ -47,90 +47,64 @@ class _ImageAppPageState extends State<ImageAppPage> {
       imageQuality: 85,
     );
     if (picked != null) {
-      onSelected(File(picked.path));
-      setState(() {});
+      setState(() {
+        onSelected(File(picked.path));
+      });
     }
   }
 
-  // --- [1] 상품 기본 등록 (Product 테이블) ---
+  // --- [서버 통신 로직] ---
+
+  // 1. 상품 기본 등록 (FastAPI Form 방식에 맞춤)
   Future<int?> insertAction() async {
     try {
-      String fullUrl = '${IpAddress.baseUrl}/product/insert';
-      var request = http.MultipartRequest('POST', Uri.parse(fullUrl));
+      var request = http.MultipartRequest('POST', Uri.parse('${IpAddress.baseUrl}/product/insert'));
       request.fields['ename'] = enameController.text;
       request.fields['price'] = priceController.text.replaceAll(',', '');
-      request.fields['quantity'] = '100'; 
+      request.fields['quantity'] = '100';
+      // 첫 등록 시 mid는 서버에서 None 처리하므로 보내지 않음
+
       var response = await request.send();
       var respStr = await response.stream.bytesToString();
       if (response.statusCode == 200) {
         var data = json.decode(respStr);
-        if (data['pid'] != null) return int.tryParse(data['pid'].toString());
+        return int.tryParse(data['pid'].toString());
       }
     } catch (e) { debugPrint("insertAction 에러: $e"); }
     return null;
   }
 
-  // --- [2] 상품명 등록 ---
-  Future<void> uploadProductName(int newPid) async {
-    try {
-      var request = http.MultipartRequest('POST', Uri.parse('${IpAddress.baseUrl}/productname/upload'));
-      request.fields['pid'] = newPid.toString();
-      request.fields['name'] = productNameController.text;
-      await request.send();
-    } catch (e) { debugPrint("상품명 등록 에러: $e"); }
-  }
-
-  // --- [3] 제조사 등록 ---
-  Future<void> uploadManufacturerName(int newPid) async {
-    if (selectedManufacturer == null) return;
-    try {
-      var request = http.MultipartRequest('POST', Uri.parse('${IpAddress.baseUrl}/manufacturername/upload'));
-      request.fields['pid'] = newPid.toString();
-      request.fields['name'] = selectedManufacturer!;
-      await request.send();
-    } catch (e) { debugPrint("제조사 등록 에러: $e"); }
-  }
-
-  // --- [4] 이미지 업로드 ---
-  Future<void> uploadImages(int newPid) async {
-    List<Map<String, dynamic>> imageTasks = [
-      {'pos': 'main', 'file': mainImage},
-      {'pos': 'top', 'file': topImage},
-      {'pos': 'side', 'file': sideImage},
-      {'pos': 'back', 'file': backImage},
-    ];
-    for (var task in imageTasks) {
-      if (task['file'] == null) continue;
-      try {
-        var request = http.MultipartRequest('POST', Uri.parse('${IpAddress.baseUrl}/productimage/upload'));
-        request.fields['pid'] = newPid.toString();
-        request.fields['position'] = task['pos'];
-        request.files.add(await http.MultipartFile.fromPath('file', task['file'].path));
-        await request.send();
-      } catch (e) { debugPrint("이미지 업로드 에러: $e"); }
-    }
-  }
-
-  // --- [5] 색상 등록 ---
-  Future<void> uploadColor(int newPid) async {
-    if (selectedColorlist == null) return;
-    try {
-      var request = http.MultipartRequest('POST', Uri.parse('${IpAddress.baseUrl}/productcolor/uproad'));
-      request.fields['pid'] = newPid.toString();
-      request.fields['color'] = selectedColorlist!;
-      await request.send();
-    } catch (e) { debugPrint("색상 등록 에러: $e"); }
-  }
-
-  // --- [6] 단일 사이즈 등록 (개별 PID용) ---
-  Future<void> uploadSingleSize(int newPid, int sizeValue) async {
+  // 2. MID 업데이트 API 호출
+  Future<void> updateMid(int pid, int mid) async {
     try {
       await http.post(
-        Uri.parse('${IpAddress.baseUrl}/productsize/insert?pid=$newPid'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"inputsize": [sizeValue]}), 
+        Uri.parse('${IpAddress.baseUrl}/product/updateMid'),
+        body: {'pid': pid.toString(), 'mid': mid.toString()},
       );
-    } catch (e) { debugPrint("사이즈($sizeValue) 등록 에러: $e"); }
+    } catch (e) { debugPrint("updateMid 에러: $e"); }
+  }
+
+  // 3. 기타 상세 정보들
+  Future<void> uploadProductName(int pid) async => await http.post(Uri.parse('${IpAddress.baseUrl}/productname/upload'), body: {'pid': pid.toString(), 'name': productNameController.text});
+  Future<void> uploadManufacturerName(int pid) async => await http.post(Uri.parse('${IpAddress.baseUrl}/manufacturername/upload'), body: {'pid': pid.toString(), 'name': selectedManufacturer ?? ''});
+  Future<void> uploadColor(int pid) async => await http.post(Uri.parse('${IpAddress.baseUrl}/productcolor/uproad'), body: {'pid': pid.toString(), 'color': selectedColorlist ?? ''});
+  Future<void> uploadSingleSize(int pid, int size) async => await http.post(Uri.parse('${IpAddress.baseUrl}/productsize/insert?pid=$pid'), headers: {"Content-Type": "application/json"}, body: jsonEncode({"inputsize": [size]}));
+
+  // 4. 이미지 업로드 (최초 1회용)
+  Future<void> uploadImages(int pid) async {
+    final url = '${IpAddress.baseUrl}/productimage/upload';
+    if (mainImage != null) await _sendImg(url, pid, 'main', mainImage!);
+    if (topImage != null) await _sendImg(url, pid, 'top', topImage!);
+    if (sideImage != null) await _sendImg(url, pid, 'side', sideImage!);
+    if (backImage != null) await _sendImg(url, pid, 'back', backImage!);
+  }
+
+  Future<void> _sendImg(String url, int pid, String pos, File file) async {
+    var request = http.MultipartRequest('POST', Uri.parse(url));
+    request.fields['pid'] = pid.toString();
+    request.fields['position'] = pos;
+    request.files.add(await http.MultipartFile.fromPath('file', file.path));
+    await request.send();
   }
 
   @override
@@ -220,7 +194,7 @@ class _ImageAppPageState extends State<ImageAppPage> {
                   const Text('(mm 단위)'),
                 ],
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 40),
 
               _sectionTitle('상품가격'),
               Container(
@@ -256,38 +230,42 @@ class _ImageAppPageState extends State<ImageAppPage> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: () {
-                    if (productNameController.text.isEmpty || enameController.text.isEmpty || selectedManufacturer == null || selectedColorlist == null || selectedSizes.isEmpty) {
-                      Get.snackbar("입력 오류", "모든 필수 항목과 최소 하나 이상의 사이즈를 선택해주세요.");
-                      return;
+                    if (productNameController.text.isEmpty || selectedSizes.isEmpty) {
+                      Get.snackbar("알림", "정보를 모두 입력해주세요."); return;
                     }
-
                     CustomSnackbar.showConfirmDialog(
                       title: '상품등록',
-                      message: '선택한 ${selectedSizes.length}개 사이즈를 각각 개별 상품으로 등록하시겠습니까?',
+                      message: '${selectedSizes.length}개의 사이즈 상품을 등록하시겠습니까?',
                       onConfirm: () async {
                         Get.back();
                         Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
-
                         try {
-                          // 🔥 선택한 사이즈만큼 반복 실행
-                          for (int size in selectedSizes) {
+                          int? sharedFirstPid;
+                          for (int i = 0; i < selectedSizes.length; i++) {
                             int? newPid = await insertAction();
-                            if (newPid != null && newPid > 0) {
+                            if (newPid == null) { Get.back(); Get.snackbar("에러", "서버 응답 없음"); return; }
+
+                            if (i == 0) {
+                              sharedFirstPid = newPid;
                               await Future.wait([
                                 uploadProductName(newPid),
                                 uploadManufacturerName(newPid),
                                 uploadImages(newPid),
                                 uploadColor(newPid),
-                                uploadSingleSize(newPid, size), // 현재 루프의 사이즈만 등록
+                                uploadSingleSize(newPid, selectedSizes[i]),
+                                updateMid(newPid, sharedFirstPid),
+                              ]);
+                            } else {
+                              await Future.wait([
+                                uploadColor(newPid),
+                                uploadSingleSize(newPid, selectedSizes[i]),
+                                updateMid(newPid, sharedFirstPid!),
                               ]);
                             }
                           }
                           Get.back();
-                          Get.snackbar("성공", "${selectedSizes.length}개의 상품이 사이즈별로 등록되었습니다.");
-                        } catch (e) {
-                          Get.back();
-                          Get.snackbar("에러", "등록 중 오류가 발생했습니다.");
-                        }
+                          Get.snackbar("성공", "MID: $sharedFirstPid 그룹 등록이 완료되었습니다.");
+                        } catch (e) { Get.back(); Get.snackbar("에러", "실패: $e"); }
                       },
                     );
                   },
@@ -301,7 +279,7 @@ class _ImageAppPageState extends State<ImageAppPage> {
     );
   }
 
-  // --- 유틸리티 함수들 (디자인 유지) ---
+  // --- UI 보조 함수들 (기존 디자인 복구) ---
   Widget _sectionTitle(String title, {String? subTitle}) {
     return Column(children: [
       Row(children: [
@@ -328,46 +306,33 @@ class _ImageAppPageState extends State<ImageAppPage> {
 
   void _updateSelectedSizes() {
     if (startSize != null && endSize != null && startSize! <= endSize!) {
-      setState(() {
-        selectedSizes = [for (int i = startSize!; i <= endSize!; i += 5) i];
-      });
-    } else {
-      setState(() { selectedSizes = []; });
+      setState(() { selectedSizes = [for (int i = startSize!; i <= endSize!; i += 5) i]; });
     }
   }
 
-  Widget _imageBox({required String title, required File? image, required VoidCallback onTap}) {
+  Widget _imageBox({required String title, File? image, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
-      child: Stack(children: [
-        Container(
-          width: 140, height: 140,
-          decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(12)),
-          child: Column(children: [
-            Expanded(child: image == null ? const Icon(Icons.camera_alt, size: 40, color: Colors.white) : ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.file(image, fit: BoxFit.cover, width: double.infinity))),
-            Container(height: 36, width: double.infinity, alignment: Alignment.center, decoration: const BoxDecoration(color: Colors.black, borderRadius: BorderRadius.vertical(bottom: Radius.circular(12))), child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 12))),
-          ]),
-        ),
-        if (image != null) Positioned(top: 6, right: 6, child: Container(decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle), child: const Icon(Icons.close, size: 18, color: Colors.white))),
-      ]),
+      child: Container(
+        width: 140, height: 140,
+        decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(12)),
+        child: Column(children: [
+          Expanded(child: image == null ? const Icon(Icons.camera_alt, size: 40, color: Colors.white) : ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.file(image, fit: BoxFit.cover, width: double.infinity))),
+          Container(height: 36, width: double.infinity, alignment: Alignment.center, decoration: const BoxDecoration(color: Colors.black, borderRadius: BorderRadius.vertical(bottom: Radius.circular(12))), child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 12))),
+        ]),
+      ),
     );
   }
 }
 
+// 금액 콤마 포맷터
 class CurrencyInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
     if (newValue.text.isEmpty) return const TextEditingValue(text: '0');
-    String digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-    digits = digits.replaceFirst(RegExp(r'^0+'), '');
+    String digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '').replaceFirst(RegExp(r'^0+'), '');
     if (digits.isEmpty) digits = '0';
-    final buffer = StringBuffer();
-    for (int i = 0; i < digits.length; i++) {
-      int indexFromEnd = digits.length - i;
-      buffer.write(digits[i]);
-      if (indexFromEnd > 1 && indexFromEnd % 3 == 1) buffer.write(',');
-    }
-    final formatted = buffer.toString();
+    final formatted = digits.replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
     return TextEditingValue(text: formatted, selection: TextSelection.collapsed(offset: formatted.length));
   }
 }
