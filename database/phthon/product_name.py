@@ -16,6 +16,11 @@ def connect():
     )
     return conn
 
+# Description : select수정
+#   - 구조 수정
+# Date : 2025-01-03
+# Author : 지현
+
 @router.get("/select")
 async def select(pid:int):
     conn=connect()
@@ -26,8 +31,7 @@ async def select(pid:int):
     curs.execute(sql,(pid,))
     rows =curs.fetchall()
     conn.close()
-    result=[rows]
-    return{'results':result}
+    return{'results':rows}
 
 @router.post("/upload")
 async def upload(pid:int=Form(...),name:str=Form(...)):
