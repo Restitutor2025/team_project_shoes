@@ -26,7 +26,7 @@ async def select(pid: int):
     curs = conn.cursor()
 
     sql = """
-            SELECT size FROM ProductSize WHERE pid = %s 
+            SELECT * FROM ProductSize WHERE pid = %s 
         """
     curs.execute(sql, (pid,))
     rows = curs.fetchall()
