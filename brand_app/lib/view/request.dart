@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'package:brand_app/ip/ipaddress.dart';
 import 'package:brand_app/util/pcolor.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 
 class Request extends StatefulWidget {
   const Request({super.key});
@@ -9,137 +13,167 @@ class Request extends StatefulWidget {
 }
 
 class _RequestState extends State<Request> {
-  // 입력 제어를 위한 컨트롤러 및 변수
   final TextEditingController _nameController =
       TextEditingController();
+  final TextEditingController _quantityController =
+      TextEditingController(text: '1');
+
   String? _selectedMaker;
   String? _selectedProduct;
   String? _selectedSize;
   String? _selectedColor;
-  int _quantity = 1;
 
-  // 더미 데이터
-  final List<String> _makers = ['아디다스', '나이키', '뉴발란스'];
-  final List<String> _products = [
-    '퍼피켓',
-    '에어맥스',
-    '574 Classic',
-  ];
-  final List<String> _colors = ['블랙', '화이트', '그레이'];
+  List<String> _makers = [];
+  List<String> _products = [];
+  bool _isLoadingProducts = false;
+  bool _isLoadingmakers = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProducts();
+    _fetchMakers();
+  }
+
+  // API 호출 함수
+  Future<void> _fetchProducts() async {
+    setState(() => _isLoadingProducts = true);
+    print("데이터 요청 시작: ${IpAddress.baseUrl}/product/select");
+
+    try {
+      final response = await http.post(
+        Uri.parse('${IpAddress.baseUrl}/product/select'),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      print("응답 상태 코드: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(
+          utf8.decode(response.bodyBytes),
+        );
+        print("가져온 데이터 원본: $data");
+
+        setState(() {
+          // 1. 전체 데이터에서 ename만 추출
+          List<String> rawNames = data
+              .map((item) => item['ename'].toString())
+              .toList();
+
+          // 2. toSet()을 사용하여 중복 제거 후 다시 리스트로 변환
+          _products = rawNames.toSet().toList();
+
+          // 3. (선택) 보기 좋게 정렬
+          _products.sort();
+
+          _isLoadingProducts = false;
+        });
+        print("파싱된 상품 리스트: $_products");
+      } else {
+        print("서버 에러 응답: ${response.body}");
+        throw Exception('Failed to load products');
+      }
+    } catch (e) {
+      print("상품 목록 로드 에러 발생: $e");
+      setState(() => _isLoadingProducts = false);
+    }
+  }
+
+  // API 호출 함수
+  Future<void> _fetchMakers() async {
+    setState(() => _isLoadingmakers = true);
+    print(
+      "데이터 요청 시작: ${IpAddress.baseUrl}/manufacturename/upload",
+    );
+
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '${IpAddress.baseUrl}/manufacturername/select?pid=1',
+        ),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      print("응답 상태 코드: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(
+          utf8.decode(response.bodyBytes),
+        );
+        print("가져온 데이터 원본: $data");
+
+        setState(() {
+          List<String> rawNames = data
+              .map((item) => item['name'].toString())
+              .toList();
+
+          // 2. toSet()을 사용하여 중복 제거 후 다시 리스트로 변환
+          _makers = rawNames.toSet().toList();
+
+          // 3. (선택) 보기 좋게 정렬
+          _makers.sort();
+
+          _isLoadingmakers = false;
+        });
+        print("파싱된 상품 리스트: $_makers");
+      } else {
+        print("서버 에러 응답: ${response.body}");
+        throw Exception('Failed to load products');
+      }
+    } catch (e) {
+      print("상품 목록 로드 에러 발생: $e");
+      setState(() => _isLoadingmakers = false);
+    }
+  }
+
+  final List<String> _colors = ['화이트', '레드', '블랙', '브라운'];
   final List<String> _sizes = List.generate(
     13,
-    (index) => (230 + (index * 5)).toString(),
+    (i) => (230 + (i * 5)).toString(),
   );
 
-  // 수량 조절 함수
   void _updateQuantity(int amount) {
+    int current =
+        int.tryParse(_quantityController.text) ?? 0;
+    int newValue = current + amount;
+    if (newValue < 1) newValue = 1;
     setState(() {
-      if (_quantity + amount >= 1) {
-        _quantity += amount;
-      }
+      _quantityController.text = newValue.toString();
     });
   }
 
-  // 결과 확인 창 (BottomSheet)
-  void _showResultSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFF5F5F7),
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(20),
-            ),
-          ),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(15),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        color: Colors.grey[200],
-                        child: const Icon(
-                          Icons.image,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '$_selectedMaker $_selectedProduct ($_selectedColor)',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              '직원이름 : ${_nameController.text}  /  제조사 : $_selectedMaker  /  사이즈 : $_selectedSize  /  컬러 : $_selectedColor  /  수량 : $_quantity',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // 데이터베이스 저장 로직이 들어갈 곳
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(
-                      0xFF333333,
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 15,
-                    ),
-                  ),
-                  child: const Text(
-                    '제출하기',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-            ],
-          ),
-        );
-      },
-    );
+  // 품의 등록 액션
+  Future<int?> insertAction() async {
+    try {
+      print(
+        "제출 데이터 확인: ${_nameController.text}, $_selectedMaker, $_selectedProduct, $_selectedSize, $_selectedColor, ${_quantityController.text}",
+      );
+
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${IpAddress.baseUrl}/imployee/uproad'),
+      );
+      request.fields['ename'] = _nameController.text;
+      request.fields['maker'] =
+          _selectedMaker ?? ""; // 키값 확인 필요 (기존 pid에서 변경)
+      request.fields['pname'] = _selectedProduct ?? "";
+      request.fields['size'] = _selectedSize ?? "";
+      request.fields['color'] = _selectedColor ?? "";
+      request.fields['quantity'] = _quantityController.text;
+
+      var response = await request.send();
+      var respStr = await response.stream.bytesToString();
+
+      if (response.statusCode == 200) {
+        print("등록 성공: $respStr");
+        return 1;
+      } else {
+        print("등록 실패 (${response.statusCode}): $respStr");
+      }
+    } catch (e) {
+      debugPrint("insertAction 에러: $e");
+    }
+    return null;
   }
 
   @override
@@ -163,99 +197,100 @@ class _RequestState extends State<Request> {
               decoration: const InputDecoration(
                 hintText: '이름을 입력하세요',
                 isDense: true,
+                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 20),
 
             _buildLabel('제조사명'),
-            _buildDropdown(
-              _makers,
-              _selectedMaker,
-              (val) => setState(() {
-                _selectedMaker = val;
-                _selectedProduct = null;
-              }),
-            ),
+            _buildDropdown(_makers, _selectedMaker, (val) {
+              setState(() => _selectedMaker = val);
+            }),
             const SizedBox(height: 20),
 
             _buildLabel('상품명'),
-            _buildDropdown(
-              _products,
-              _selectedProduct,
-              _selectedMaker == null
-                  ? null
-                  : (val) => setState(
-                      () => _selectedProduct = val,
-                    ),
-            ),
+            _isLoadingProducts
+                ? const LinearProgressIndicator()
+                : _buildDropdown(
+                    _products,
+                    _selectedProduct,
+                    (val) {
+                      setState(
+                        () => _selectedProduct = val,
+                      );
+                    },
+                  ),
             const SizedBox(height: 20),
 
             _buildLabel('사이즈'),
-            _buildDropdown(
-              _sizes,
-              _selectedSize,
-              _selectedProduct == null
-                  ? null
-                  : (val) =>
-                        setState(() => _selectedSize = val),
-              suffix: '(mm)단위',
-            ),
+            _buildDropdown(_sizes, _selectedSize, (val) {
+              setState(() => _selectedSize = val);
+            }, suffix: '(mm)단위'),
             const SizedBox(height: 20),
 
             _buildLabel('컬러'),
-            _buildDropdown(
-              _colors,
-              _selectedColor,
-              _selectedSize == null
-                  ? null
-                  : (val) => setState(
-                      () => _selectedColor = val,
-                    ),
-            ),
-            const SizedBox(height: 20),
+            _buildDropdown(_colors, _selectedColor, (val) {
+              setState(() => _selectedColor = val);
+            }),
+            const SizedBox(height: 24),
 
             _buildLabel('발주수량'),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 10,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 15,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Colors.grey[300]!,
+                SizedBox(
+                  width: 100,
+                  height: 45,
+                  child: TextField(
+                    controller: _quantityController,
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    inputFormatters: [
+                      FilteringTextInputFormatter
+                          .digitsOnly,
+                    ],
+                    decoration: InputDecoration(
+                      contentPadding: EdgeInsets.zero,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          8,
+                        ),
+                      ),
                     ),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Text(
-                    '$_quantity',
-                    style: const TextStyle(fontSize: 16),
                   ),
                 ),
-                const SizedBox(width: 10),
-                _quantityBtn(1, '+1'),
-                _quantityBtn(10, '+10'),
-                _quantityBtn(100, '+100'),
+                _quantityButton(1),
+                _quantityButton(10),
+                _quantityButton(100),
               ],
             ),
             const SizedBox(height: 40),
 
             Center(
               child: SizedBox(
-                width: 200,
+                width: double.infinity,
+                height: 50,
                 child: ElevatedButton(
-                  onPressed: _selectedColor != null
-                      ? _showResultSheet
-                      : null,
+                  onPressed:
+                      _showResultSheet, // 조건 없이 항상 실행 가능하게 변경
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(
                       0xFF333333,
                     ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        8,
+                      ),
+                    ),
                   ),
                   child: const Text(
                     '확인',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ),
@@ -266,33 +301,62 @@ class _RequestState extends State<Request> {
     );
   }
 
-  // 공통 라벨 위젯
-  Widget _buildLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
+  // --- 기존 위젯 함수들 (_quantityButton, _buildLabel, _buildDropdown, _showResultSheet 동일하게 유지) ---
+
+  Widget _quantityButton(int unit) {
+    return Container(
+      height: 45,
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade400),
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            '*',
-            style: TextStyle(
-              color: Colors.red,
+          IconButton(
+            onPressed: () => _updateQuantity(-unit),
+            icon: const Icon(Icons.remove, size: 18),
+          ),
+          Text(
+            '$unit',
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+          IconButton(
+            onPressed: () => _updateQuantity(unit),
+            icon: const Icon(Icons.add, size: 18),
           ),
         ],
       ),
     );
   }
 
-  // 공통 드롭다운 위젯
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: RichText(
+        text: TextSpan(
+          text: '* ',
+          style: const TextStyle(
+            color: Colors.red,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+          children: [
+            TextSpan(
+              text: text,
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildDropdown(
     List<String> items,
     String? value,
@@ -320,10 +384,8 @@ class _RequestState extends State<Request> {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(5),
               ),
-              enabled:
-                  onChanged != null, // 이전 단계 미선택 시 비활성화
+              hintText: '선택해주세요',
             ),
-            hint: const Text('선택해주세요'),
           ),
         ),
         if (suffix != null)
@@ -341,19 +403,59 @@ class _RequestState extends State<Request> {
     );
   }
 
-  // 수량 증가 버튼 위젯
-  Widget _quantityBtn(int amount, String label) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 5),
-      child: OutlinedButton(
-        onPressed: () => _updateQuantity(amount),
-        style: OutlinedButton.styleFrom(
-          minimumSize: const Size(60, 40),
-          padding: EdgeInsets.zero,
+  void _showResultSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFFF5F5F7),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(20),
+          ),
         ),
-        child: Text(
-          label,
-          style: const TextStyle(color: Colors.black54),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              '입력된 정보 확인',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text('상품명: ${_selectedProduct ?? "미선택"}'),
+            Text('직원: ${_nameController.text}'),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  await insertAction();
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF333333),
+                ),
+                child: const Text(
+                  '제출하기',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

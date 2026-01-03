@@ -48,8 +48,8 @@ async def get_products():
     curs = conn.cursor() # 팀원 스타일: 커서 직접 생성
 
     try:
-        # SQL 실행
-        sql = "SELECT id, quantity, price, date, ename FROM product"
+        # DISTINCT를 넣어 중복을 원천 차단합니다.
+        sql = "SELECT DISTINCT ename FROM product ORDER BY ename ASC"
         curs.execute(sql)
         results = curs.fetchall()
 
