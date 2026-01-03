@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:customer_app/ip/ipaddress.dart';
 import 'package:customer_app/model/product.dart';
 import 'package:customer_app/util/pcolor.dart';
+import 'package:customer_app/util/snackbar.dart';
 import 'package:customer_app/view/home/home.dart';
 import 'package:customer_app/view/mypage/mypage.dart';
 import 'package:customer_app/view/product/purchase.dart';
@@ -46,6 +47,7 @@ class _DetailState extends State<Detail> {
   // List<Map<String, String>>productList = Get.arguments ?? '___';
   Product product = Get.arguments ?? '__';
   
+  
   @override
   void initState() {
     super.initState();
@@ -79,6 +81,7 @@ class _DetailState extends State<Detail> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Pcolor.basebackgroundColor,
         title: Text(""),
         actions: [
           IconButton(onPressed: () {
@@ -103,6 +106,7 @@ class _DetailState extends State<Detail> {
           ),
         ]
       ),
+      backgroundColor: Pcolor.basebackgroundColor,
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(30, 0, 30, 30),
@@ -112,8 +116,8 @@ class _DetailState extends State<Detail> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Image.network(
-                    '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=main', //상품이미지
-                    fit: BoxFit.contain,
+                    '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=main', //상품 메인 이미지
+                    fit: BoxFit.fill,
                   ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,8 +144,20 @@ class _DetailState extends State<Detail> {
                   ),
                 ],
               ),
+              Image.asset(
+                    'images/size.png', //사이즈표
+                    fit: BoxFit.fill,
+                  ),
               Image.network(
-                    '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=main', //상품이미지
+                    '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=top', //상품이미지
+                    fit: BoxFit.contain,
+                  ),
+              Image.network(
+                    '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=side', //상품이미지
+                    fit: BoxFit.contain,
+                  ),
+              Image.network(
+                    '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=back', //상품이미지
                     fit: BoxFit.contain,
                   ),
             ],
@@ -336,15 +352,24 @@ class _DetailState extends State<Detail> {
                  ),
               ElevatedButton(
                 onPressed: () {
-                  Get.to(Purchase(), arguments: {
+                  if (selectedSize=="" || selectedColor=="") {
+                   Snackbar().errorSnackBar(
+                    "미선택", 
+                    "사이즈와 색상을 모두 선택해주세요."
+                  );
+                  }else{
+                    Get.to(Purchase(), arguments: {
                   "pid": product.id,
                   "name": productName[0]["name"],
                   "size": selectedSize,
                   "color": selectedColor,
                   "price": product.price,
                   "quantity": count,
+                  "manufacturername": productList[0]['m.name'],
                   "image": '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=main'
-                });
+                  });
+                  }
+                  
                 },
                  child: Text("구매하기"),
                  ),
