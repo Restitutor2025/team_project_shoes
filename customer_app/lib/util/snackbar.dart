@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 
 class Snackbar {
   // 실패 했을때 스낵바
-  errorSnackBar(String title, String message ){
+  void errorSnackBar(String title, String message ){
     Get.snackbar(
     title,
     message,
@@ -14,7 +14,7 @@ class Snackbar {
     );
   }
   // 성공했을때 스낵바
-  okSnackBar(String title, String message ){
+  void okSnackBar(String title, String message ){
     Get.snackbar(
     title,
     message,
@@ -25,7 +25,7 @@ class Snackbar {
     );
   }
   // Dialog
-  showDialog(String title, String message) {
+  void showDialog(String title, String message) {
     Get.defaultDialog(
       title: title,
       middleText: message,
