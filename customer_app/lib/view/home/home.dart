@@ -1,3 +1,4 @@
+import 'package:customer_app/ip/ipaddress.dart';
 import 'package:customer_app/model/product.dart';
 import 'package:customer_app/view/product/detail.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +32,7 @@ class _HomeState extends State<Home> {
 
   Future<void> getJSONdata() async {
     var url = Uri.parse(
-      'http://172.16.250.183:8008/product/select',
+      '${IpAddress.baseUrl}/product/select',
     );
     try {
       var response = await http.post(url);
@@ -237,7 +238,7 @@ class _ProductCard extends StatelessWidget {
             Expanded(
               child: Center(
                 child: Image.network(
-                  'http://172.16.250.183:8008/productimage/view?pid=${product.id}&position=main', //상품이미지
+                  '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=main', //상품이미지
                   fit: BoxFit.contain,
                 ),
               ),
