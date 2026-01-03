@@ -314,7 +314,7 @@ class _ImageAppPageState extends State<ImageAppPage> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: selectedManufacturer,
+                value: selectedColorlist,
                 hint: const Text('칼라를 선택하세요'),
                 items: manufacturers
                     .map(
@@ -326,7 +326,7 @@ class _ImageAppPageState extends State<ImageAppPage> {
                     .toList(),
                 onChanged: (value) {
                   setState(() {
-                    selectedManufacturer = value;
+                    selectedColorlist = value;
                   });
                 },
                 decoration: InputDecoration(

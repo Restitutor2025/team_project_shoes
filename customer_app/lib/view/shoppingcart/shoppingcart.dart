@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:customer_app/ip/ipaddress.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 class Shoppingcart extends StatefulWidget {
@@ -26,7 +27,7 @@ class _ShoppingcartState extends State<Shoppingcart> {
   }
 
   Future<void> getJSONData()async{
-    var url=Uri.parse("http://172.16.250.199:8008/product/selectcart");
+    var url=Uri.parse("${IpAddress.baseUrl}/product/selectcart");
     var response =await http.get(url);
     data.clear();
     var dataConvertedJSON =json.decode(utf8.decode(response.bodyBytes));
@@ -37,7 +38,7 @@ class _ShoppingcartState extends State<Shoppingcart> {
 
   }
    Future<void> getJSONDataimage()async{
-    var url=Uri.parse("http://172.16.250.199:8008/productimage/view2");
+    var url=Uri.parse("${IpAddress.baseUrl}/productimage/view2");
     var response =await http.get(url);
     imagedata.clear();
     var dataConvertedJSON =json.decode(utf8.decode(response.bodyBytes));
