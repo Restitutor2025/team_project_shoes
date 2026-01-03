@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:customer_app/ip/ipaddress.dart';
 import 'package:customer_app/util/pcolor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -75,7 +76,7 @@ void initState() {
   }
 
   Future<void> loadStoreData() async {
-    var url = Uri.parse("http://172.16.250.193:8008/store/select");
+    var url = Uri.parse("${IpAddress.baseUrl}/store/select");
     var response = await http.get(url);
     storeList.clear();
     var dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));

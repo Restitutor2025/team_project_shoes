@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:customer_app/ip/ipaddress.dart';
 import 'package:customer_app/model/name.dart';
 import 'package:customer_app/model/product.dart';
 import 'package:customer_app/model/product_image.dart';
@@ -26,7 +27,7 @@ import 'package:intl/intl.dart';
 const String rDBName = 'teamproject';  //  Database Name
 const String rDBFileExt = '.db';
 //  Point 3
-const hostip='172.16.250.193';
+const hostip='${IpAddress.host}';
 //  Point 2
 const String rDBFull = rDBName+rDBFileExt;
 const int rVersion = 1;

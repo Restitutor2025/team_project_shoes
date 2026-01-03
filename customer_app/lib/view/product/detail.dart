@@ -1,3 +1,4 @@
+import 'package:customer_app/ip/ipaddress.dart';
 import 'package:customer_app/model/product.dart';
 import 'package:customer_app/util/pcolor.dart';
 import 'package:flutter/material.dart';
@@ -91,7 +92,7 @@ class _DetailState extends State<Detail> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Image.network(
-                  'http://172.16.250.183:8008/productimage/view?pid=${product.id}&position=main', //상품이미지
+                  '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=main', //상품이미지
                   fit: BoxFit.contain,
                 ),
                 Text(
@@ -109,7 +110,7 @@ class _DetailState extends State<Detail> {
               ],
             ),
             Image.network(
-                  'http://172.16.250.183:8008/productimage/view?pid=${product.id}&position=main', //상품이미지
+                  '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=main', //상품이미지
                   fit: BoxFit.contain,
                 ),
           ],
@@ -162,7 +163,7 @@ class _DetailState extends State<Detail> {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: Image.network(
-                              'http://172.16.250.183:8008/productimage/view?pid=${product.id}&position=main', //상품이미지
+                              '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=main', //상품이미지
                               fit: BoxFit.contain,
                             ),
                           ),

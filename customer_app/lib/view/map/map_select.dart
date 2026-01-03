@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:customer_app/database/selected_store_database.dart';
+import 'package:customer_app/ip/ipaddress.dart';
 import 'package:customer_app/util/pcolor.dart';
 import 'package:customer_app/util/snackbar.dart';
 import 'package:customer_app/view/map/map_detail.dart';
@@ -69,7 +70,7 @@ class _MapSelectState extends State<MapSelect> {
   }
 
   Future<void> loadStoreData() async {
-    var url = Uri.parse("http://172.16.250.193:8008/store/select");
+    var url = Uri.parse("${IpAddress.baseUrl}/store/select");
     var response = await http.get(url);
     storeList.clear();
     var dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));
