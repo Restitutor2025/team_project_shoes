@@ -33,7 +33,7 @@ class _StaffLoginState extends State<StaffLogin> {
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Image.asset("images/puma.png",
+        Image.asset("images/logo_non.png",
         width: 300,
         height: 300,),
         Container(
@@ -47,7 +47,7 @@ class _StaffLoginState extends State<StaffLogin> {
           child:Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset("images/puma2.png",
+              Image.asset("images/logo_non.png",
               width: 100,
               height: 100,),
               Padding(

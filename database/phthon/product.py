@@ -98,6 +98,34 @@ async def select(pid: int):
     finally:
         conn.close()
 
+@router.get("/selectInventory")
+async def select(pid: int):
+    conn = connect()
+    try:
+        curs = conn.cursor() 
+        sql = """
+            SELECT 
+                p.id,
+                p.ename,
+                p.quantity,
+                p.date,
+                pn.name,
+                m.name,
+                pc.color
+            FROM product p
+            LEFT JOIN productname pn ON p.id = pn.pid
+            LEFT JOIN manufacturername m ON p.mid = m.pid
+            LEFT JOIN productcolor pc ON p.id = pc.pid
+            WHERE p.id = %s
+        """
+        curs.execute(sql, (pid,))
+        rows = curs.fetchall()
+        return {"results": rows}
+    except Exception as e:
+        print("selectdetail error:", e)
+        return {"error": str(e)}
+    finally:
+        conn.close()
 
 
 @router.post("/insert")
