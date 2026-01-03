@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:brand_app/ip/ipaddress.dart'; // ✅ 추가: 이미지 URL에 사용
 import 'package:brand_app/util/pcolor.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -14,7 +15,22 @@ class PurchaseDetailView extends StatefulWidget {
 
 class _PurchaseDetailViewState extends State<PurchaseDetailView> {
   // Property
-  var value = Get.arguments ?? "__";
+  // var value = Get.arguments ?? "__";          // ❌ 사용 방식 변경
+  late final Map<String, dynamic> data;          // ✅ 추가: arguments를 Map으로 보관
+  late final String status;                      // ✅ 추가: 상태를 한 번만 계산
+
+  @override
+  void initState() {
+    super.initState();
+    final value = Get.arguments;
+    if (value is Map<String, dynamic>) {
+      data = value;
+    } else {
+      data = <String, dynamic>{};
+      log('PurchaseDetailView: 잘못된 arguments 타입: ${value.runtimeType}');
+    }
+    status = currentStatus(data); // ✅ 한 번만 계산해서 재사용
+  }
 
   String formatDate(dynamic x) {
     if (x == null) return '-';
@@ -32,11 +48,12 @@ class _PurchaseDetailViewState extends State<PurchaseDetailView> {
     }
   }
 
-  String currentStatus(Map<String, Object?> item) {
+  // ✅ 타입을 Map<String, dynamic>으로 변경
+  String currentStatus(Map<String, dynamic> item) {
     final hasPurchaseDate = item['purchasedate'] != null;
     final hasPickupDate = item['pickupdate'] != null;
 
-    final hasRefundId = item['rid'] != null; 
+    final hasRefundId = item['rid'] != null;
     final hasRefundDate = item['refunddate'] != null;
 
     if (hasRefundId && hasRefundDate) {
@@ -71,10 +88,62 @@ class _PurchaseDetailViewState extends State<PurchaseDetailView> {
     }
   }
 
+
+  Widget _buildProductImage(BuildContext context) {
+    final pid = data['pid'];
+
+    double width = MediaQuery.of(context).size.width * 0.5;
+    double height = 220.0;
+
+    // pid 없으면 기존처럼 회색 박스
+    if (pid == null) {
+      return Container(
+        width: MediaQuery.of(context).size.width * 0.5,
+        height: 220,
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          borderRadius: BorderRadius.circular(12),
+        ),
+      );
+    }
+    
+    final imageUrl = "${IpAddress.baseUrl}/productimage/view?pid=$pid&position=main";
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Image.network(
+        imageUrl,
+        width: width,
+        height: height,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) return child;
+          return Container(
+            width: width,
+            height: height,
+            alignment: Alignment.center,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: width,
+            height: height,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            alignment: Alignment.center,
+            child: Icon(Icons.broken_image),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-
-    if (value is! Map<String, dynamic>) {
+    if (data.isEmpty) {
       return Scaffold(
         appBar: AppBar(
           title: Text('자세히 보기'),
@@ -87,8 +156,6 @@ class _PurchaseDetailViewState extends State<PurchaseDetailView> {
         ),
       );
     }
-
-    final Map<String, dynamic> data = value as Map<String, dynamic>;
 
     return Scaffold(
       appBar: AppBar(
@@ -105,14 +172,7 @@ class _PurchaseDetailViewState extends State<PurchaseDetailView> {
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(0, 0, 0, 32),
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.5,
-                    height: 220,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
+                  child: _buildProductImage(context),
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,24 +190,27 @@ class _PurchaseDetailViewState extends State<PurchaseDetailView> {
                                   Expanded(
                                     child: Text(
                                       data['cemail']?.toString() ?? '-',
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: _statusColor((currentStatus(data).toString())).withOpacity(0.1),
+                                      color: _statusColor(status).withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
-                                        color: _statusColor((currentStatus(data).toString())),
+                                        color: _statusColor(status),
                                         width: 0.8,
                                       ),
                                     ),
                                     child: Text(
-                                      (currentStatus(data).toString()).isEmpty ? '상태 없음' : (currentStatus(data).toString()),
+                                      status.isEmpty ? '상태 없음' : status,
                                       style: TextStyle(
-                                        color: _statusColor((currentStatus(data).toString())),
+                                        color: _statusColor(status),
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -193,16 +256,20 @@ class _PurchaseDetailViewState extends State<PurchaseDetailView> {
                                       children: [
                                         Padding(
                                           padding: const EdgeInsets.symmetric(vertical: 2),
-                                          child: Text('주문금액 : ${data['finalprice'] ?? '-'}')),
+                                          child: Text('주문금액 : ${data['finalprice'] ?? '-'}'),
+                                        ),
                                         Padding(
                                           padding: const EdgeInsets.symmetric(vertical: 2),
-                                          child: Text('사이즈 : ${data['size'] ?? '-'}')),
+                                          child: Text('사이즈 : ${data['size'] ?? '-'}'),
+                                        ),
                                         Padding(
                                           padding: const EdgeInsets.symmetric(vertical: 2),
-                                          child: Text('색상 : ${data['color'] ?? '-'}')),
+                                          child: Text('색상 : ${data['color'] ?? '-'}'),
+                                        ),
                                         Padding(
                                           padding: const EdgeInsets.symmetric(vertical: 2),
-                                          child: Text('수량 : ${data['quantity'] ?? '-'}')),
+                                          child: Text('수량 : ${data['quantity'] ?? '-'}'),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -232,15 +299,14 @@ class _PurchaseDetailViewState extends State<PurchaseDetailView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if ((currentStatus(data).toString()) == '주문완료' || (currentStatus(data).toString()) == '수령대기')
+                            if (status == '주문완료' || status == '수령대기')
                               Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 4),
                                 child: Text('수령지점 : ${data['sname']?.toString() ?? '-'}'),
                               ),
-
-                            if ((currentStatus(data).toString()) == '수령완료' ||
-                                (currentStatus(data).toString()) == '반품대기' ||
-                                (currentStatus(data).toString()) == '반품완료') ...[
+                            if (status == '수령완료' ||
+                                status == '반품대기' ||
+                                status == '반품완료') ...[
                               Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 4),
                                 child: Text('수령지점 : ${data['sname']?.toString() ?? '-'}'),
@@ -250,26 +316,26 @@ class _PurchaseDetailViewState extends State<PurchaseDetailView> {
                                 child: Text('수령날짜 : ${formatDate(data['pickupdate'])}'),
                               ),
                             ],
-
-                            if ((currentStatus(data).toString()) == '반품대기' || (currentStatus(data).toString()) == '반품완료')
+                            if (status == '반품대기' || status == '반품완료')
                               Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 4),
-                                child: Text('반품지점 : ${data['sname']?.toString() ?? '-'}'),
+                                child: Text(
+                                  '반품지점 : ${data['sname']?.toString() ?? '-'}',
+                                ),
                               ),
-
-                            if ((currentStatus(data).toString()) == '반품완료')
+                            if (status == '반품완료')
                               Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 4),
                                 child: Text('반품날짜 : ${formatDate(data['refunddate'])}'),
                               ),
-
-                            if (!((currentStatus(data).toString()) == '주문완료' ||
-                                (currentStatus(data).toString()) == '수령대기' ||
-                                (currentStatus(data).toString()) == '수령완료' ||
-                                (currentStatus(data).toString()) == '반품대기' ||
-                                (currentStatus(data).toString()) == '반품완료'))
+                            if (!(status == '주문완료' ||
+                                status == '수령대기' ||
+                                status == '수령완료' ||
+                                status == '반품대기' ||
+                                status == '반품완료'))
                               Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 4),
                                 child: Text(
                                   '추가 수령/반품 정보가 없습니다.',
                                   style: TextStyle(

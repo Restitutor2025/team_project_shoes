@@ -147,3 +147,28 @@ async def find_pw(request: FindPwRequest):
         return {'results': 'Error'}
     finally:
         conn.close()
+
+#  고객 id로 정보 조회
+@router.get("/select")
+async def select_by_id(cid: int):
+    conn = connect()
+    curs = conn.cursor()
+    try:
+        sql = """
+            SELECT id, name, email, phone, date, address
+            FROM customer
+            WHERE id = %s
+        """
+        curs.execute(sql, (cid,))
+        user = curs.fetchone()
+
+        if user:
+            if user.get('date'):
+                user['date'] = user['date'].isoformat()
+            return {'results': [user]}
+        else:
+            return {'results': []}
+    except Exception as e:
+        return {'results': 'Error'}
+    finally:
+        conn.close()
