@@ -1,6 +1,7 @@
 import 'package:brand_app/firebase_options.dart';
 import 'package:brand_app/view/ask_chat.dart';
 import 'package:brand_app/view/image_app_page.dart';
+import 'package:brand_app/view/request.dart';
 import 'package:brand_app/view/staff_login.dart';
 import 'package:brand_app/view/staff_main_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -60,7 +61,7 @@ class MyApp extends StatelessWidget {
           seedColor: Colors.deepPurple,
         ),
       ),
-      home: const StaffLogin(),
+      home: const Request(),
     );
   }
 }
