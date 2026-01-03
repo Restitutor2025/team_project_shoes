@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:customer_app/config.dart' as config;
+import 'package:customer_app/model/customer.dart';
 import 'package:flutter/material.dart';
 
 //  Mypage
@@ -27,15 +28,17 @@ class _MypageState extends State<Mypage> {
   int purchases = 0;
   int reviews = 0;
   int asks = 0;
+  late Customer customer;
 
   @override
   void initState() {
     super.initState();
+    customer = Customer(id: 1, email: 'email', password: 'password', name: 'name', phone: 'phone', date: DateTime.now(), address: 'address');
     _loadCounts();
   }
 
   Future<void> _loadCounts() async {
-    final int cid = 1; // Actual customer id in release
+    int cid = customer.id!;
 
     try {
       final purchaseList = (await config.getJSONData(
@@ -109,7 +112,7 @@ class _MypageState extends State<Mypage> {
             Padding(
               padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
               child: Row(
-                children: [Icon(Icons.question_mark), Text('\t\tUser')],
+                children: [Icon(Icons.person), Text('\t\t${customer.name}')],
               ),
             ),
             Card(
