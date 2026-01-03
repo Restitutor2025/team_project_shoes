@@ -3,6 +3,10 @@ import 'dart:convert';
 import 'package:customer_app/ip/ipaddress.dart';
 import 'package:customer_app/model/product.dart';
 import 'package:customer_app/util/pcolor.dart';
+import 'package:customer_app/view/home/home.dart';
+import 'package:customer_app/view/mypage/mypage.dart';
+import 'package:customer_app/view/product/purchase.dart';
+import 'package:customer_app/view/shoppingcart/shoppingcart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -28,15 +32,17 @@ class Detail extends StatefulWidget {
 
 class _DetailState extends State<Detail> {
   // Property
-  // late List<Product> productList; 제품 데이터 받아오기
-  // List<Map<String, String>> productList = []; // 제품 데이터 받아올 곳
-  ScrollController scrollController = ScrollController();
+  List productList = []; // 제품 데이터 받아오기
+  ScrollController scrollController = ScrollController(); // 스크롤 컨트롤러
   List sizeList = []; // 사이즈 데이터 받아올 곳
   List productName = []; // 제품명 데이터 받아올 곳
   List colorList = []; // 컬러 데이터 받아올 곳
   late int count = 1; // 제품 수량
   Color changeSizeColor = Pcolor.appBarForegroundColor;
-  int? indexNum;
+  int? indexNum; // 사이즈 선택 인덱스 비교용
+  int? colorIndexNum; // 컬러 선택 인덱스 비교용
+  String selectedSize = "";
+  String selectedColor = "";
   // List<Map<String, String>>productList = Get.arguments ?? '___';
   Product product = Get.arguments ?? '__';
   
@@ -45,46 +51,29 @@ class _DetailState extends State<Detail> {
     super.initState();
     // addData(); // 더미 데이터 넣어줄 예정
     getJSONData();
-    getJSONNameData();
-    getJSONColorData();
 
   }
 
   Future<void> getJSONData() async{
-    var url1 = Uri.parse(
-      "${IpAddress.baseUrl}/productsize/select?pid=${product.id}", 
+    var url = Uri.parse(
+      "${IpAddress.baseUrl}/product/selectdetail?pid=${product.id}", 
     ); 
-    var response = await http.get(url1);
+    var response = await http.get(url);
     var dataConvertdJSON = json.decode(utf8.decode(response.bodyBytes));
 
     List results = dataConvertdJSON['results'];
-    sizeList.addAll(results);
-    setState(() {});
+    
+    if (results.isNotEmpty) {
+    setState(() {
+      productList = results;
+      sizeList = results.map((item) => item['size']).toSet().toList(); 
+      colorList = results.map((item) => item['color']).toSet().toList();
+      
+      productName = [results[0]]; 
+    });
+  }
   }
 
-  Future<void> getJSONNameData() async{
-    var url2 = Uri.parse(
-      "${IpAddress.baseUrl}/productname/select?pid=${product.id}", 
-    ); 
-    var response = await http.get(url2);
-    var dataConvertdJSON = json.decode(utf8.decode(response.bodyBytes));
-
-    List nameResult = dataConvertdJSON['results'];
-    productName.addAll(nameResult);
-    setState(() {});
-  }
-
-  Future<void> getJSONColorData() async{
-    var url3 = Uri.parse(
-      "${IpAddress.baseUrl}/productcolor/select?pid=${product.id}", 
-    ); 
-    var response = await http.get(url3);
-    var dataConvertdJSON = json.decode(utf8.decode(response.bodyBytes));
-
-    List colorResults = dataConvertdJSON['results'];
-    colorList.addAll(colorResults);
-    setState(() {});
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,17 +87,17 @@ class _DetailState extends State<Detail> {
           icon: Icon(Icons.search) //
           ),
           IconButton(onPressed: () {
-            // 홈 화면 이동
+            Home();
           }, 
           icon: Icon(Icons.home) //
           ),
           IconButton(onPressed: () {
-            // 장바구니 페이지 이동
+            Shoppingcart();
           }, 
           icon: Icon(Icons.shopping_cart_outlined) //
           ),
           IconButton(onPressed: () {
-            // 마이 페이지 이동
+            Mypage();
           }, 
           icon: Icon(Icons.more_horiz) //
           ),
@@ -138,7 +127,7 @@ class _DetailState extends State<Detail> {
                         ),
                       Text( 
                          productName.isNotEmpty
-                          ? productName[0]["name"].toString()
+                          ? productList[0]["name"].toString()
                           : ""
                         ),
                       Text(
@@ -219,7 +208,7 @@ class _DetailState extends State<Detail> {
                                   productName[0]["name"].toString(),
                                 style: TextStyle(
                                 fontWeight: FontWeight.bold),),
-                                Text('KEEN'),
+                                Text(productList[0]['m.name'].toString()),
                                 SizedBox(height: 12),
                               ],
                             ),
@@ -229,8 +218,9 @@ class _DetailState extends State<Detail> {
                     ],
                   ),
                 ),
+            Text("사이즈"),
             SizedBox(
-              height: 150,
+              height: 50,
               child: GridView.builder(
                   controller: scrollController,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -241,25 +231,24 @@ class _DetailState extends State<Detail> {
                   ), 
                   itemCount: sizeList.length,
                   itemBuilder: (context, index) {
-                    final bool choiseCardIndex = (indexNum==index);
                     return SizedBox(
                       height: 30,
                       child: Center(
                         child: GestureDetector(
                           onTap: () {
                             // colorSheet();
-                            indexNum=index;
-                            
+                            indexNum = index;
+                            selectedSize = sizeList[index].toString();
                             setState(() {});
                           },
                           child: Card(
-                            color: choiseCardIndex 
+                            color: (indexNum == index) 
                               ? Pcolor.errorBackColor
                               : Pcolor.basebackgroundColor,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(sizeList[index]["size"].toString(),),
+                                Text(sizeList[index].toString(),),
                               ],
                             ),
                           ),
@@ -269,6 +258,7 @@ class _DetailState extends State<Detail> {
                   }
               ),
             ),
+            Text("색상"),
             SizedBox(
               width: 200,
               height: 70,
@@ -287,10 +277,20 @@ class _DetailState extends State<Detail> {
                       color: Pcolor.appBarBackgroundColor,
                       borderRadius: BorderRadius.circular(15)
                     ),
-                    child: Card(
-                      child: Center(
-                        child:
-                          Text(colorList[index]["color"])
+                    child: GestureDetector(
+                      onTap: () {
+                        colorIndexNum = index;
+                        setState(() {});
+                        selectedColor = colorList[index].toString();
+                      },
+                      child: Card(
+                        color: (colorIndexNum == index)
+                        ? Pcolor.errorBackColor
+                        : Pcolor.basebackgroundColor,
+                        child: Center(
+                          child:
+                            Text(colorList[index])
+                        ),
                       ),
                     ),
                   );
@@ -317,100 +317,42 @@ class _DetailState extends State<Detail> {
                 ),
               ]
             ),
+            Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  Get.to(Shoppingcart(), arguments: {
+                  "pid": product.id, // pid
+                  "name": productName[0]["name"], // 상품명
+                  "size": selectedSize, // 고른 사이즈
+                  "color": selectedColor, // 선택 컬러
+                  "price": product.price, // 상품 가격
+                  "quantity": count, // 수량
+                  "image": '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=main' // 이미지
+                  });
+                },
+                 child: Text("장바구니"),
+                 ),
+              ElevatedButton(
+                onPressed: () {
+                  Get.to(Purchase(), arguments: {
+                  "pid": product.id,
+                  "name": productName[0]["name"],
+                  "size": selectedSize,
+                  "color": selectedColor,
+                  "price": product.price,
+                  "quantity": count,
+                  "image": '${IpAddress.baseUrl}/productimage/view?pid=${product.id}&position=main'
+                });
+                },
+                 child: Text("구매하기"),
+                 ),
+            ],
+          ),
           ],
         ),
       )
     );
-
   }
-
-  // void colorSheet(){
-  //   Get.bottomSheet(
-  //     Container(
-  //       width: 500,
-  //       height: 300,
-  //       color: Pcolor.basebackgroundColor,
-  //       child: Column(
-  //         children: [
-  //           Icon(Icons.horizontal_rule_sharp),
-  //           Text("색깔"),
-  //           SizedBox(height: 12),
-  //           SizedBox(
-  //             width: 200,
-  //             height: 70,
-  //             child: GridView.builder(
-  //               itemCount: colorList.length,
-  //               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-  //               crossAxisCount: 3,
-  //               crossAxisSpacing: 10,
-  //               mainAxisSpacing: 10,
-  //               ), 
-  //               controller: scrollController,
-  //               itemBuilder: (context, index) {
-  //                 return Container(
-  //                   height: 10,
-  //                   decoration: BoxDecoration(
-  //                     color: Pcolor.effectBackColor,
-  //                     borderRadius: BorderRadius.circular(15)
-  //                   ),
-  //                   child: Card(
-  //                     child: Center(
-  //                       child:
-  //                         Text(colorList[index])
-  //                     ),
-  //                   ),
-  //                 );
-  //               },
-  //               ),
-  //           ),
-            
-  //         Column(
-  //         children: [
-  //           Row(
-  //             mainAxisAlignment: MainAxisAlignment.end,
-  //             children: [
-  //               TextButton(
-  //                 onPressed: () {
-  //                   count--;
-  //                   setState(() {});
-  //                 },
-  //                 child: Text('-'),
-  //               ),
-  //               Text("$count"),
-  //               TextButton.icon(
-  //                 label: Icon(Icons.add),
-  //                 onPressed: () {
-  //                   count++;
-  //                   setState(() {});
-  //                 },
-  //               ),
-  //             ]
-  //           ),
-  //         Row(
-  //           mainAxisAlignment: MainAxisAlignment.center,
-  //           children: [
-  //             ElevatedButton(
-  //               onPressed: () {
-  //                 //
-  //               },
-  //                child: Text("장바구니"),
-  //                ),
-  //             ElevatedButton(
-  //               onPressed: () {
-  //                 //
-  //               },
-  //                child: Text("구매하기"),
-  //                ),
-  //           ],
-  //         ),
-  //         ]
-  //         )
-  //         ]
-  //         ),
-  //     ),
-  //   );
-  // }
-
-
-
 } // class
