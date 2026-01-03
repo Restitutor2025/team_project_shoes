@@ -29,8 +29,10 @@ class _PurchaseState extends State<Purchase> {
   // Property
   late TextEditingController branchName; //  매장명
   late bool isBranchSelected; // 픽업 장소 선택 여부
-  late int _radioValue; // Radio
+  late int _radioValue; // Radio 버튼
   late Color okColor = Pcolor.appBarBackgroundColor;
+
+  Map<String, dynamic> selectedProduct = Get.arguments; // 넘어온 상품 정보 저장
 
   @override
   void initState() {
@@ -164,8 +166,8 @@ class _PurchaseState extends State<Purchase> {
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: Image.asset(
-                                'images/logo.png',
+                              child: Image.network(
+                                selectedProduct['image'],
                                 width: 72,
                                 height: 72,
                                 fit: BoxFit.cover,
@@ -175,15 +177,15 @@ class _PurchaseState extends State<Purchase> {
                               child: Column(
                                 children: [
                                   Text(
-                                    "킨 재스퍼 여성 스니커즈 발라드",
+                                  selectedProduct['name'],
                                   style: TextStyle(
                                   fontWeight: FontWeight.bold),),
-                                  Text('킨'),
+                                  Text(selectedProduct['manufacturername'],),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text(
-                                        "240 SIZE",
+                                        "${selectedProduct['size']} 개",
                                       style: TextStyle(
                                       fontWeight: FontWeight.bold),),
                                       Text(
@@ -191,7 +193,7 @@ class _PurchaseState extends State<Purchase> {
                                       style: TextStyle(
                                       fontWeight: FontWeight.bold),),
                                       Text(
-                                        "1 개",
+                                        "${selectedProduct['quantity']} 개",
                                       style: TextStyle(
                                       fontWeight: FontWeight.bold),),
                                     ],
@@ -208,7 +210,7 @@ class _PurchaseState extends State<Purchase> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text("결제 금액"),
-                            Text("382,000 원"),
+                            Text("${selectedProduct['price']} 원"),
                           ],
                         ),
                         SizedBox(height: 12),
