@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:customer_app/config.dart' as config;
+import 'package:customer_app/model/customer.dart';
+import 'package:customer_app/model/usercontroller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -26,6 +28,9 @@ class Chatting extends StatefulWidget {
 
 class _ChattingState extends State<Chatting> {
   //  Property
+  late Customer customer;
+  UserController userController = Get.find<UserController>();
+
   late int cid;
   var values = Get.arguments;
   late TextEditingController tEC1;
@@ -34,8 +39,11 @@ class _ChattingState extends State<Chatting> {
   @override
   void initState() {
     super.initState();
+    userController.user == null
+      ? customer = Customer(id: 1, email: 'email', password: 'password', name: 'name', phone: 'phone', date: DateTime.now(), address: 'address')
+      : customer = userController.user!;
     tEC1 = TextEditingController();
-    cid = 1;  //  dummy
+    cid = customer.id!;
   }
 
   @override
