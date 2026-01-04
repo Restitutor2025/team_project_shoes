@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:customer_app/config.dart' as config;
 import 'package:customer_app/model/customer.dart';
+import 'package:customer_app/model/usercontroller.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 //  Mypage
 /*
@@ -30,12 +32,15 @@ class _MypageState extends State<Mypage> {
   int reviews = 0;
   int asks = 0;
   late Customer customer;
+  UserController userController = Get.find<UserController>();
 
   @override
   void initState() {
     super.initState();
-    customer = Customer(id: 1, email: 'email', password: 'password', name: 'name', phone: 'phone', date: DateTime.now(), address: 'address');
     _loadCounts();
+    userController.user == null
+      ? customer = Customer(id: 1, email: 'email', password: 'password', name: 'name', phone: 'phone', date: DateTime.now(), address: 'address')
+      : customer = userController.user!;
   }
 
   Future<void> _loadCounts() async {
