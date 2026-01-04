@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:customer_app/database/cartdatabasehandler.dart';
+import 'package:customer_app/for%20test/purchase2.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -8,7 +9,6 @@ import 'package:customer_app/model/product.dart';
 import 'package:customer_app/model/cart.dart';
 import 'package:customer_app/model/usercontroller.dart'; // 유저 컨트롤러 임포트
 import 'package:customer_app/util/pcolor.dart';
-import 'package:customer_app/view/product/purchase.dart';
 
 class Detail2 extends StatefulWidget {
   const Detail2({super.key});
@@ -73,8 +73,7 @@ class _Detail2State extends State<Detail2> {
       return;
     }
     
-    // Customer 모델의 id(고유번호)를 cid로 사용
-    // 만약 Customer 모델의 ID 필드명이 다르면 (예: u_seq 등) 아래 코드를 그에 맞게 수정하세요.
+    // ✅ 직접 수정하신 'id' 필드명을 사용하여 userCid 할당
     int userCid = int.parse(userController.user!.id.toString()); 
 
     // 2. 선택한 옵션에 맞는 실제 상품 id 찾기
@@ -88,7 +87,7 @@ class _Detail2State extends State<Detail2> {
 
     if (isCart) {
       try {
-        // SQLite 저장: 고정값 1 대신 유저의 실제 ID(userCid)를 넣음
+        // SQLite 저장
         await handler.insertCart(Cart(cid: userCid, cartid: finalPid));
         Get.back(); // 바텀시트 닫기
         Get.snackbar("성공", "장바구니에 담겼습니다.", backgroundColor: Colors.blue, colorText: Colors.white);
@@ -96,7 +95,7 @@ class _Detail2State extends State<Detail2> {
     } else {
       // 바로 구매하기: 결제 페이지로 이동
       Get.back();
-      Get.to(() => const Purchase(), arguments: {
+      Get.to(() => const Purchase2(), arguments: {
         "pid": finalPid,
         "name": matchedItem['product_name'] ?? product.ename,
         "size": selectedSize,
@@ -105,21 +104,26 @@ class _Detail2State extends State<Detail2> {
         "quantity": count,
         "manufacturername": matchedItem['manufacturer_name'] ?? "브랜드",
         "image": '${IpAddress.baseUrl}/productimage/view?pid=${product.mid ?? product.id}&position=main',
-        "cid": userCid,
+        "cid": userCid, // ✅ 실제 유저 ID(cid) 전달
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    int imgId = (product.mid != null && product.mid != 0) ? product.mid! : product.id!;
+    // 💡 이미지 ID 안전장치 (id가 null이면 0으로 처리하여 URI 에러 방지)
+    int imgId = (product.mid != null && product.mid != 0) ? product.mid! : (product.id ?? 0);
+
     return Scaffold(
       backgroundColor: Pcolor.basebackgroundColor,
       appBar: AppBar(title: Text(koreanName ?? "상품 상세"), backgroundColor: Colors.white, foregroundColor: Colors.black, elevation: 0),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Image.network('${IpAddress.baseUrl}/productimage/view?pid=$imgId&position=main', fit: BoxFit.cover),
+            // 💡 이미지 주소 생성 시 에러 방지
+            imgId != 0 
+              ? Image.network('${IpAddress.baseUrl}/productimage/view?pid=$imgId&position=main', fit: BoxFit.cover)
+              : const SizedBox(height: 200, child: Icon(Icons.image_not_supported)),
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -131,7 +135,9 @@ class _Detail2State extends State<Detail2> {
                   const Divider(height: 40),
                   Image.asset('images/size.png', fit: BoxFit.fill),
                   const SizedBox(height: 20),
-                  _img(imgId, 'top'), _img(imgId, 'side'), _img(imgId, 'back'),
+                  if (imgId != 0) ...[
+                    _img(imgId, 'top'), _img(imgId, 'side'), _img(imgId, 'back'),
+                  ]
                 ],
               ),
             ),
@@ -151,7 +157,11 @@ class _Detail2State extends State<Detail2> {
     );
   }
 
-  Widget _img(int pid, String pos) => Image.network('${IpAddress.baseUrl}/productimage/view?pid=$pid&position=$pos', fit: BoxFit.contain, errorBuilder: (c, e, s) => const SizedBox.shrink());
+  Widget _img(int pid, String pos) => Image.network(
+    '${IpAddress.baseUrl}/productimage/view?pid=$pid&position=$pos', 
+    fit: BoxFit.contain, 
+    errorBuilder: (c, e, s) => const SizedBox.shrink()
+  );
 
   void showPurchaseSheet() {
     Get.bottomSheet(
