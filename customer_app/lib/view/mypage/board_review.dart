@@ -55,6 +55,7 @@ class _BoardReviewState extends State<BoardReview> {
   late bool starChosen;
   late bool reviewText;
   late Product product;
+  late ProductSize pSize;
   late PurchaseRow purchaseRow;
   late int pNumber;
 
@@ -69,18 +70,28 @@ class _BoardReviewState extends State<BoardReview> {
     reviewText = false;
   }
 
-  _initreview() async{
+  Future<void> _initreview() async{
     purchaseRow = Get.arguments;
     pNumber = purchaseRow.purchase.pid;
-    product = getJSONData('product');
+
+    final List<dynamic> data =
+      await getJSONData('product/selectdetail?pid=$pNumber');
+
+    product = Product.fromJson(data.first);
+
+    final List<dynamic> data2 =
+      await getJSONData('product/productsize/select?pid=$pNumber');
+
+    pSize = ProductSize.fromJson(data.first);
+    setState(() {});
   }
 
   Future<List<dynamic>> getJSONData(String page) async {
-    var url = Uri.parse("http://$hostip:8008/$page");
+    var url = Uri.parse("http://${config.hostip}:8008/$page");
     var response = await http.get(url);
 
     var dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));
-    final result = dataConvertedJSON["results"].first;
+    final result = dataConvertedJSON["results"];
 
     return result;
   }
@@ -129,15 +140,17 @@ class _BoardReviewState extends State<BoardReview> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    dName.name,
+                                    purchaseRow.productName == null
+                                    ? '에러'
+                                    : purchaseRow.productName!,
                                     style: TextStyle(fontSize: 17),
                                   ),
                                   Text(
-                                    '(${purchaseRow.productName})',
+                                    '(${product.ename})',
                                     style: TextStyle(fontSize: 17),
                                   ),
                                   Text(
-                                    '사이즈: ${dSize.size}',
+                                    '사이즈: ${pSize.size}',
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Colors.grey,
@@ -251,7 +264,7 @@ class _BoardReviewState extends State<BoardReview> {
   Future<void> submitReview() async {
     final Review review = Review(
       cid: 1.toString(), //  NIF in actual release
-      pcid: dPurchase.id!,
+      pcid: purchaseRow.purchase.id!,
       timestamp: DateTime.now(),
       contents: tEC1.text.trim(),
       star: reviewScore,
@@ -259,8 +272,8 @@ class _BoardReviewState extends State<BoardReview> {
 
     final querySnapshot = await FirebaseFirestore.instance
         .collection('review')
-        .where('cid', isEqualTo: dPurchase.cid)
-        .where('pcid', isEqualTo: dPurchase.id)
+        .where('cid', isEqualTo: purchaseRow.purchase.cid)
+        .where('pcid', isEqualTo: purchaseRow.purchase.id)
         .limit(1)
         .get();
         
