@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
   Create: 29/12/2025 18:00, Creator: Chansol, Park
   Update log: 
     DUMMY 00/00/0000 00:00, 'Point X, Description', Creator: Chansol, Park
+    CHECKER
   Version: 1.0
   Dependency: 
   Desc: Mypage
