@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:customer_app/config.dart' as config;
 import 'package:customer_app/model/customer.dart';
 import 'package:customer_app/model/purchase.dart';
@@ -6,6 +8,7 @@ import 'package:customer_app/view/mypage/board_review.dart';
 import 'package:customer_app/view/mypage/chatting.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 class PurchaseList extends StatefulWidget {
@@ -83,8 +86,17 @@ class _PurchaseListState extends State<PurchaseList> {
     return const [];
   }
 
+  Future<List<dynamic>> getJSONData(String page) async {
+    var url = Uri.parse("http://${config.hostip}:8008/$page");
+    var response = await http.get(url);
+
+    var dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));
+    List result = dataConvertedJSON["results"];
+    return result;
+  }
+
   Future<List<PurchaseRow>> setPurchaseList(int cid) async {
-    final raw = await config.getJSONData('purchase/selectcustomer?cid=$cid');
+    final raw = await getJSONData('purchase/selectcustomer?cid=$cid');
     final list = _unwrapList(raw);
 
     final purchases = list
