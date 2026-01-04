@@ -36,7 +36,7 @@ class _PurchaseListState extends State<PurchaseList> {
   }
 
   Future<void> _init() async {
-    final cid = 1;
+    final cid = (Get.arguments?['cid'] as int?) ?? 1;
     try {
       final rows = await setPurchaseList(cid);
       if (!mounted) return;
@@ -193,7 +193,7 @@ class _PurchaseListState extends State<PurchaseList> {
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
                                   Text(
-                                    '수령 날짜: ${DateFormat(config.dateFormat).format(totalPurchases[index].purchase.pickupdate)}',
+                                    '수령 날짜: ${DateFormat(config.dateFormat).format(totalPurchases[index].purchase.pickupdate!)}',
                                     style: TextStyle(fontSize: 15),
                                   ),
                                   Padding(
