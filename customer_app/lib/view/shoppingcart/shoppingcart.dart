@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:customer_app/model/usercontroller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -16,6 +17,7 @@ class Shoppingcart extends StatefulWidget {
 }
 
 class _ShoppingcartState extends State<Shoppingcart> {
+  final UserController userController = Get.find<UserController>();
   final Cartdatabasehandler handler = Cartdatabasehandler();
 
   Map<String, dynamic>? incomingItem;
@@ -32,7 +34,8 @@ class _ShoppingcartState extends State<Shoppingcart> {
 
     if (incomingItem != null && incomingItem!['pid'] != null) {
       handler.insertCart(
-        Cart(cartid: incomingItem!['pid']),
+        Cart(cartid: incomingItem!['pid'],
+              cid:userController.user as int ),
       );
     }
 
