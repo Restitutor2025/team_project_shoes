@@ -5,6 +5,7 @@ import 'package:customer_app/config.dart' as config;
 import 'package:customer_app/model/customer.dart';
 import 'package:customer_app/model/usercontroller.dart';
 import 'package:customer_app/view/mypage/purchase_list.dart';
+import 'package:customer_app/view/mypage/support_center.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -161,7 +162,7 @@ class _MypageState extends State<Mypage> {
                       child: Column(
                         children: [
                           IconButton(onPressed: () {
-                            Get.to(PurchaseList());
+                            Get.to(PurchaseList(), arguments: {'cid': customer.id!});
                           }, icon: Icon(Icons.shopping_cart)),
                           Text('구매 내역'),
                           Text(purchases.toString()),
@@ -182,7 +183,9 @@ class _MypageState extends State<Mypage> {
                       padding: const EdgeInsets.all(8.0),
                       child: Column(
                         children: [
-                          Icon(Icons.headphones),
+                          IconButton(onPressed: () {
+                            Get.to(SupportCenter());
+                          }, icon: Icon(Icons.headphones)),
                           Text('고객 센터'),
                           Text(asks.toString()),
                         ],
