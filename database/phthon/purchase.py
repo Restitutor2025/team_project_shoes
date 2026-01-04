@@ -64,6 +64,33 @@ async def select():
     finally:
         if conn:
             conn.close()
+            
+@router.get("/selectcustomer")
+async def selectcustomer(cid: int):
+    conn = None
+    try:
+        conn = connect()
+        curs = conn.cursor()
+
+        sql = """
+            SELECT id, pid, cid, eid, quantity, finalprice, pickupdate, purchasedate, code
+            FROM purchase
+            WHERE cid = %s
+            ORDER BY purchasedate DESC
+        """
+        curs.execute(sql, (cid,))
+        rows = curs.fetchall()
+
+        rows = serialize_rows(rows)
+        return {"results": rows}
+
+    except Exception as e:
+        print("purchase/selectcustomer error:", e)
+        return {"error": str(e), "results": []}
+
+    finally:
+        if conn:
+            conn.close()
 
 @router.post("/insert")
 async def insert(
