@@ -99,11 +99,11 @@ class _ChattingState extends State<Chatting> {
               final chattime = totalChates[index]['timestamp'].toDate();
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisAlignment: totalChates[index]['cid'] == null
+                mainAxisAlignment: (totalChates[index]['eid'] != null)
                     ? MainAxisAlignment.start
                     : MainAxisAlignment.end,
                 children: [
-                  if (totalChates[index]['cid'] != null)
+                  if (totalChates[index]['eid'] == null)
                     Align(
                       alignment: Alignment.bottomCenter,
                       child: Text(
@@ -126,7 +126,7 @@ class _ChattingState extends State<Chatting> {
                       ),
                     ),
                   ),
-                  if (totalChates[index]['cid'] == null)
+                  if (totalChates[index]['eid'] != null)
                     Align(
                       alignment: Alignment.bottomCenter,
                       child: Text(
