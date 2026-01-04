@@ -45,24 +45,26 @@ async def get_shopping():
 @router.post("/select")
 async def get_products():
     conn = connect()
-    curs = conn.cursor() # 팀원 스타일: 커서 직접 생성
-
+    curs = conn.cursor()
     try:
-        # DISTINCT를 넣어 중복을 원천 차단합니다.
-        sql = "SELECT DISTINCT ename FROM product ORDER BY ename ASC"
+        # id, mid, price, ename을 모두 가져와야 Flutter 모델이 깨지지 않습니다.
+        sql = """
+            SELECT id, mid, ename, price, quantity, date 
+            FROM product 
+            ORDER BY id DESC
+        """
         curs.execute(sql)
         results = curs.fetchall()
 
-        # 데이터 가공 (날짜 형변환)
         for row in results:
             if row['date']:
                 row['date'] = str(row['date'])
-        return results
+        
+        return results  # 리스트 형태로 반환
 
     except Exception as e:
         print(f"Error: {e}")
-        return {'results': 'Error'} 
-        
+        return [] # 에러 시 빈 리스트 반환하여 로딩 종료 유도
     finally:
         conn.close()
 
