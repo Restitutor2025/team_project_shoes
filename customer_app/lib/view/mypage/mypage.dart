@@ -37,10 +37,10 @@ class _MypageState extends State<Mypage> {
   @override
   void initState() {
     super.initState();
-    _loadCounts();
     userController.user == null
       ? customer = Customer(id: 1, email: 'email', password: 'password', name: 'name', phone: 'phone', date: DateTime.now(), address: 'address')
       : customer = userController.user!;
+    _loadCounts();
   }
 
   Future<void> _loadCounts() async {
