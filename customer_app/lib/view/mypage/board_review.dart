@@ -82,7 +82,7 @@ class _BoardReviewState extends State<BoardReview> {
     final List<dynamic> data2 =
       await getJSONData('product/productsize/select?pid=$pNumber');
 
-    pSize = ProductSize.fromJson(data.first);
+    pSize = ProductSize.fromJson(data2.first);
     setState(() {});
   }
 
