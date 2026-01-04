@@ -7,7 +7,6 @@ import 'package:customer_app/view/mypage/chatting.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-//asdadsadddasdaddd
 
 class PurchaseList extends StatefulWidget {
   const PurchaseList({super.key});
@@ -19,7 +18,7 @@ class PurchaseList extends StatefulWidget {
 class PurchaseRow {
   final Purchase purchase;
   final String? productName;
-  final String? imageUrl; // 또는 path
+  final String imageUrl;
 
   PurchaseRow({
     required this.purchase,
@@ -29,33 +28,42 @@ class PurchaseRow {
 }
 
 class _PurchaseListState extends State<PurchaseList> {
-  //  Property
   List<PurchaseRow> totalPurchases = [];
   bool isLoading = true;
   late Customer customer;
-  UserController userController = Get.find<UserController>();
+  final UserController userController = Get.find<UserController>();
 
   @override
   void initState() {
     super.initState();
-    userController.user == null
-        ? customer = Customer(
-            id: 1,
-            email: 'email',
-            password: 'password',
-            name: 'name',
-            phone: 'phone',
-            date: DateTime.now(),
-            address: 'address',
-          )
-        : customer = userController.user!;
+
+    customer =
+        userController.user ??
+        Customer(
+          id: 1,
+          email: 'email',
+          password: 'password',
+          name: 'name',
+          phone: 'phone',
+          date: DateTime.now(),
+          address: 'address',
+        );
+
     _init();
   }
 
   Future<void> _init() async {
     final cid = customer.id;
+    if (cid == null) {
+      setState(() {
+        totalPurchases = [];
+        isLoading = false;
+      });
+      return;
+    }
+
     try {
-      final rows = await setPurchaseList(cid!);
+      final rows = await setPurchaseList(cid);
       if (!mounted) return;
       setState(() {
         totalPurchases = rows;
@@ -64,41 +72,55 @@ class _PurchaseListState extends State<PurchaseList> {
     } catch (e, st) {
       debugPrint('PurchaseList load error: $e\n$st');
       if (!mounted) return;
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
     }
   }
 
-  Future<List<PurchaseRow>> setPurchaseList(int cid) async {
-    final purchases = (await config.getJSONData(
-      'purchase/select?cid=$cid',
-    )).cast<Purchase>();
-    final rows = <PurchaseRow>[];
+  /// getJSONData가 "List"를 주든, {"results": List}를 주든 안전 처리
+  List<dynamic> _unwrapList(dynamic raw) {
+    if (raw is List) return raw;
+    if (raw is Map && raw['results'] is List) return raw['results'] as List;
+    return const [];
+  }
 
-    for (final p in purchases) {
-      final namesRaw = await config.getJSONData(
-        'productname/select?pid=${p.pid}',
-      );
+  Future<List<PurchaseRow>> setPurchaseList(int cid) async {
+    final raw = await config.getJSONData('purchase/select?cid=$cid');
+    final list = _unwrapList(raw);
+
+    final purchases = list
+        .whereType<Map>()
+        .map((e) => Purchase.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+
+    // 병렬로 productname 조회 (속도 개선)
+    final futures = purchases.map((p) async {
       String? name;
-      if (namesRaw.isNotEmpty) {
-        final first = namesRaw.first;
-        if (first is Map && first['name'] != null) {
-          name = first['name'].toString();
-        } else if (first is List && first.isNotEmpty) {
-          name = first[0].toString();
-        } else {
-          name = first.toString();
+
+      try {
+        final namesRaw = await config.getJSONData(
+          'productname/select?pid=${p.pid}',
+        );
+        final namesList = _unwrapList(namesRaw);
+
+        if (namesList.isNotEmpty) {
+          final first = namesList.first;
+          if (first is Map && first['name'] != null) {
+            name = first['name'].toString();
+          } else {
+            name = first.toString();
+          }
         }
+      } catch (_) {
+        // 이름 조회 실패해도 목록은 뜨게 둠
       }
 
       final imageUrl =
           'http://${config.hostip}:8008/productimage/view?pid=${p.pid}&position=main';
 
-      rows.add(PurchaseRow(purchase: p, productName: name, imageUrl: imageUrl));
-    }
+      return PurchaseRow(purchase: p, productName: name, imageUrl: imageUrl);
+    }).toList();
 
-    return rows;
+    return await Future.wait(futures);
   }
 
   @override
@@ -107,7 +129,10 @@ class _PurchaseListState extends State<PurchaseList> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: Text("구매 목록", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          "구매 목록",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         elevation: 0,
         bottom: PreferredSize(
@@ -116,12 +141,19 @@ class _PurchaseListState extends State<PurchaseList> {
         ),
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : totalPurchases.isEmpty
-          ? Center(child: Text('구매 내역이 없습니다.'))
+          ? const Center(child: Text('구매 내역이 없습니다.'))
           : ListView.builder(
               itemCount: totalPurchases.length,
               itemBuilder: (context, index) {
+                final row = totalPurchases[index];
+                final p = row.purchase;
+
+                final pickUpText = (p.pickupdate == null)
+                    ? '미수령'
+                    : DateFormat(config.dateFormat).format(p.pickupdate!);
+
                 return SizedBox(
                   width: MediaQuery.of(context).size.width * 0.9,
                   height: 180,
@@ -129,11 +161,16 @@ class _PurchaseListState extends State<PurchaseList> {
                     color: Colors.white,
                     child: Row(
                       children: [
-                        Image.network(
-                          totalPurchases[index].imageUrl ?? '',
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.contain,
+                        Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Image.network(
+                            row.imageUrl,
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) =>
+                                const Icon(Icons.image_not_supported),
+                          ),
                         ),
                         Expanded(
                           child: Column(
@@ -151,16 +188,16 @@ class _PurchaseListState extends State<PurchaseList> {
                                       MainAxisAlignment.spaceEvenly,
                                   children: [
                                     Text(
-                                      '${totalPurchases[index].productName}',
-                                      style: TextStyle(fontSize: 15),
+                                      row.productName ?? '(이름 없음)',
+                                      style: const TextStyle(fontSize: 15),
                                     ),
                                     Text(
-                                      '${config.formatter.format(totalPurchases[index].purchase.quantity)}개',
-                                      style: TextStyle(fontSize: 15),
+                                      '${config.formatter.format(p.quantity)}개',
+                                      style: const TextStyle(fontSize: 15),
                                     ),
                                     Text(
-                                      '총 구매액: ${config.formatter.format(totalPurchases[index].purchase.finalprice)}',
-                                      style: TextStyle(fontSize: 15),
+                                      '총 구매액: ${config.formatter.format(p.finalprice)}',
+                                      style: const TextStyle(fontSize: 15),
                                     ),
                                   ],
                                 ),
@@ -170,8 +207,8 @@ class _PurchaseListState extends State<PurchaseList> {
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
                                   Text(
-                                    '구매 날짜: ${DateFormat(config.dateFormat).format(totalPurchases[index].purchase.purchasedate)}',
-                                    style: TextStyle(fontSize: 15),
+                                    '구매 날짜: ${DateFormat(config.dateFormat).format(p.purchasedate)}',
+                                    style: const TextStyle(fontSize: 15),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
@@ -181,15 +218,15 @@ class _PurchaseListState extends State<PurchaseList> {
                                       child: ElevatedButton(
                                         onPressed: () {
                                           Get.to(
-                                            Chatting(),
-                                            arguments: totalPurchases[index],
-                                          )!.then((value) => setState(() {}));
+                                            const Chatting(),
+                                            arguments: row,
+                                          )?.then((_) => setState(() {}));
                                         },
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.white,
                                           elevation: 1,
                                         ),
-                                        child: Text(
+                                        child: const Text(
                                           '문의 하기',
                                           style: TextStyle(fontSize: 12),
                                         ),
@@ -203,8 +240,8 @@ class _PurchaseListState extends State<PurchaseList> {
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
                                   Text(
-                                    '수령 날짜: ${totalPurchases[index].purchase.pickupdate == null ? '미수령' : DateFormat(config.dateFormat).format(totalPurchases[index].purchase.pickupdate!)}',
-                                    style: TextStyle(fontSize: 15),
+                                    '수령 날짜: $pickUpText',
+                                    style: const TextStyle(fontSize: 15),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
@@ -212,23 +249,19 @@ class _PurchaseListState extends State<PurchaseList> {
                                       width: 100,
                                       height: 35,
                                       child: ElevatedButton(
-                                        onPressed: () {
-                                          if (totalPurchases[index]
-                                                  .purchase
-                                                  .pickupdate ==
-                                              null) {
-                                            return;
-                                          }
-                                          Get.to(
-                                            BoardReview(),
-                                            arguments: totalPurchases[index],
-                                          )!.then((value) => setState(() {}));
-                                        },
+                                        onPressed: p.pickupdate == null
+                                            ? null
+                                            : () {
+                                                Get.to(
+                                                  const BoardReview(),
+                                                  arguments: row,
+                                                )?.then((_) => setState(() {}));
+                                              },
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.white,
                                           elevation: 1,
                                         ),
-                                        child: Text(
+                                        child: const Text(
                                           '리뷰 하기',
                                           style: TextStyle(fontSize: 12),
                                         ),
