@@ -1,10 +1,19 @@
-import 'package:customer_app/model/usercontroller.dart';
+import 'package:customer_app/database/selected_store_database.dart';
 import 'package:customer_app/view/home/home.dart';
 import 'package:customer_app/view/map/map_select.dart';
 import 'package:customer_app/view/mypage/mypage.dart';
 import 'package:customer_app/view/shoppingcart/shoppingcart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:customer_app/ip/ipaddress.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+// 1. StoreController 정의 (파일 상단 혹은 별도 파일)
+class StoreController extends GetxController {
+  var selectedStoreName = "지점을 선택해주세요".obs;
+  void updateStoreName(String name) => selectedStoreName.value = name;
+}
 
 class Tabbar extends StatefulWidget {
   const Tabbar({super.key});
@@ -14,61 +23,91 @@ class Tabbar extends StatefulWidget {
 }
 
 class _TabbarState extends State<Tabbar> {
-  final userController = Get.find<UserController>();
+  final StoreController storeController = Get.put(StoreController());
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    Home(),
-    MapSelect(),
-    Shoppingcart(),
-    Mypage()
+    const Home(),
+    const MapSelect(),
+    const Shoppingcart(),
+    const Mypage()
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _initialLoad();
+  }
+
+  // 앱 켜질 때 SQLite에서 기존 sid 읽어서 이름 가져오기
+  Future<void> _initialLoad() async {
+    final db = SelectedStoreDatabase();
+    int? sid = await db.queryStoreId();
+    if (sid != null) {
+      try {
+        var url = Uri.parse('${IpAddress.baseUrl}/store/select_one?id=$sid');
+        var response = await http.get(url);
+        if (response.statusCode == 200) {
+          var data = json.decode(utf8.decode(response.bodyBytes));
+          if (data['results'].isNotEmpty) {
+            String name = data['results'][0]['name'];
+            storeController.updateStoreName(name); // 컨트롤러 값 업데이트
+          }
+        }
+      } catch (e) {
+        debugPrint("초기 로드 에러: $e");
+      }
+    }
+  }
+
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    setState(() => _selectedIndex = index);
   }
 
   @override
   Widget build(BuildContext context) {
-    int? userId = userController.user?.id;
-    print(userId);
     return Scaffold(
-      // 현재 선택된 인덱스의 페이지를 보여줌
       body: _pages[_selectedIndex],
-      
-      // 하단 탭바 설정
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed, // 아이템이 4개 이상일 때도 고정
-        backgroundColor: const Color(0xFF121212), // 사진과 같은 진한 검정색
-        selectedItemColor: Colors.white, // 선택된 아이콘 색상
-        unselectedItemColor: Colors.grey, // 선택되지 않은 아이콘 색상
-        showSelectedLabels: false, // 선택된 라벨 숨김 (사진처럼 아이콘만 표시)
-        showUnselectedLabels: false, // 선택되지 않은 라벨 숨김
-        currentIndex: _selectedIndex, // 현재 인덱스
-        onTap: _onItemTapped, // 터치 이벤트
-        
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.location_on_outlined),
-            activeIcon: Icon(Icons.location_on),
-            label: 'Location',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_bag_outlined),
-            activeIcon: Icon(Icons.shopping_bag),
-            label: 'Shop',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // --- 지점 정보 표시줄 (Obx로 감싸서 실시간 반영) ---
+          Obx(() => GestureDetector(
+            onTap: () => _onItemTapped(1), // 클릭 시 지도 페이지로
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+              color: const Color(0xFF1E1E1E), 
+              child: Row(
+                children: [
+                  const Icon(Icons.location_on, color: Colors.redAccent, size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    storeController.selectedStoreName.value,
+                    style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                  const Spacer(),
+                  const Icon(Icons.refresh, color: Colors.grey, size: 14),
+                ],
+              ),
+            ),
+          )),
+          // --- 하단 탭바 ---
+          BottomNavigationBar(
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: const Color(0xFF121212),
+            selectedItemColor: Colors.white,
+            unselectedItemColor: Colors.grey,
+            showSelectedLabels: false,
+            showUnselectedLabels: false,
+            currentIndex: _selectedIndex,
+            onTap: _onItemTapped,
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
+              BottomNavigationBarItem(icon: Icon(Icons.location_on_outlined), activeIcon: Icon(Icons.location_on), label: 'Location'),
+              BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), activeIcon: Icon(Icons.shopping_bag), label: 'Shop'),
+              BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
+            ],
           ),
         ],
       ),
