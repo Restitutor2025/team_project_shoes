@@ -3,6 +3,7 @@ import 'package:customer_app/config.dart' as config;
 import 'package:customer_app/model/customer.dart';
 import 'package:customer_app/model/purchase.dart';
 import 'package:customer_app/model/usercontroller.dart';
+import 'package:customer_app/view/mypage/board_review.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -26,18 +27,6 @@ class Chatting extends StatefulWidget {
 
   @override
   State<Chatting> createState() => _ChattingState();
-}
-
-class PurchaseRow {
-  final Purchase purchase;
-  final String? productName;
-  final String imageUrl;
-
-  PurchaseRow({
-    required this.purchase,
-    required this.productName,
-    required this.imageUrl,
-  });
 }
 
 class _ChattingState extends State<Chatting> {
