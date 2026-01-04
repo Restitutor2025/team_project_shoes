@@ -193,7 +193,7 @@ class _PurchaseListState extends State<PurchaseList> {
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
                                   Text(
-                                    '수령 날짜: ${DateFormat(config.dateFormat).format(totalPurchases[index].purchase.pickupdate)}',
+                                    '수령 날짜: ${DateFormat(config.dateFormat).format(totalPurchases[index].purchase.pickupdate!)}',
                                     style: TextStyle(fontSize: 15),
                                   ),
                                   Padding(
