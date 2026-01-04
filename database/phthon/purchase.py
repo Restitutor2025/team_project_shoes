@@ -37,17 +37,27 @@ async def select():
     return{'results':result}
 
 @router.post("/insert")
-async def insert(quantity: int = Form(...), finalprice: int = Form(...), code: str = Form(...)):
+async def insert(
+    quantity: int = Form(...), 
+    finalprice: int = Form(...), 
+    code: str = Form(...),
+    pid: int = Form(...),   # 추가
+    cid: int = Form(...),   # 추가
+    eid: int = Form(...)    # 추가
+):
     try:
         conn = connect() 
         curs = conn.cursor()
-        sql = "INSERT INTO purchase (quantity,finalprice,purchasedate,code) VALUES (%s,%s,CURDATE(),%s)"
-        curs.execute(sql, (quantity,finalprice,code,))
+        # SQL 문에 pid, cid, eid 컬럼과 %s를 추가합니다.
+        sql = """
+            INSERT INTO purchase (quantity, finalprice, purchasedate, code, pid, cid, eid) 
+            VALUES (%s, %s, CURDATE(), %s, %s, %s, %s)
+        """
+        curs.execute(sql, (quantity, finalprice, code, pid, cid, eid))
         conn.commit()
         conn.close()
-        return{"result": "OK"}
+        return {"result": "OK"}
     except Exception as e:
-        print("Error:", e)
         print("Error details:", e)
         return {'result': "Error"}
 

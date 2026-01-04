@@ -373,32 +373,33 @@ class _MapSelectState extends State<MapSelect> {
   }
 
 void selectStore(Map<String, dynamic> store) {
-    Get.defaultDialog(
-      title: '매장 선택',
-      middleText: '${store['name']} 매장을 선택하시겠습니까?',
-      textConfirm: '선택',
-      textCancel: '취소',
-      confirmTextColor: Colors.white,
-      onConfirm: () async {
-        final int storeId = store['id'];
-        final String storeName = store['name']; // 매장 이름 가져오기
+  Get.defaultDialog(
+    title: '매장 선택',
+    middleText: '${store['name']} 매장을 선택하시겠습니까?',
+    textConfirm: '선택',
+    textCancel: '취소',
+    confirmTextColor: Colors.white,
+    onConfirm: () async {
+      final int storeId = store['id'];
+      final String storeName = store['name'];
 
-        // 1. SQLite에 저장
-        final result = await selectedStoreDB.insertStoreId(storeId);
-        print('선택 매장 저장 결과: $result');
+      // 1. SQLite 저장 (핸들러 호출)
+      await selectedStoreDB.insertStoreId(storeId);
 
-        // 2. [추가] 컨트롤러 업데이트 (이 코드가 UI를 즉시 바꿉니다)
-        // Tabbar에서 선언한 StoreController를 찾아 이름을 업데이트함
-        if (Get.isRegistered<StoreController>()) {
-          Get.find<StoreController>().updateStoreName(storeName);
-        }
+      // 2. StoreController 업데이트 (등록되어 있을 경우)
+      if (Get.isRegistered<StoreController>()) {
+        Get.find<StoreController>().updateStoreName(storeName);
+      }
 
-        selectedStoreId = storeId;
+      // 3. ⭐ 중요: Purchase2 페이지로 데이터 던지며 닫기
+      // 이 result 값이 Purchase2의 Get.to 결과를 채워줍니다.
+      Get.back(result: {
+        'branchName': storeName,
+        'sid': storeId,
+      });
 
-        setState(() {});
-        Get.back();
-        Snackbar().okSnackBar('성공', '매장이 선택 되었습니다.');
-      },
-    );
-  }
+      Snackbar().okSnackBar('성공', '매장이 선택 되었습니다.');
+    },
+  );
+}
 } // class
