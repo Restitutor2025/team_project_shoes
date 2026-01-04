@@ -1,12 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:customer_app/config.dart' as config;
+import 'package:customer_app/model/customer.dart';
+import 'package:customer_app/model/usercontroller.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 //  Mypage
 /*
   Create: 29/12/2025 18:00, Creator: Chansol, Park
   Update log: 
     DUMMY 00/00/0000 00:00, 'Point X, Description', Creator: Chansol, Park
+    CHECKER
   Version: 1.0
   Dependency: 
   Desc: Mypage
@@ -27,15 +31,20 @@ class _MypageState extends State<Mypage> {
   int purchases = 0;
   int reviews = 0;
   int asks = 0;
+  late Customer customer;
+  UserController userController = Get.find<UserController>();
 
   @override
   void initState() {
     super.initState();
     _loadCounts();
+    userController.user == null
+      ? customer = Customer(id: 1, email: 'email', password: 'password', name: 'name', phone: 'phone', date: DateTime.now(), address: 'address')
+      : customer = userController.user!;
   }
 
   Future<void> _loadCounts() async {
-    final int cid = 1; // Actual customer id in release
+    int cid = customer.id!;
 
     try {
       final purchaseList = (await config.getJSONData(
@@ -109,7 +118,7 @@ class _MypageState extends State<Mypage> {
             Padding(
               padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
               child: Row(
-                children: [Icon(Icons.question_mark), Text('\t\tUser')],
+                children: [Icon(Icons.person), Text('\t\t${customer.name}')],
               ),
             ),
             Card(
