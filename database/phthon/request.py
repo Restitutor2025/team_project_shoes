@@ -6,8 +6,6 @@ import pymysql
 router = APIRouter()
 class RequestData(BaseModel):
     eid: int
-    date: int
-    okdate: int
     contents: str
 
 def connect():
@@ -27,7 +25,7 @@ async def RequestInsert(data: RequestData):
     curs = conn.cursor()
 
     try:
-        sql = "INSERT INTO request(eid, date, okdate, contents) VALUES (%s, NOW(), NOW(), %s)"
+        sql = "INSERT INTO request(eid, date, okdate, contents) VALUES (%s, NOW(), null, %s)"
         
         curs.execute(sql, (data.eid, data.contents))
         
