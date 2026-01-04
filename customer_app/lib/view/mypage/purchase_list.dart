@@ -67,8 +67,7 @@ class _PurchaseListState extends State<PurchaseList> {
     }
   }
 
-  /// 옵션 pid -> 대표 group_id
-  /// (이미지/이름이 대표 pid(group_id)에만 있는 구조 대응)
+  /// 옵션 pid -> 대표 group_id (이미지/이름이 대표 pid에만 있는 구조 대응)
   Future<int> _resolveGroupId(int pid) async {
     try {
       final url = Uri.parse(
@@ -79,20 +78,18 @@ class _PurchaseListState extends State<PurchaseList> {
 
       final decoded = json.decode(utf8.decode(res.bodyBytes));
 
-      // 서버 응답이 {"group_id": ...} 인 케이스
+      // 1) {"group_id": ...}
       if (decoded is Map && decoded['group_id'] != null) {
-        final parsed = int.tryParse(decoded['group_id'].toString());
-        return parsed ?? pid;
+        return int.tryParse(decoded['group_id'].toString()) ?? pid;
       }
 
-      // 혹시 {"results":[{...,"group_id":...}]} 같은 케이스 방어
+      // 2) {"results":[{...,"group_id":...}]}
       if (decoded is Map &&
           decoded['results'] is List &&
           (decoded['results'] as List).isNotEmpty) {
         final first = (decoded['results'] as List).first;
         if (first is Map && first['group_id'] != null) {
-          final parsed = int.tryParse(first['group_id'].toString());
-          return parsed ?? pid;
+          return int.tryParse(first['group_id'].toString()) ?? pid;
         }
       }
 
@@ -104,7 +101,7 @@ class _PurchaseListState extends State<PurchaseList> {
   }
 
   Future<List<PurchaseRow>> _loadPurchaseRows(int cid) async {
-    // ✅ mypage랑 동일 라우트로 통일 (서버 구현이 확실한 쪽)
+    // ✅ mypage 카운트랑 동일 라우트 사용 (서버 구현 확실한 쪽)
     final raw = await config.getJSONData('purchase/selectcustomer?cid=$cid');
 
     // config.dart가 Purchase로 파싱해준 경우
@@ -128,7 +125,7 @@ class _PurchaseListState extends State<PurchaseList> {
       }),
     );
 
-    // 2) product name은 groupId 기준으로 가져오기 (캐싱 + 병렬)
+    // 2) 상품명은 groupId 기준으로 가져오기 (캐싱 + 병렬)
     final Map<int, String?> nameByGroupId = {};
     final uniqueGroupIds = groupIdByPid.values.toSet().toList();
 
@@ -168,194 +165,7 @@ class _PurchaseListState extends State<PurchaseList> {
 
     // 3) rows 조립 (이미지/이름 모두 groupId 기준)
     return purchases.map((p) {
-      final gid = groupIdByPid[p.pid] ?? p.pid;
+      final int gid = groupIdByPid[p.pid] ?? p.pid;
 
       final imageUrl =
-          'http://${config.hostip}:8008/productimage/view?pid=$gid&position=main';
-
-      return PurchaseRow(
-        purchase: p,
-        productName: nameByGroupId[gid],
-        imageUrl: imageUrl,
-      );
-    }).toList();
-  }
-
-  String _fmtMoney(dynamic value) {
-    final n = num.tryParse(value?.toString() ?? '');
-    if (n == null) return value?.toString() ?? '';
-    return NumberFormat('#,###').format(n);
-  }
-
-  String _fmtDate(dynamic value) {
-    if (value == null) return '';
-    if (value is DateTime) return DateFormat('yyyy-MM-dd').format(value);
-    final s = value.toString();
-    final dt = DateTime.tryParse(s);
-    if (dt != null) return DateFormat('yyyy-MM-dd').format(dt);
-    return s;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: const Text(
-          "구매 목록",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        elevation: 0,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: Colors.grey.shade300),
-        ),
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : totalPurchases.isEmpty
-              ? const Center(child: Text('구매 내역이 없습니다.'))
-              : ListView.builder(
-                  itemCount: totalPurchases.length,
-                  itemBuilder: (context, index) {
-                    final row = totalPurchases[index];
-
-                    return SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.9,
-                      height: 180,
-                      child: Card(
-                        color: Colors.white,
-                        child: Row(
-                          children: [
-                            Image.network(
-                              row.imageUrl ?? '',
-                              width: 50,
-                              height: 50,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stack) {
-                                debugPrint(
-                                  'Image load failed: ${row.imageUrl} / $error',
-                                );
-                                return const SizedBox(
-                                  width: 50,
-                                  height: 50,
-                                  child: Icon(Icons.image_not_supported_outlined),
-                                );
-                              },
-                            ),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      10,
-                                      30,
-                                      0,
-                                      0,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        Text(
-                                          row.productName ?? '상품',
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(
-                                          "${row.purchase.quantity}개",
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(10, 5, 0, 0),
-                                    child: Text(
-                                      "주문 금액: ${_fmtMoney(row.purchase.finalprice)}원",
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(10, 5, 0, 0),
-                                    child: Text(
-                                      "픽업 날짜: ${_fmtDate(row.purchase.pickupdate)}",
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(10, 5, 0, 0),
-                                    child: Text(
-                                      "구매 날짜: ${_fmtDate(row.purchase.purchasedate)}",
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        SizedBox(
-                                          width: 100,
-                                          height: 35,
-                                          child: ElevatedButton(
-                                            onPressed: () {
-                                              Get.to(
-                                                const Chatting(),
-                                                arguments: {
-                                                  'pcid': row.purchase.id,
-                                                  'productName': row.productName ?? '상품',
-                                                },
-                                              )?.then((_) => setState(() {}));
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.white,
-                                              elevation: 1,
-                                            ),
-                                            child: const Text(
-                                              '문의 하기',
-                                              style: TextStyle(fontSize: 12),
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          width: 100,
-                                          height: 35,
-                                          child: ElevatedButton(
-                                            onPressed: () {
-                                              // TODO: 리뷰 화면 연결
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.white,
-                                              elevation: 1,
-                                            ),
-                                            child: const Text(
-                                              '리뷰 하기',
-                                              style: TextStyle(fontSize: 12),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-    );
-  }
-}
+          'http://${config.hostip}:8
