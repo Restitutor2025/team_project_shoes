@@ -143,14 +143,19 @@ class _RequestState extends State<Request> {
   // 품의 등록 액션
   Future<int?> insertAction() async {
     try {
-      final url = Uri.parse(
-        '${IpAddress.baseUrl}/request/insert',
-      );
+      // 1. IP를 강제로 Swagger 주소로 설정해서 테스트해보세요.
+      // 만약 성공한다면 ipaddress.dart 파일의 문제인 것이 확실해집니다.
+      final String manualUrl =
+          "http://172.16.252.165:8008/request/insert";
+      final url = Uri.parse(manualUrl);
 
-      // 2. Swagger 성공 사례와 똑같은 데이터 구조로 전송
       var response = await http.post(
         url,
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          "Content-Type": "application/json",
+          "Accept":
+              "application/json", // Swagger(docs)와 똑같이 맞춤
+        },
         body: jsonEncode({
           "eid": 1,
           "contents":
@@ -158,17 +163,21 @@ class _RequestState extends State<Request> {
         }),
       );
 
-      print("요청 URL: $url");
+      print(
+        "전송 데이터: ${jsonEncode({"eid": 1, "contents": "..."})}",
+      );
+      print("최종 요청 URL: $url");
       print("응답 코드: ${response.statusCode}");
-      print("응답 결과: ${response.body}");
+      print("응답 내용: ${utf8.decode(response.bodyBytes)}");
 
       if (response.statusCode == 200) {
-        final res = jsonDecode(response.body);
-        if (res['results'] == 'OK')
-          return 1; // Swagger 결과와 매칭
+        final res = jsonDecode(
+          utf8.decode(response.bodyBytes),
+        );
+        if (res['results'] == 'OK') return 1;
       }
     } catch (e) {
-      debugPrint("통신 에러 발생: $e");
+      debugPrint("통신 에러 상세: $e");
     }
     return null;
   }
