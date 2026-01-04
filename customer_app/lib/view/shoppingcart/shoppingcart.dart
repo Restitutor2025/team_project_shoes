@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:customer_app/database/cartdatabasehandler.dart';
 import 'package:customer_app/model/cart.dart';
 import 'package:customer_app/ip/ipaddress.dart';
+import 'package:customer_app/for test/purchase2.dart';
 
 class Shoppingcart extends StatefulWidget {
   const Shoppingcart({super.key});
@@ -20,64 +21,88 @@ class _ShoppingcartState extends State<Shoppingcart> {
   final UserController userController = Get.find<UserController>();
   final Cartdatabasehandler handler = Cartdatabasehandler();
 
-  Map<String, dynamic>? incomingItem;
   late Future<List<Cart>> cartFuture;
 
-  /// ✅ cart.id → qty
+  /// cart.id -> quantity
   final Map<int, int> quantityMap = {};
 
   @override
   void initState() {
     super.initState();
-
-    incomingItem = Get.arguments;
-
-    if (incomingItem != null && incomingItem!['pid'] != null) {
-      handler.insertCart(
-        Cart(cartid: incomingItem!['pid'],
-              cid:userController.user as int ),
-      );
-    }
-
     cartFuture = handler.queryCart();
   }
 
-  // ================= pid → 상품 상세 =================
-  Future<List<Map<String, dynamic>>> getProductDetail(int pid) async {
+  // ================= pid -> 옵션 상세 =================
+  Future<Map<String, dynamic>?> getProductDetail(int pid) async {
     final url =
-        Uri.parse("${IpAddress.baseUrl}/product/selectdetail?pid=$pid");
+        Uri.parse("${IpAddress.baseUrl}/product/selectdetail2?pid=$pid");
 
     final response = await http.get(url);
-    final dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));
+    final data = json.decode(utf8.decode(response.bodyBytes));
 
-    final List results = dataConvertedJSON['results'];
-    return results
-        .map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e))
-        .toList();
-  }
+    final List results = data['results'];
+    if (results.isEmpty) return null;
 
-  // ================= 주문 데이터 =================
-  List<Map<String, dynamic>> buildOrderItems(List<Cart> carts) {
-    return carts.map((cart) {
-      return {
-        "cart_id": cart.id,
-        "pid": cart.cartid,
-        "qty": quantityMap[cart.id] ?? 1,
-      };
-    }).toList();
+    // 장바구니에 담긴 pid와 정확히 일치하는 옵션
+    return results.firstWhere(
+      (e) => e['id'] == pid,
+      orElse: () => results.first,
+    );
   }
 
   // ================= 장바구니 삭제 =================
   Future<void> deleteCartItem(int cartRowId) async {
     await handler.deleteCart(cartRowId);
-
-    // 수량 Map에서도 제거
     quantityMap.remove(cartRowId);
 
-    // 장바구니 다시 로드
     setState(() {
       cartFuture = handler.queryCart();
     });
+  }
+
+  // ================= 여러 상품 결제 이동 =================
+  Future<void> goToPayment(List<Cart> carts) async {
+    if (carts.isEmpty) return;
+
+    final List<Map<String, dynamic>> orderItems = [];
+
+    for (final cart in carts) {
+      final int pid = cart.cartid;
+      final int qty = quantityMap[cart.id] ?? 1;
+
+      final item = await getProductDetail(pid);
+      if (item == null) continue;
+
+      orderItems.add({
+        "pid": pid,
+        "cid": userController.user!.id,
+
+        "price": item['price'],
+        "quantity": qty,
+
+        // 🔥 상품명
+        "name": item['product_name'],
+        "productname": item['product_name'],
+
+        // 🔥 제조사
+        "manufacturername": item['manufacturer_name'],
+
+        "size": item['size'],
+        "color": item['color'],
+
+        "image":
+            '${IpAddress.baseUrl}/productimage/view?pid=${item['mid']}&position=main',
+      });
+    }
+
+    if (orderItems.isEmpty) return;
+
+    Get.to(
+      () => const Purchase2(),
+      arguments: {
+        "items": orderItems,
+      },
+    );
   }
 
   @override
@@ -89,16 +114,16 @@ class _ShoppingcartState extends State<Shoppingcart> {
       ),
       body: FutureBuilder<List<Cart>>(
         future: cartFuture,
-        builder: (context, cartSnapshot) {
-          if (cartSnapshot.connectionState == ConnectionState.waiting) {
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (!cartSnapshot.hasData || cartSnapshot.data!.isEmpty) {
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text("장바구니가 비어있습니다"));
           }
 
-          final carts = cartSnapshot.data!;
+          final carts = snapshot.data!;
 
           return Column(
             children: [
@@ -111,10 +136,9 @@ class _ShoppingcartState extends State<Shoppingcart> {
                     final int cartRowId = cart.id!;
                     final int pid = cart.cartid;
 
-                    // 처음 row는 수량 1
                     quantityMap.putIfAbsent(cartRowId, () => 1);
 
-                    return FutureBuilder<List<Map<String, dynamic>>>(
+                    return FutureBuilder<Map<String, dynamic>?>(
                       future: getProductDetail(pid),
                       builder: (context, productSnapshot) {
                         if (!productSnapshot.hasData) {
@@ -124,19 +148,11 @@ class _ShoppingcartState extends State<Shoppingcart> {
                           );
                         }
 
-                        final productList = productSnapshot.data!;
-                        if (productList.isEmpty) {
-                          return const SizedBox.shrink();
-                        }
-
-                        final item = productList[0];
-
-                        final int price = (item['price'] is int)
-                            ? item['price']
-                            : int.tryParse("${item['price']}") ?? 0;
+                        final item = productSnapshot.data!;
                         final int qty = quantityMap[cartRowId] ?? 1;
+                        final int price = item['price'] ?? 0;
+                        final int mid = item['mid'];
 
-                        /// ================= 카드 UI =================
                         return Card(
                           margin: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 8),
@@ -153,13 +169,12 @@ class _ShoppingcartState extends State<Shoppingcart> {
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
                                   child: Image.network(
-                                    '${IpAddress.baseUrl}/productimage/view?pid=$pid&position=main',
+                                    '${IpAddress.baseUrl}/productimage/view?pid=$mid&position=main',
                                     width: 80,
                                     height: 80,
                                     fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            const Icon(
+                                    errorBuilder: (_, __, ___) =>
+                                        const Icon(
                                       Icons.image_not_supported,
                                       size: 80,
                                     ),
@@ -175,7 +190,7 @@ class _ShoppingcartState extends State<Shoppingcart> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        item['name'] ?? '',
+                                        item['product_name'] ?? '',
                                         style: const TextStyle(
                                           fontSize: 15,
                                           fontWeight: FontWeight.bold,
@@ -183,9 +198,11 @@ class _ShoppingcartState extends State<Shoppingcart> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                          "제조사: ${item['manufacturer'] ?? ''}"),
+                                        "제조사: ${item['manufacturer_name'] ?? ''}",
+                                      ),
                                       Text(
-                                          "사이즈: ${item['size'] ?? ''} / 색상: ${item['color'] ?? ''}"),
+                                        "사이즈: ${item['size']} / 색상: ${item['color']}",
+                                      ),
                                       const SizedBox(height: 8),
 
                                       /// 수량 조절
@@ -196,13 +213,9 @@ class _ShoppingcartState extends State<Shoppingcart> {
                                                 size: 18),
                                             onPressed: () {
                                               setState(() {
-                                                if ((quantityMap[cartRowId] ??
-                                                        1) >
-                                                    1) {
+                                                if (qty > 1) {
                                                   quantityMap[cartRowId] =
-                                                      (quantityMap[cartRowId] ??
-                                                              1) -
-                                                          1;
+                                                      qty - 1;
                                                 }
                                               });
                                             },
@@ -220,9 +233,7 @@ class _ShoppingcartState extends State<Shoppingcart> {
                                             onPressed: () {
                                               setState(() {
                                                 quantityMap[cartRowId] =
-                                                    (quantityMap[cartRowId] ??
-                                                            1) +
-                                                        1;
+                                                    qty + 1;
                                               });
                                             },
                                           ),
@@ -232,16 +243,16 @@ class _ShoppingcartState extends State<Shoppingcart> {
                                   ),
                                 ),
 
-                                /// 오른쪽 영역 (가격 + 삭제)
+                                /// 가격 + 삭제
                                 Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.end,
                                   children: [
                                     IconButton(
                                       icon: const Icon(Icons.delete,
                                           color: Colors.red),
-                                      onPressed: () {
-                                        deleteCartItem(cartRowId);
-                                      },
+                                      onPressed: () =>
+                                          deleteCartItem(cartRowId),
                                     ),
                                     Text(
                                       "${price * qty}원",
@@ -262,19 +273,14 @@ class _ShoppingcartState extends State<Shoppingcart> {
                 ),
               ),
 
-              /// ================= 하단 결제 버튼 =================
+              /// ================= 결제 버튼 =================
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: SizedBox(
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton(
-                    onPressed: () {
-                      final orderItems = buildOrderItems(carts);
-                      debugPrint("ORDER ITEMS => $orderItems");
-
-                      // Get.toNamed("/payment", arguments: orderItems);
-                    },
+                    onPressed: () => goToPayment(carts),
                     child: const Text("결제하기"),
                   ),
                 ),
