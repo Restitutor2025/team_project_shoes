@@ -47,7 +47,9 @@ class _PurchaseListState extends State<PurchaseList> {
     final int? loginCid = userController.user?.id;
     final int cid = argCid ?? loginCid ?? 1;
 
-    debugPrint('PurchaseList cid=$cid args=${Get.arguments} user=${userController.user?.id}');
+    debugPrint(
+      'PurchaseList cid=$cid args=${Get.arguments} user=${userController.user?.id}',
+    );
 
     try {
       final rows = await _loadPurchaseRows(cid);
@@ -63,7 +65,7 @@ class _PurchaseListState extends State<PurchaseList> {
     }
   }
 
-  /// 옵션 pid -> 대표 group_id (이미지/이름이 대표 pid에만 있는 구조 대응)
+  /// 옵션 pid -> 대표 group_id (이미지/이름이 대표 pid(group_id)에만 있는 구조 대응)
   Future<int> _resolveGroupId(int pid) async {
     try {
       final url = Uri.parse('http://${config.hostip}:8008/product/selectdetail2?pid=$pid');
@@ -72,12 +74,12 @@ class _PurchaseListState extends State<PurchaseList> {
 
       final decoded = json.decode(utf8.decode(res.bodyBytes));
 
-      // 1) {"group_id": ...}
+      // {"results": [...], "group_id": ...}
       if (decoded is Map && decoded['group_id'] != null) {
         return int.tryParse(decoded['group_id'].toString()) ?? pid;
       }
 
-      // 2) {"results":[{...,"group_id":...}]}
+      // 혹시 {"results":[{...,"group_id":...}]} 같은 케이스 방어
       if (decoded is Map &&
           decoded['results'] is List &&
           (decoded['results'] as List).isNotEmpty) {
@@ -94,9 +96,9 @@ class _PurchaseListState extends State<PurchaseList> {
     }
   }
 
-  /// ✅ 핵심: productname/select 응답이 Map(Name) 아니고
-  /// results: [[ "상품명" ]] 같은 형태일 수 있어서 raw로 직접 파싱
-  Future<String?> _fetchProductNameRaw(int pidOrGroupId) async {
+  /// ✅ productname/select 응답은 pid가 없어서 Name.fromJson이 깨질 수 있음
+  /// 그래서 config.getJSONData를 쓰지 말고, 여기서 직접 파싱해서 name만 뽑자.
+  Future<String?> _fetchProductNameDirect(int pidOrGroupId) async {
     try {
       final url = Uri.parse('http://${config.hostip}:8008/productname/select?pid=$pidOrGroupId');
       final res = await http.get(url);
@@ -109,17 +111,36 @@ class _PurchaseListState extends State<PurchaseList> {
       if (results is! List || results.isEmpty) return null;
 
       final first = results.first;
-
-      // results: [["나이키"]] 형태
-      if (first is List && first.isNotEmpty) return first.first?.toString();
-
-      // results: [{"name":"나이키"}] 형태 (혹시 서버가 바뀌면 대비)
       if (first is Map && first['name'] != null) return first['name'].toString();
 
-      // results: ["나이키"] 형태
-      return first?.toString();
+      return null;
     } catch (e) {
-      debugPrint('ProductName raw load error (pid=$pidOrGroupId): $e');
+      debugPrint('productname/select parse error (pid=$pidOrGroupId): $e');
+      return null;
+    }
+  }
+
+  /// 보조 플랜: product/selectdetail2 결과에 product_name이 붙어오는 구조면 거기서 꺼내기
+  Future<String?> _fetchNameFromSelectDetail2(int pidOrGroupId) async {
+    try {
+      final url = Uri.parse('http://${config.hostip}:8008/product/selectdetail2?pid=$pidOrGroupId');
+      final res = await http.get(url);
+      if (res.statusCode != 200) return null;
+
+      final decoded = json.decode(utf8.decode(res.bodyBytes));
+      if (decoded is! Map) return null;
+
+      final results = decoded['results'];
+      if (results is! List || results.isEmpty) return null;
+
+      final first = results.first;
+      if (first is Map) {
+        final v = first['product_name'] ?? first['name'];
+        return v?.toString();
+      }
+      return null;
+    } catch (e) {
+      debugPrint('selectdetail2 name fallback error (pid=$pidOrGroupId): $e');
       return null;
     }
   }
@@ -138,27 +159,31 @@ class _PurchaseListState extends State<PurchaseList> {
           .map((e) => Purchase.fromJson(Map<String, dynamic>.from(e)))
           .toList();
     }
-
     if (purchases.isEmpty) return <PurchaseRow>[];
-
-    // 디버그: quantity/ pid 확인
-    for (final p in purchases) {
-      debugPrint('Purchase row: id=${p.id} pid=${p.pid} quantity=${p.quantity}');
-    }
 
     // 1) pid -> groupId 매핑 (병렬)
     final Map<int, int> groupIdByPid = {};
-    await Future.wait(purchases.map((p) async {
-      groupIdByPid[p.pid] = await _resolveGroupId(p.pid);
-    }));
+    await Future.wait(
+      purchases.map((p) async {
+        groupIdByPid[p.pid] = await _resolveGroupId(p.pid);
+      }),
+    );
 
     // 2) 상품명은 groupId 기준으로 가져오기 (캐싱 + 병렬)
     final Map<int, String?> nameByGroupId = {};
     final uniqueGroupIds = groupIdByPid.values.toSet().toList();
 
-    await Future.wait(uniqueGroupIds.map((gid) async {
-      nameByGroupId[gid] = await _fetchProductNameRaw(gid);
-    }));
+    await Future.wait(
+      uniqueGroupIds.map((gid) async {
+        // 1차: productname/select 직접 파싱
+        String? name = await _fetchProductNameDirect(gid);
+
+        // 2차: selectdetail2 결과에서 product_name fallback
+        name ??= await _fetchNameFromSelectDetail2(gid);
+
+        nameByGroupId[gid] = name;
+      }),
+    );
 
     // 3) rows 조립 (이미지/이름 모두 groupId 기준)
     return purchases.map((p) {
@@ -190,12 +215,6 @@ class _PurchaseListState extends State<PurchaseList> {
     return s;
   }
 
-  int _qtySafe(dynamic q) {
-    if (q == null) return 0;
-    if (q is int) return q;
-    return int.tryParse(q.toString()) ?? 0;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -221,7 +240,6 @@ class _PurchaseListState extends State<PurchaseList> {
                   itemCount: totalPurchases.length,
                   itemBuilder: (context, index) {
                     final row = totalPurchases[index];
-                    final qty = _qtySafe(row.purchase.quantity);
 
                     return SizedBox(
                       width: MediaQuery.of(context).size.width * 0.9,
@@ -254,16 +272,14 @@ class _PurchaseListState extends State<PurchaseList> {
                                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                       children: [
                                         Text(
-                                          row.productName?.trim().isNotEmpty == true
-                                              ? row.productName!
-                                              : '상품',
+                                          row.productName ?? '상품',
                                           style: const TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
                                         Text(
-                                          "${qty}개",
+                                          "${row.purchase.quantity}개",
                                           style: const TextStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold,
