@@ -143,6 +143,7 @@ async def select_summary():
             SELECT
                 p.id            AS pcid,
                 pr.id           AS pid,
+                pr.mid          AS mid,
                 p.cid           AS cid,
                 c.email         AS cemail,
                 c.name          AS cname,
@@ -161,7 +162,7 @@ async def select_summary():
             JOIN employee e            ON p.eid = e.id
             JOIN store s               ON e.sid = s.id
             JOIN product pr            ON p.pid = pr.id
-            LEFT JOIN productname pn   ON pn.pid = pr.id
+            LEFT JOIN productname pn   ON pn.pid = pr.mid
             LEFT JOIN productsize ps   ON ps.pid = pr.id
             LEFT JOIN productcolor pc  ON pc.pid = pr.id
             LEFT JOIN refund r         ON r.pcid = p.id
