@@ -16,6 +16,7 @@ class Ask {
   final String? id; // Firestore doc id
   final String? cid; // FK from Customer
   final String? eid; // FK from Employee
+  final String? pcid; // FK from Purchase
   final DateTime timestamp;
   final String contents;
   final String title;
@@ -24,6 +25,7 @@ class Ask {
     this.id,
     this.cid,
     this.eid,
+    this.pcid,
     required this.timestamp,
     required this.contents,
     required this.title,
@@ -44,6 +46,7 @@ class Ask {
       id: doc.id,
       cid: data['cid'] as String?,
       eid: data['eid'] as String?,
+      pcid: data['pcid'] as String?,
       timestamp: time,
       contents: data['contents'] as String,
       title: data['title'] as String,
@@ -54,6 +57,7 @@ class Ask {
     return {
       'cid': cid,
       'eid': eid,
+      'pcid': pcid,
       'timestamp': Timestamp.fromDate(timestamp),
       'contents': contents,
       'title': title,
