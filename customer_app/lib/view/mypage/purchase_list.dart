@@ -84,7 +84,7 @@ class _PurchaseListState extends State<PurchaseList> {
   }
 
   Future<List<PurchaseRow>> setPurchaseList(int cid) async {
-    final raw = await config.getJSONData('purchase/select?cid=$cid');
+    final raw = await config.getJSONData('purchase/selectcustomer?cid=$cid');
     final list = _unwrapList(raw);
 
     final purchases = list
