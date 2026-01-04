@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:customer_app/config.dart' as config;
 import 'package:customer_app/model/customer.dart';
@@ -5,6 +7,7 @@ import 'package:customer_app/model/usercontroller.dart';
 import 'package:customer_app/view/mypage/purchase_list.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 
 //  Mypage
 /*
@@ -44,11 +47,32 @@ class _MypageState extends State<Mypage> {
     _loadCounts();
   }
 
+  List<dynamic> _unwrapList(dynamic decoded) {
+    if (decoded is List) return decoded;
+    if (decoded is Map && decoded['results'] is List) {
+      return decoded['results'] as List;
+    }
+    return const [];
+  }
+
+  Future<List<dynamic>> _getList(String path) async {
+    final url = Uri.parse("http://${config.hostip}:8008/$path");
+    final res = await http.get(url);
+
+    if (res.statusCode != 200) {
+      throw Exception('HTTP ${res.statusCode} (${url.path}): ${res.body}');
+    }
+
+    final decoded = json.decode(utf8.decode(res.bodyBytes));
+    final list = _unwrapList(decoded);
+    return list;
+  }
+
   Future<void> _loadCounts() async {
 
     try {
-      final purchaseList = (await config.getJSONData(
-        'purchase/select?cid=${customer.id!}',
+      final purchaseList = (await _getList(
+        'purchase/selectcustomer?cid=${customer.id!}',
       ));
       final int purchaseCount = purchaseList.length;
 
