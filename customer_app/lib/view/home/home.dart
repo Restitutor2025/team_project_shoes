@@ -1,3 +1,4 @@
+import 'package:customer_app/for%20test/detail2.dart';
 import 'package:customer_app/ip/ipaddress.dart';
 import 'package:customer_app/model/product.dart';
 import 'package:customer_app/view/product/detail.dart';
@@ -201,7 +202,7 @@ class _ProductCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () => Get.to(
-        () => const Detail(), 
+        () => const Detail2(), 
         arguments: {'product': product, 'koreanName': koreanName} 
       ),
       child: Container(
