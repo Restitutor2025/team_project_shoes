@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:customer_app/config.dart' as config;
 import 'package:customer_app/model/customer.dart';
 import 'package:customer_app/model/usercontroller.dart';
+import 'package:customer_app/view/mypage/purchase_list.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -136,7 +137,9 @@ class _MypageState extends State<Mypage> {
                       padding: const EdgeInsets.all(8.0),
                       child: Column(
                         children: [
-                          Icon(Icons.shopping_cart),
+                          IconButton(onPressed: () {
+                            Get.to(PurchaseList());
+                          }, icon: Icon(Icons.shopping_cart)),
                           Text('구매 내역'),
                           Text(purchases.toString()),
                         ],
