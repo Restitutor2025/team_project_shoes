@@ -69,7 +69,7 @@ async def get_products():
         conn.close()
 
 @router.get("/selectdetail")
-async def select(pid: int):
+async def selectdetail(pid: int):
     conn = connect()
     try:
         curs = conn.cursor() 

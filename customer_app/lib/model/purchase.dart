@@ -20,7 +20,7 @@ class Purchase {
   int eid;  //  FK Employee
   int quantity;
   int finalprice;
-  DateTime pickupdate;
+  DateTime? pickupdate;
   DateTime purchasedate;
 
   //  Constructor
@@ -31,7 +31,7 @@ class Purchase {
     required this.eid,
     required this.quantity,
     required this.finalprice,
-    required this.pickupdate,
+    this.pickupdate,
     required this.purchasedate,
     });
 
@@ -44,7 +44,9 @@ class Purchase {
       eid: json['eid'],
       quantity: json['quantity'],
       finalprice: json['finalprice'],
-      pickupdate: DateTime.parse(json['pickupdate']),
+      pickupdate: json['pickupdate'] == null
+      ? null
+      : DateTime.parse(json['pickupdate']),
       purchasedate: DateTime.parse(json['purchasedate'])
     );
   }
@@ -58,7 +60,7 @@ class Purchase {
       'eid':eid,
       'quantity':quantity,
       'finalprice':finalprice,
-      'pickupdate':pickupdate.toIso8601String(),
+      'pickupdate':pickupdate?.toIso8601String(),
       'purchasedate':purchasedate.toIso8601String()
     };
   }
