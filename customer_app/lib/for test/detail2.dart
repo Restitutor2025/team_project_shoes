@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:customer_app/ip/ipaddress.dart';
 import 'package:customer_app/model/product.dart';
 import 'package:customer_app/model/cart.dart';
-import 'package:customer_app/model/usercontroller.dart'; // 유저 컨트롤러 임포트
+import 'package:customer_app/model/usercontroller.dart'; 
 import 'package:customer_app/util/pcolor.dart';
 
 class Detail2 extends StatefulWidget {
@@ -22,7 +22,7 @@ class _Detail2State extends State<Detail2> {
   late Product product;
   String? koreanName;
   final Cartdatabasehandler handler = Cartdatabasehandler();
-  final UserController userController = Get.find<UserController>(); // 컨트롤러 찾기
+  final UserController userController = Get.find<UserController>(); 
 
   List allOptions = []; 
   List sizeList = [];   
@@ -60,23 +60,20 @@ class _Detail2State extends State<Detail2> {
     } catch (e) { debugPrint("Error: $e"); }
   }
 
-  // 장바구니 저장 및 구매 로직
+  // ✅ 장바구니 저장 및 구매 로직 수정
   void _handleAction({required bool isCart}) async {
     if (selectedSize.isEmpty || selectedColor.isEmpty) {
       Get.snackbar("알림", "옵션을 모두 선택해주세요.", snackPosition: SnackPosition.BOTTOM);
       return;
     }
 
-    // 1. 로그인 유저 확인 및 cid 가져오기
     if (userController.user == null) {
       Get.snackbar("알림", "로그인이 필요한 서비스입니다.");
       return;
     }
     
-    // ✅ 직접 수정하신 'id' 필드명을 사용하여 userCid 할당
     int userCid = int.parse(userController.user!.id.toString()); 
 
-    // 2. 선택한 옵션에 맞는 실제 상품 id 찾기
     var matchedItem = allOptions.firstWhere(
       (item) => item['size'].toString() == selectedSize && item['color'].toString() == selectedColor,
       orElse: () => null,
@@ -87,31 +84,34 @@ class _Detail2State extends State<Detail2> {
 
     if (isCart) {
       try {
-        // SQLite 저장
         await handler.insertCart(Cart(cid: userCid, cartid: finalPid));
-        Get.back(); // 바텀시트 닫기
+        Get.back(); 
         Get.snackbar("성공", "장바구니에 담겼습니다.", backgroundColor: Colors.blue, colorText: Colors.white);
       } catch (e) { debugPrint("SQLite Error: $e"); }
     } else {
-      // 바로 구매하기: 결제 페이지로 이동
+      // 💡 [수정 포인트] Shoppingcart와 형식을 맞추기 위해 "items" 키를 사용한 리스트로 전달
       Get.back();
       Get.to(() => const Purchase2(), arguments: {
-        "pid": finalPid,
-        "name": matchedItem['product_name'] ?? product.ename,
-        "size": selectedSize,
-        "color": selectedColor,
-        "price": product.price,
-        "quantity": count,
-        "manufacturername": matchedItem['manufacturer_name'] ?? "브랜드",
-        "image": '${IpAddress.baseUrl}/productimage/view?pid=${product.mid ?? product.id}&position=main',
-        "cid": userCid, // ✅ 실제 유저 ID(cid) 전달
+        "items": [
+          {
+            "pid": finalPid,
+            "cid": userCid,
+            "price": matchedItem['price'] ?? product.price,
+            "quantity": count,
+            "name": matchedItem['product_name'] ?? koreanName ?? product.ename,
+            "productname": matchedItem['product_name'] ?? koreanName ?? product.ename,
+            "manufacturername": matchedItem['manufacturer_name'] ?? "브랜드",
+            "size": selectedSize,
+            "color": selectedColor,
+            "image": '${IpAddress.baseUrl}/productimage/view?pid=${product.mid ?? product.id}&position=main',
+          }
+        ]
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // 💡 이미지 ID 안전장치 (id가 null이면 0으로 처리하여 URI 에러 방지)
     int imgId = (product.mid != null && product.mid != 0) ? product.mid! : (product.id ?? 0);
 
     return Scaffold(
@@ -120,7 +120,6 @@ class _Detail2State extends State<Detail2> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 💡 이미지 주소 생성 시 에러 방지
             imgId != 0 
               ? Image.network('${IpAddress.baseUrl}/productimage/view?pid=$imgId&position=main', fit: BoxFit.cover)
               : const SizedBox(height: 200, child: Icon(Icons.image_not_supported)),
