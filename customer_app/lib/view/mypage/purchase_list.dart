@@ -2,6 +2,7 @@ import 'package:customer_app/config.dart' as config;
 import 'package:customer_app/model/customer.dart';
 import 'package:customer_app/model/purchase.dart';
 import 'package:customer_app/model/usercontroller.dart';
+import 'package:customer_app/view/mypage/board_review.dart';
 import 'package:customer_app/view/mypage/chatting.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -38,8 +39,16 @@ class _PurchaseListState extends State<PurchaseList> {
   void initState() {
     super.initState();
     userController.user == null
-      ? customer = Customer(id: 1, email: 'email', password: 'password', name: 'name', phone: 'phone', date: DateTime.now(), address: 'address')
-      : customer = userController.user!;
+        ? customer = Customer(
+            id: 1,
+            email: 'email',
+            password: 'password',
+            name: 'name',
+            phone: 'phone',
+            date: DateTime.now(),
+            address: 'address',
+          )
+        : customer = userController.user!;
     _init();
   }
 
@@ -172,7 +181,8 @@ class _PurchaseListState extends State<PurchaseList> {
                                       child: ElevatedButton(
                                         onPressed: () {
                                           Get.to(
-                                            Chatting(), arguments: totalPurchases[index]
+                                            Chatting(),
+                                            arguments: totalPurchases[index],
                                           )!.then((value) => setState(() {}));
                                         },
                                         style: ElevatedButton.styleFrom(
@@ -193,7 +203,7 @@ class _PurchaseListState extends State<PurchaseList> {
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
                                   Text(
-                                    '수령 날짜: ${DateFormat(config.dateFormat).format(totalPurchases[index].purchase.pickupdate)}',
+                                    '수령 날짜: ${totalPurchases[index].purchase.pickupdate == null ? '미수령' : DateFormat(config.dateFormat).format(totalPurchases[index].purchase.pickupdate!)}',
                                     style: TextStyle(fontSize: 15),
                                   ),
                                   Padding(
@@ -202,7 +212,18 @@ class _PurchaseListState extends State<PurchaseList> {
                                       width: 100,
                                       height: 35,
                                       child: ElevatedButton(
-                                        onPressed: () {},
+                                        onPressed: () {
+                                          if (totalPurchases[index]
+                                                  .purchase
+                                                  .pickupdate ==
+                                              null) {
+                                            return;
+                                          }
+                                          Get.to(
+                                            BoardReview(),
+                                            arguments: totalPurchases[index],
+                                          )!.then((value) => setState(() {}));
+                                        },
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.white,
                                           elevation: 1,

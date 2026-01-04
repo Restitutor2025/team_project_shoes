@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:customer_app/config.dart' as config;
 import 'package:customer_app/model/name.dart';
@@ -9,6 +11,7 @@ import 'package:customer_app/util/snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 
 //  board_review
 
@@ -32,6 +35,18 @@ class BoardReview extends StatefulWidget {
   State<BoardReview> createState() => _BoardReviewState();
 }
 
+class PurchaseRow {
+  final Purchase purchase;
+  final String? productName;
+  final String? imageUrl; // 또는 path
+
+  PurchaseRow({
+    required this.purchase,
+    required this.productName,
+    required this.imageUrl,
+  });
+}
+
 class _BoardReviewState extends State<BoardReview> {
   //  Property
   late TextEditingController tEC1;
@@ -39,36 +54,35 @@ class _BoardReviewState extends State<BoardReview> {
   //  Point 1
   late bool starChosen;
   late bool reviewText;
-  //  Dummies
-  final Product dProduct = Product(
-    id: 1,
-    mid: 1,
-    quantity: 1,
-    price: 10500,
-    date: DateTime.now(),
-    ename: 'English',
-  );
-  final Name dName = Name(pid: 1, name: 'Korean');
-  final ProductSize dSize = ProductSize(pid: 1, size: 270);
-  final Purchase dPurchase = Purchase(
-    id: 1,
-    pid: 1,
-    cid: 1,
-    eid: 1,
-    quantity: 1,
-    finalprice: 10500,
-    pickupdate: DateTime.now(),
-    purchasedate: DateTime.now(),
-  );
+  late Product product;
+  late PurchaseRow purchaseRow;
+  late int pNumber;
 
   @override
   void initState() {
     super.initState();
     tEC1 = TextEditingController();
+    _initreview();
     reviewScore = 0;
     //  Point 1
     starChosen = false;
     reviewText = false;
+  }
+
+  _initreview() async{
+    purchaseRow = Get.arguments;
+    pNumber = purchaseRow.purchase.pid;
+    product = getJSONData('product');
+  }
+
+  Future<List<dynamic>> getJSONData(String page) async {
+    var url = Uri.parse("http://$hostip:8000/$page");
+    var response = await http.get(url);
+
+    var dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));
+    final result = dataConvertedJSON["results"].first;
+
+    return result;
   }
 
   @override
@@ -119,7 +133,7 @@ class _BoardReviewState extends State<BoardReview> {
                                     style: TextStyle(fontSize: 17),
                                   ),
                                   Text(
-                                    '(${dProduct.ename})',
+                                    '(${purchaseRow.productName})',
                                     style: TextStyle(fontSize: 17),
                                   ),
                                   Text(
@@ -130,14 +144,14 @@ class _BoardReviewState extends State<BoardReview> {
                                     ),
                                   ),
                                   Text(
-                                    '가격: ${dProduct.price}',
+                                    '가격: ${purchaseRow.purchase.finalprice}',
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Colors.grey,
                                     ),
                                   ),
                                   Text(
-                                    '구매 갯수: ${dProduct.quantity}',
+                                    '구매 갯수: ${purchaseRow.purchase.quantity}',
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Colors.grey,

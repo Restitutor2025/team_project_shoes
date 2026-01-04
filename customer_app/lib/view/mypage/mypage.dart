@@ -45,22 +45,21 @@ class _MypageState extends State<Mypage> {
   }
 
   Future<void> _loadCounts() async {
-    int cid = customer.id!;
 
     try {
       final purchaseList = (await config.getJSONData(
-        'purchase/select?cid=$cid',
+        'purchase/select?cid=${customer.id!}',
       ));
       final int purchaseCount = purchaseList.length;
 
       final int reviewCount = await _countFirestoreByCid(
         collection: 'review',
-        cid: cid,
+        cid: customer.id!,
       );
 
       final int askCount = await _countFirestoreByCid(
         collection: 'ask',
-        cid: cid,
+        cid: customer.id!,
       );
 
       if (!mounted) return;
