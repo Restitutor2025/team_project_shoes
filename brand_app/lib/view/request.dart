@@ -143,33 +143,51 @@ class _RequestState extends State<Request> {
   // 품의 등록 액션
   Future<int?> insertAction() async {
     try {
-      print(
-        "제출 데이터 확인: ${_nameController.text}, $_selectedMaker, $_selectedProduct, $_selectedSize, $_selectedColor, ${_quantityController.text}",
+      // 1. 선택된 값들을 하나의 문자열(contents)로 합칩니다.
+      String fullContents = [
+        "제조사: ${_selectedMaker ?? '미선택'}",
+        "상품명: ${_selectedProduct ?? '미선택'}",
+        "사이즈: ${_selectedSize ?? '미선택'}",
+        "컬러: ${_selectedColor ?? '미선택'}",
+        "수량: ${_quantityController.text}",
+      ].join(" / ");
+
+      final url = Uri.parse(
+        '${IpAddress.baseUrl}/request/insert',
       );
 
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('${IpAddress.baseUrl}/imployee/uproad'),
+      // 2. 서버의 RequestData 모델 필드명(eid, date, okdate, contents)과 1:1 매칭
+      var response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          'eid': 1, // 현재는 테스트용 1번, 나중에 로그인한 유저 ID로 변경 가능
+          'date': 0, // 서버 SQL에서 NOW()를 사용하므로 0 전송
+          'okdate': 0, // 서버 SQL에서 NOW()를 사용하므로 0 전송
+          'contents': fullContents, // 합쳐진 상품 상세 정보
+        }),
       );
-      request.fields['ename'] = _nameController.text;
-      request.fields['maker'] =
-          _selectedMaker ?? ""; // 키값 확인 필요 (기존 pid에서 변경)
-      request.fields['pname'] = _selectedProduct ?? "";
-      request.fields['size'] = _selectedSize ?? "";
-      request.fields['color'] = _selectedColor ?? "";
-      request.fields['quantity'] = _quantityController.text;
 
-      var response = await request.send();
-      var respStr = await response.stream.bytesToString();
+      print("보낸 데이터: $fullContents");
+      print("응답 상태 코드: ${response.statusCode}");
+      print("응답 내용: ${response.body}");
 
       if (response.statusCode == 200) {
-        print("등록 성공: $respStr");
-        return 1;
+        final Map<String, dynamic> res = jsonDecode(
+          response.body,
+        );
+        if (res['results'] == 'OK') {
+          print("데이터베이스 저장 성공!");
+          return 1;
+        } else {
+          print("서버 로직 에러: ${res['results']}");
+          return null;
+        }
       } else {
-        print("등록 실패 (${response.statusCode}): $respStr");
+        print("HTTP 에러 발생: ${response.statusCode}");
       }
     } catch (e) {
-      debugPrint("insertAction 에러: $e");
+      debugPrint("insertAction 통신 에러: $e");
     }
     return null;
   }
