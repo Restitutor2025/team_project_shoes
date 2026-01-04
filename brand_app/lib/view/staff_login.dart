@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:brand_app/ip/ipaddress.dart';
 import 'package:brand_app/model/employee.dart';
 import 'package:brand_app/model/login.dart';
+import 'package:brand_app/view/executive_mainpage.dart';
 import 'package:brand_app/view/staff_main_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -37,8 +38,8 @@ class _StaffLoginState extends State<StaffLogin> {
         width: 300,
         height: 300,),
         Container(
-          width: 300,
-          height:300,
+          width: 500,
+          height:400,
           decoration: BoxDecoration(
             border: Border.all(
               color:Colors.black
@@ -126,21 +127,33 @@ Future<void> loginAction() async {
       }),
     );
 
-    print("Response Status: ${response.statusCode}"); // 상태 코드 확인
-    print("Response Body: ${utf8.decode(response.bodyBytes)}"); // 응답 내용 확인
+    print("Response Status: ${response.statusCode}");
+    print("Response Body: ${utf8.decode(response.bodyBytes)}");
 
     if (response.statusCode == 200) {
       final data = json.decode(utf8.decode(response.bodyBytes));
-      
+
       if (data['results'] == 'OK') {
-        // 이 부분에서 모델 파싱 에러가 많이 납니다.
         try {
-          Employee loggedInEmployee = Employee.fromJson(data['employee_data']); 
+          Employee loggedInEmployee =
+              Employee.fromJson(data['employee_data']);
+
           employeeController.login(loggedInEmployee);
-          Get.offAll(() => const StaffMainpage());
-        } catch (parseError) {
-          print("파싱 에러: $parseError");
-          _errorSnackBar('데이터 모델 변환 중 에러가 발생했습니다.');
+
+          // ⭐⭐⭐ 여기 핵심 수정 ⭐⭐⭐
+          final role = loggedInEmployee.role.toLowerCase();
+
+          if (role == '사원') {
+            // 사원
+            Get.offAll(() => const StaffMainpage());
+          } else {
+            // 사원이 아니면 전부 임원
+            Get.offAll(() => const ExecutiveMainpage());
+          }
+
+        } catch (e) {
+          print("파싱 에러: $e");
+          _errorSnackBar('데이터 처리 중 오류가 발생했습니다.');
         }
       } else {
         _errorSnackBar('이메일 또는 비밀번호가 일치하지 않습니다.');
@@ -153,6 +166,7 @@ Future<void> loginAction() async {
     _errorSnackBar('네트워크 에러가 발생했습니다.');
   }
 }
+
 
   void _errorSnackBar(String message) {
     Get.snackbar(

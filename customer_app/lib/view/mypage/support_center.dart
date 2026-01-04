@@ -1,4 +1,7 @@
+import 'package:customer_app/model/customer.dart';
+import 'package:customer_app/model/usercontroller.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 //  Support center
 /*
@@ -21,6 +24,18 @@ class SupportCenter extends StatefulWidget {
 }
 
 class _SupportCenterState extends State<SupportCenter> {
+  //  Property
+  late Customer customer;
+  UserController userController = Get.find<UserController>();
+
+  @override
+  void initState() {
+    super.initState();
+    userController.user == null
+      ? customer = Customer(id: 1, email: 'email', password: 'password', name: 'name', phone: 'phone', date: DateTime.now(), address: 'address')
+      : customer = userController.user!;
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(

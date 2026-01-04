@@ -4,6 +4,7 @@ import 'package:customer_app/database/selected_store_database.dart';
 import 'package:customer_app/ip/ipaddress.dart';
 import 'package:customer_app/util/pcolor.dart';
 import 'package:customer_app/util/snackbar.dart';
+import 'package:customer_app/view/home/tabbar.dart';
 import 'package:customer_app/view/map/map_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -371,25 +372,34 @@ class _MapSelectState extends State<MapSelect> {
     );
   }
 
-  void selectStore(Map<String, dynamic> store) {
-    Get.defaultDialog(
-      title: '매장 선택',
-      middleText: '${store['name']} 매장을 선택하시겠습니까?',
-      textConfirm: '선택',
-      textCancel: '취소',
-      confirmTextColor: Colors.white,
-      onConfirm: () async {
-        final int storeId = store['id'];
+void selectStore(Map<String, dynamic> store) {
+  Get.defaultDialog(
+    title: '매장 선택',
+    middleText: '${store['name']} 매장을 선택하시겠습니까?',
+    textConfirm: '선택',
+    textCancel: '취소',
+    confirmTextColor: Colors.white,
+    onConfirm: () async {
+      final int storeId = store['id'];
+      final String storeName = store['name'];
 
-        final result = await selectedStoreDB.insertStoreId(storeId);
-        print('선택 매장 저장 결과: $result');
+      // 1. SQLite 저장 (핸들러 호출)
+      await selectedStoreDB.insertStoreId(storeId);
 
-        selectedStoreId = storeId;
+      // 2. StoreController 업데이트 (등록되어 있을 경우)
+      if (Get.isRegistered<StoreController>()) {
+        Get.find<StoreController>().updateStoreName(storeName);
+      }
 
-        setState(() {});
-        Get.back();
-        Snackbar().okSnackBar('성공', '매장이 선택 되었습니다.');
-      },
-    );
-  }
+      // 3. ⭐ 중요: Purchase2 페이지로 데이터 던지며 닫기
+      // 이 result 값이 Purchase2의 Get.to 결과를 채워줍니다.
+      Get.back(result: {
+        'branchName': storeName,
+        'sid': storeId,
+      });
+
+      Snackbar().okSnackBar('성공', '매장이 선택 되었습니다.');
+    },
+  );
+}
 } // class

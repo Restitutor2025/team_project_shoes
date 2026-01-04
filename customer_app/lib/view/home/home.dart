@@ -1,3 +1,4 @@
+import 'package:customer_app/for%20test/detail2.dart';
 import 'package:customer_app/ip/ipaddress.dart';
 import 'package:customer_app/model/product.dart';
 import 'package:customer_app/view/product/detail.dart';
@@ -19,6 +20,8 @@ class _HomeState extends State<Home> {
   int _currentPage = 0;
   List<Product> data = [];
   Map<int, String> koreanNames = {}; 
+  bool _isLoading = true;
+  String _errorMessage = ""; // 에러 메시지 저장용
 
   @override
   void initState() {
@@ -28,26 +31,45 @@ class _HomeState extends State<Home> {
 
   Future<void> getJSONdata() async {
     var url = Uri.parse('${IpAddress.baseUrl}/product/select');
+    debugPrint("요청 주소: $url");
+    
     try {
-      var response = await http.post(url);
+      // 서버 응답 대기 시간을 5초로 설정
+      var response = await http.post(url).timeout(const Duration(seconds: 5));
+      
       if (response.statusCode == 200) {
         var dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));
         if (dataConvertedJSON is List) {
           List<Product> fetchedData = dataConvertedJSON.map((json) => Product.fromJson(json)).toList();
           
-          // 중복 제거 (이름 기준)
           final Map<String, Product> uniqueMap = {};
           for (var item in fetchedData) {
             if (!uniqueMap.containsKey(item.ename)) uniqueMap[item.ename] = item;
           }
           
-          data = uniqueMap.values.toList();
-          setState(() {});
-          // 각 상품의 한글 이름 가져오기
-          for (var item in data) { fetchKoreanName(item); }
+          if (mounted) {
+            setState(() {
+              data = uniqueMap.values.toList();
+              _isLoading = false;
+            });
+            for (var item in data) { fetchKoreanName(item); }
+          }
         }
+      } else {
+        setState(() {
+          _errorMessage = "서버 에러: ${response.statusCode}";
+          _isLoading = false;
+        });
       }
-    } catch (e) { debugPrint('Error: $e'); }
+    } catch (e) { 
+      debugPrint('에러 상세: $e'); 
+      if (mounted) {
+        setState(() {
+          _errorMessage = "연결 실패\nIP주소나 서버 상태를 확인하세요\n($e)";
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> fetchKoreanName(Product product) async {
@@ -58,7 +80,7 @@ class _HomeState extends State<Home> {
       if (response.statusCode == 200) {
         var jsonResponse = json.decode(utf8.decode(response.bodyBytes));
         List results = jsonResponse['results'];
-        if (results.isNotEmpty) {
+        if (results.isNotEmpty && mounted) {
           setState(() { koreanNames[product.id!] = results[0]['name']; });
         }
       }
@@ -79,26 +101,37 @@ class _HomeState extends State<Home> {
           child: Image.asset('images/logo.png', fit: BoxFit.contain),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSearchField(),
-            _buildSectionTitle('추천상품 🔥'),
-            _buildSlider(),
-            _buildIndicator(),
-            const SizedBox(height: 24),
-            ProductSection(title: '신상상품', product: data, koreanNames: koreanNames),
-            const SizedBox(height: 32),
-            ProductSection(title: '오늘의 인기상품', product: data, koreanNames: koreanNames),
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
+      body: _isLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage.isNotEmpty
+              ? Center(child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Text(_errorMessage, textAlign: TextAlign.center, style: const TextStyle(color: Colors.red)),
+                ))
+              : data.isEmpty 
+                  ? const Center(child: Text("상품 데이터가 없습니다."))
+                  : RefreshIndicator(
+                      onRefresh: getJSONdata,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildSearchField(),
+                            _buildSectionTitle('추천상품 🔥'),
+                            _buildSlider(),
+                            _buildIndicator(),
+                            const SizedBox(height: 24),
+                            ProductSection(title: '신상상품', product: data, koreanNames: koreanNames),
+                            const SizedBox(height: 32),
+                            ProductSection(title: '오늘의 인기상품', product: data, koreanNames: koreanNames),
+                            const SizedBox(height: 32),
+                          ],
+                        ),
+                      ),
+                    ),
     );
   }
 
-  // 1) 검색창 디자인 복구
   Widget _buildSearchField() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 30, 20, 0),
@@ -120,7 +153,6 @@ class _HomeState extends State<Home> {
     child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
   );
 
-  // 2) 슬라이더 디자인 복구
   Widget _buildSlider() {
     return SizedBox(
       height: 240,
@@ -142,9 +174,9 @@ class _HomeState extends State<Home> {
     );
   }
 
-  // 3) 인디케이터 디자인 복구
   Widget _buildIndicator() {
     int count = data.length > 5 ? 5 : data.length;
+    if (count == 0) return const SizedBox.shrink();
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(count, (index) {
@@ -170,7 +202,7 @@ class _ProductCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () => Get.to(
-        () => const Detail(), 
+        () => const Detail2(), 
         arguments: {'product': product, 'koreanName': koreanName} 
       ),
       child: Container(

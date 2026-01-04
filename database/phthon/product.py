@@ -45,24 +45,26 @@ async def get_shopping():
 @router.post("/select")
 async def get_products():
     conn = connect()
-    curs = conn.cursor() # 팀원 스타일: 커서 직접 생성
-
+    curs = conn.cursor()
     try:
-        # SQL 실행
-        sql = "SELECT id, quantity, price, date, ename FROM product"
+        # id, mid, price, ename을 모두 가져와야 Flutter 모델이 깨지지 않습니다.
+        sql = """
+            SELECT id, mid, ename, price, quantity, date 
+            FROM product 
+            ORDER BY id DESC
+        """
         curs.execute(sql)
         results = curs.fetchall()
 
-        # 데이터 가공 (날짜 형변환)
         for row in results:
             if row['date']:
                 row['date'] = str(row['date'])
-        return results
+        
+        return results  # 리스트 형태로 반환
 
     except Exception as e:
         print(f"Error: {e}")
-        return {'results': 'Error'} 
-        
+        return [] # 에러 시 빈 리스트 반환하여 로딩 종료 유도
     finally:
         conn.close()
 
@@ -199,3 +201,44 @@ async def get_mid(ename: str):
     finally:
         if conn:
             conn.close()
+
+
+
+##################################### 우선 구현용
+@router.get("/selectdetail2")
+async def select_detail2(pid: int):
+    conn = connect()
+    try:
+        curs = conn.cursor()
+        # 1. 먼저 해당 상품의 mid를 확인합니다.
+        sql_mid = "SELECT mid FROM product WHERE id = %s"
+        curs.execute(sql_mid, (pid,))
+        res = curs.fetchone()
+        
+        # mid가 0이거나 없으면 본인 ID를 그룹 ID로 사용합니다.
+        group_id = res['mid'] if res and res['mid'] != 0 else pid
+
+        # 2. 같은 mid를 가진 모든 상품의 모든 옵션(사이즈, 컬러)을 중복 없이 가져옵니다.
+        sql = """
+            SELECT 
+                p.id, p.ename, p.price, p.mid,
+                pn.name as product_name,
+                m.name as manufacturer_name,
+                ps.size,
+                pc.color
+            FROM product p
+            LEFT JOIN productname pn ON p.id = pn.pid
+            LEFT JOIN manufacturername m ON p.mid = m.pid
+            LEFT JOIN productsize ps ON p.id = ps.pid
+            LEFT JOIN productcolor pc ON p.id = pc.pid
+            WHERE p.mid = %s OR p.id = %s
+        """
+        curs.execute(sql, (group_id, group_id))
+        rows = curs.fetchall()
+        
+        return {"results": rows, "group_id": group_id}
+    except Exception as e:
+        print(f"Error in selectdetail2: {e}")
+        return {"error": str(e)}
+    finally:
+        conn.close()

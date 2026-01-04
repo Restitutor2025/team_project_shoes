@@ -60,3 +60,13 @@ async def delete_productcolor(pid: int, color: str):
         return {'result': 'Error'}
     finally:
         conn.close()
+
+@router.get("/all")
+async def get_all_colors():
+    conn = connect()
+    curs = conn.cursor()
+    # 등록된 모든 색상을 중복 없이 가져옴
+    curs.execute("SELECT DISTINCT color FROM productcolor")
+    rows = curs.fetchall()
+    conn.close()
+    return {"results": [row['color'] for row in rows]}
