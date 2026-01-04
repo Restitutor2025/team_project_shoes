@@ -93,7 +93,7 @@ class _PurchaseListState extends State<PurchaseList> {
       }
 
       final imageUrl =
-          'http://${config.hostip}:8000/productimage/view?pid=${p.pid}&position=main';
+          'http://${config.hostip}:8008/productimage/view?pid=${p.pid}&position=main';
 
       rows.add(PurchaseRow(purchase: p, productName: name, imageUrl: imageUrl));
     }
