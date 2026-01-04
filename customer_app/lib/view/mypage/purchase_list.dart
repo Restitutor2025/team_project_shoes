@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:customer_app/config.dart' as config;
 import 'package:customer_app/model/purchase.dart';
 import 'package:customer_app/model/usercontroller.dart';
 import 'package:customer_app/view/mypage/chatting.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 class PurchaseList extends StatefulWidget {
@@ -18,7 +21,7 @@ class PurchaseRow {
   final String? productName;
   final String? imageUrl;
 
-  PurchaseRow({
+  const PurchaseRow({
     required this.purchase,
     required this.productName,
     required this.imageUrl,
@@ -39,14 +42,17 @@ class _PurchaseListState extends State<PurchaseList> {
   }
 
   Future<void> _init() async {
-    final argCid = Get.arguments?['cid'] as int?;
-    final fallbackCid = userController.user?.id; // 로그인 유저 id
-    final cid = argCid ?? fallbackCid ?? 1;
+    // 유저별 cid: arguments 우선, 없으면 로그인 유저 id, 그래도 없으면 1
+    final int? argCid = Get.arguments?['cid'] as int?;
+    final int? loginCid = userController.user?.id;
+    final int cid = argCid ?? loginCid ?? 1;
 
-    debugPrint('PurchaseList cid=$cid args=${Get.arguments} user=${userController.user?.id}');
+    debugPrint(
+      'PurchaseList cid=$cid args=${Get.arguments} user=${userController.user?.id}',
+    );
 
     try {
-      final rows = await setPurchaseList(cid);
+      final rows = await _loadPurchaseRows(cid);
       if (!mounted) return;
       setState(() {
         totalPurchases = rows;
@@ -61,12 +67,50 @@ class _PurchaseListState extends State<PurchaseList> {
     }
   }
 
-  Future<List<PurchaseRow>> setPurchaseList(int cid) async {
+  /// 옵션 pid -> 대표 group_id
+  /// (이미지/이름이 대표 pid(group_id)에만 있는 구조 대응)
+  Future<int> _resolveGroupId(int pid) async {
+    try {
+      final url = Uri.parse(
+        'http://${config.hostip}:8008/product/selectdetail2?pid=$pid',
+      );
+      final res = await http.get(url);
+      if (res.statusCode != 200) return pid;
+
+      final decoded = json.decode(utf8.decode(res.bodyBytes));
+
+      // 서버 응답이 {"group_id": ...} 인 케이스
+      if (decoded is Map && decoded['group_id'] != null) {
+        final parsed = int.tryParse(decoded['group_id'].toString());
+        return parsed ?? pid;
+      }
+
+      // 혹시 {"results":[{...,"group_id":...}]} 같은 케이스 방어
+      if (decoded is Map &&
+          decoded['results'] is List &&
+          (decoded['results'] as List).isNotEmpty) {
+        final first = (decoded['results'] as List).first;
+        if (first is Map && first['group_id'] != null) {
+          final parsed = int.tryParse(first['group_id'].toString());
+          return parsed ?? pid;
+        }
+      }
+
+      return pid;
+    } catch (e) {
+      debugPrint('resolveGroupId error (pid=$pid): $e');
+      return pid;
+    }
+  }
+
+  Future<List<PurchaseRow>> _loadPurchaseRows(int cid) async {
     // ✅ mypage랑 동일 라우트로 통일 (서버 구현이 확실한 쪽)
     final raw = await config.getJSONData('purchase/selectcustomer?cid=$cid');
 
+    // config.dart가 Purchase로 파싱해준 경우
     List<Purchase> purchases = raw.whereType<Purchase>().toList();
 
+    // 혹시 Map으로 들어오는 경우 대비
     if (purchases.isEmpty) {
       purchases = raw
           .whereType<Map>()
@@ -76,12 +120,23 @@ class _PurchaseListState extends State<PurchaseList> {
 
     if (purchases.isEmpty) return <PurchaseRow>[];
 
-    final Map<int, String?> nameByPid = {};
-    final uniquePids = purchases.map((p) => p.pid).toSet().toList();
+    // 1) pid -> groupId 매핑 (병렬)
+    final Map<int, int> groupIdByPid = {};
+    await Future.wait(
+      purchases.map((p) async {
+        groupIdByPid[p.pid] = await _resolveGroupId(p.pid);
+      }),
+    );
 
-    Future<String?> fetchName(int pid) async {
+    // 2) product name은 groupId 기준으로 가져오기 (캐싱 + 병렬)
+    final Map<int, String?> nameByGroupId = {};
+    final uniqueGroupIds = groupIdByPid.values.toSet().toList();
+
+    Future<String?> fetchName(int pidOrGroupId) async {
       try {
-        final namesRaw = await config.getJSONData('productname/select?pid=$pid');
+        final namesRaw = await config.getJSONData(
+          'productname/select?pid=$pidOrGroupId',
+        );
         if (namesRaw.isEmpty) return null;
 
         final first = namesRaw.first;
@@ -100,22 +155,27 @@ class _PurchaseListState extends State<PurchaseList> {
         if (first is List && first.isNotEmpty) return first.first?.toString();
         return first.toString();
       } catch (e) {
-        debugPrint('ProductName load error (pid=$pid): $e');
+        debugPrint('ProductName load error (pid=$pidOrGroupId): $e');
         return null;
       }
     }
 
-    await Future.wait(uniquePids.map((pid) async {
-      nameByPid[pid] = await fetchName(pid);
-    }));
+    await Future.wait(
+      uniqueGroupIds.map((gid) async {
+        nameByGroupId[gid] = await fetchName(gid);
+      }),
+    );
 
+    // 3) rows 조립 (이미지/이름 모두 groupId 기준)
     return purchases.map((p) {
+      final gid = groupIdByPid[p.pid] ?? p.pid;
+
       final imageUrl =
-          'http://${config.hostip}:8008/productimage/view?pid=${p.pid}&position=main';
+          'http://${config.hostip}:8008/productimage/view?pid=$gid&position=main';
 
       return PurchaseRow(
         purchase: p,
-        productName: nameByPid[p.pid],
+        productName: nameByGroupId[gid],
         imageUrl: imageUrl,
       );
     }).toList();
@@ -142,7 +202,10 @@ class _PurchaseListState extends State<PurchaseList> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text("구매 목록", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          "구매 목록",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         elevation: 0,
         bottom: PreferredSize(
@@ -158,6 +221,7 @@ class _PurchaseListState extends State<PurchaseList> {
                   itemCount: totalPurchases.length,
                   itemBuilder: (context, index) {
                     final row = totalPurchases[index];
+
                     return SizedBox(
                       width: MediaQuery.of(context).size.width * 0.9,
                       height: 180,
@@ -171,7 +235,9 @@ class _PurchaseListState extends State<PurchaseList> {
                               height: 50,
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stack) {
-                                debugPrint('Image load failed: ${row.imageUrl} / $error');
+                                debugPrint(
+                                  'Image load failed: ${row.imageUrl} / $error',
+                                );
                                 return const SizedBox(
                                   width: 50,
                                   height: 50,
@@ -184,9 +250,15 @@ class _PurchaseListState extends State<PurchaseList> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Padding(
-                                    padding: const EdgeInsets.fromLTRB(10, 30, 0, 0),
+                                    padding: const EdgeInsets.fromLTRB(
+                                      10,
+                                      30,
+                                      0,
+                                      0,
+                                    ),
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
                                       children: [
                                         Text(
                                           row.productName ?? '상품',
@@ -229,7 +301,8 @@ class _PurchaseListState extends State<PurchaseList> {
                                   Padding(
                                     padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
                                       children: [
                                         SizedBox(
                                           width: 100,
@@ -248,7 +321,10 @@ class _PurchaseListState extends State<PurchaseList> {
                                               backgroundColor: Colors.white,
                                               elevation: 1,
                                             ),
-                                            child: const Text('문의 하기', style: TextStyle(fontSize: 12)),
+                                            child: const Text(
+                                              '문의 하기',
+                                              style: TextStyle(fontSize: 12),
+                                            ),
                                           ),
                                         ),
                                         SizedBox(
@@ -256,13 +332,16 @@ class _PurchaseListState extends State<PurchaseList> {
                                           height: 35,
                                           child: ElevatedButton(
                                             onPressed: () {
-                                              // TODO 리뷰 연결
+                                              // TODO: 리뷰 화면 연결
                                             },
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: Colors.white,
                                               elevation: 1,
                                             ),
-                                            child: const Text('리뷰 하기', style: TextStyle(fontSize: 12)),
+                                            child: const Text(
+                                              '리뷰 하기',
+                                              style: TextStyle(fontSize: 12),
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -270,7 +349,7 @@ class _PurchaseListState extends State<PurchaseList> {
                                   ),
                                 ],
                               ),
-                            )
+                            ),
                           ],
                         ),
                       ),
