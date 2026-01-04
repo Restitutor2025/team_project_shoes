@@ -42,10 +42,35 @@ class _MypageState extends State<Mypage> {
   @override
   void initState() {
     super.initState();
-    userController.user == null
-      ? customer = Customer(id: 1, email: 'email', password: 'password', name: 'name', phone: 'phone', date: DateTime.now(), address: 'address')
-      : customer = userController.user!;
-    _loadCounts();
+    userController = Get.find<UserController>();
+
+    // 일단 임시 customer 세팅
+    customer =
+        userController.user ??
+        Customer(
+          id: 1,
+          email: 'email',
+          password: 'password',
+          name: 'name',
+          phone: 'phone',
+          date: DateTime.now(),
+          address: 'address',
+        );
+
+    // user가 나중에 들어오는 경우 대비해서, 다음 프레임에서 한번 더 동기화
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncCustomerAndReload();
+    });
+  }
+
+  Future<void> _syncCustomerAndReload() async {
+    final u = userController.user;
+    if (u != null && u.id != null && u.id != customer.id) {
+      setState(() {
+        customer = u;
+      });
+    }
+    await _loadCounts();
   }
 
   List<dynamic> _unwrapList(dynamic decoded) {
@@ -70,7 +95,6 @@ class _MypageState extends State<Mypage> {
   }
 
   Future<void> _loadCounts() async {
-
     try {
       final purchaseList = (await _getList(
         'purchase/selectcustomer?cid=${customer.id!}',
@@ -161,9 +185,15 @@ class _MypageState extends State<Mypage> {
                       padding: const EdgeInsets.all(8.0),
                       child: Column(
                         children: [
-                          IconButton(onPressed: () {
-                            Get.to(PurchaseList(), arguments: {'cid': customer.id!});
-                          }, icon: Icon(Icons.shopping_cart)),
+                          IconButton(
+                            onPressed: () {
+                              Get.to(
+                                PurchaseList(),
+                                arguments: {'cid': customer.id!},
+                              );
+                            },
+                            icon: Icon(Icons.shopping_cart),
+                          ),
                           Text('구매 내역'),
                           Text(purchases.toString()),
                         ],
@@ -183,9 +213,12 @@ class _MypageState extends State<Mypage> {
                       padding: const EdgeInsets.all(8.0),
                       child: Column(
                         children: [
-                          IconButton(onPressed: () {
-                            Get.to(SupportCenter());
-                          }, icon: Icon(Icons.headphones)),
+                          IconButton(
+                            onPressed: () {
+                              Get.to(SupportCenter());
+                            },
+                            icon: Icon(Icons.headphones),
+                          ),
                           Text('고객 센터'),
                           Text(asks.toString()),
                         ],
