@@ -346,7 +346,7 @@ class _PurchaseViewState extends State<PurchaseView> {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: Image.network(
-                              "${IpAddress.baseUrl}/productimage/view?pid=${item.mid}&position=main",
+                              "${IpAddress.baseUrl}/productimage/view?pid=${item.pid}&position=main",
                               width: 80,
                               height: 80,
                               fit: BoxFit.cover,
