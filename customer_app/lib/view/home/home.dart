@@ -30,47 +30,48 @@ class _HomeState extends State<Home> {
   }
 
   Future<void> getJSONdata() async {
-    var url = Uri.parse('${IpAddress.baseUrl}/product/select');
-    debugPrint("요청 주소: $url");
-    
-    try {
-      // 서버 응답 대기 시간을 5초로 설정
-      var response = await http.post(url).timeout(const Duration(seconds: 5));
-      
-      if (response.statusCode == 200) {
-        var dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));
-        if (dataConvertedJSON is List) {
-          List<Product> fetchedData = dataConvertedJSON.map((json) => Product.fromJson(json)).toList();
-          
-          final Map<String, Product> uniqueMap = {};
-          for (var item in fetchedData) {
-            if (!uniqueMap.containsKey(item.ename)) uniqueMap[item.ename] = item;
-          }
-          
-          if (mounted) {
-            setState(() {
-              data = uniqueMap.values.toList();
-              _isLoading = false;
-            });
-            for (var item in data) { fetchKoreanName(item); }
-          }
-        }
-      } else {
-        setState(() {
-          _errorMessage = "서버 에러: ${response.statusCode}";
-          _isLoading = false;
-        });
+  final url = Uri.parse('${IpAddress.baseUrl}/product/select');
+
+  try {
+    final response = await http.post(url).timeout(const Duration(seconds: 5));
+
+    if (response.statusCode == 200) {
+      final decoded = json.decode(utf8.decode(response.bodyBytes));
+
+      final List list = decoded['results'];
+
+      final fetchedData =
+          list.map((e) => Product.fromJson(Map<String, dynamic>.from(e))).toList();
+
+      final Map<String, Product> uniqueMap = {};
+      for (final item in fetchedData) {
+        uniqueMap.putIfAbsent(item.ename, () => item);
       }
-    } catch (e) { 
-      debugPrint('에러 상세: $e'); 
-      if (mounted) {
-        setState(() {
-          _errorMessage = "연결 실패\nIP주소나 서버 상태를 확인하세요\n($e)";
-          _isLoading = false;
-        });
+
+      if (!mounted) return;
+      setState(() {
+        data = uniqueMap.values.toList();
+        _isLoading = false;
+      });
+
+      for (final item in data) {
+        fetchKoreanName(item);
       }
+    } else {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = "서버 에러: ${response.statusCode}";
+        _isLoading = false;
+      });
     }
+  } catch (e) {
+    if (!mounted) return;
+    setState(() {
+      _errorMessage = "연결 실패\n($e)";
+      _isLoading = false;
+    });
   }
+}
 
   Future<void> fetchKoreanName(Product product) async {
     final int targetPid = (product.mid != null && product.mid != 0) ? product.mid! : product.id!;
