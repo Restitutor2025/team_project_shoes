@@ -4,6 +4,7 @@ import 'package:customer_app/database/selected_store_database.dart';
 import 'package:customer_app/ip/ipaddress.dart';
 import 'package:customer_app/util/pcolor.dart';
 import 'package:customer_app/util/snackbar.dart';
+import 'package:customer_app/view/home/tabbar.dart';
 import 'package:customer_app/view/map/map_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -371,7 +372,7 @@ class _MapSelectState extends State<MapSelect> {
     );
   }
 
-  void selectStore(Map<String, dynamic> store) {
+void selectStore(Map<String, dynamic> store) {
     Get.defaultDialog(
       title: '매장 선택',
       middleText: '${store['name']} 매장을 선택하시겠습니까?',
@@ -380,9 +381,17 @@ class _MapSelectState extends State<MapSelect> {
       confirmTextColor: Colors.white,
       onConfirm: () async {
         final int storeId = store['id'];
+        final String storeName = store['name']; // 매장 이름 가져오기
 
+        // 1. SQLite에 저장
         final result = await selectedStoreDB.insertStoreId(storeId);
         print('선택 매장 저장 결과: $result');
+
+        // 2. [추가] 컨트롤러 업데이트 (이 코드가 UI를 즉시 바꿉니다)
+        // Tabbar에서 선언한 StoreController를 찾아 이름을 업데이트함
+        if (Get.isRegistered<StoreController>()) {
+          Get.find<StoreController>().updateStoreName(storeName);
+        }
 
         selectedStoreId = storeId;
 
