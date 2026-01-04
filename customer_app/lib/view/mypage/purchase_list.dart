@@ -54,34 +54,98 @@ class _PurchaseListState extends State<PurchaseList> {
   }
 
   Future<List<PurchaseRow>> setPurchaseList(int cid) async {
-    final purchases = (await config.getJSONData(
-      'purchase/select?cid=$cid',
-    )).cast<Purchase>();
-    final rows = <PurchaseRow>[];
+    // 1) Load purchases (robust against dynamic decoding)
+    final raw = await config.getJSONData('purchase/select?cid=$cid');
 
-    for (final p in purchases) {
-      final namesRaw = await config.getJSONData(
-        'productname/select?pid=${p.pid}',
-      );
-      String? name;
-      if (namesRaw.isNotEmpty) {
+    List<Purchase> purchases = raw.whereType<Purchase>().toList();
+
+    // Fallback: if config.dart didn't parse into Purchase objects for any reason
+    if (purchases.isEmpty) {
+      purchases = raw
+          .whereType<Map>()
+          .map((e) => Purchase.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    }
+
+    if (purchases.isEmpty) return <PurchaseRow>[];
+
+    // 2) Fetch product names with caching + parallel requests
+    final Map<int, String?> nameByPid = {};
+    final uniquePids = purchases.map((p) => p.pid).toSet().toList();
+
+    Future<String?> fetchName(int pid) async {
+      try {
+        final namesRaw = await config.getJSONData(
+          'productname/select?pid=$pid',
+        );
+        if (namesRaw.isEmpty) return null;
+
         final first = namesRaw.first;
-        if (first is Map && first['name'] != null) {
-          name = first['name'].toString();
-        } else if (first is List && first.isNotEmpty) {
-          name = first[0].toString();
-        } else {
-          name = first.toString();
-        }
-      }
 
+        // If config.dart parses to Name model
+        // ignore: avoid_dynamic_calls
+        if (first is dynamic && (first as dynamic).name != null) {
+          try {
+            // ignore: avoid_dynamic_calls
+            return (first as dynamic).name?.toString();
+          } catch (_) {
+            /* fall through */
+          }
+        }
+
+        // If it's a Map
+        if (first is Map) {
+          final v = first['name'];
+          return v?.toString();
+        }
+
+        // If it's a List like [name]
+        if (first is List && first.isNotEmpty) {
+          return first.first?.toString();
+        }
+
+        return first.toString();
+      } catch (e) {
+        debugPrint('ProductName load error (pid=$pid): $e');
+        return null;
+      }
+    }
+
+    await Future.wait(
+      uniquePids.map((pid) async {
+        nameByPid[pid] = await fetchName(pid);
+      }),
+    );
+
+    // 3) Assemble rows
+    return purchases.map((p) {
       final imageUrl =
           'http://${config.hostip}:8008/productimage/view?pid=${p.pid}&position=main';
 
-      rows.add(PurchaseRow(purchase: p, productName: name, imageUrl: imageUrl));
-    }
+      return PurchaseRow(
+        purchase: p,
+        productName: nameByPid[p.pid],
+        imageUrl: imageUrl,
+      );
+    }).toList();
+  }
 
-    return rows;
+  String _fmtMoney(dynamic value) {
+    final n = num.tryParse(value?.toString() ?? '');
+    if (n == null) return value?.toString() ?? '';
+    return NumberFormat('#,###').format(n);
+  }
+
+  String _fmtDate(dynamic value) {
+    if (value == null) return '';
+    final s = value.toString();
+    try {
+      // 서버가 ISO8601이면 여기로
+      final dt = DateTime.tryParse(s);
+      if (dt != null) return DateFormat('yyyy-MM-dd').format(dt);
+    } catch (_) {}
+    // 이미 yyyy-MM-dd 같은 문자열이면 그대로
+    return s;
   }
 
   @override
@@ -105,6 +169,7 @@ class _PurchaseListState extends State<PurchaseList> {
           : ListView.builder(
               itemCount: totalPurchases.length,
               itemBuilder: (context, index) {
+                final row = totalPurchases[index];
                 return SizedBox(
                   width: MediaQuery.of(context).size.width * 0.9,
                   height: 180,
@@ -113,10 +178,15 @@ class _PurchaseListState extends State<PurchaseList> {
                     child: Row(
                       children: [
                         Image.network(
-                          totalPurchases[index].imageUrl ?? '',
+                          row.imageUrl ?? '',
                           width: 50,
                           height: 50,
                           fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const SizedBox(
+                            width: 50,
+                            height: 50,
+                            child: Icon(Icons.image_not_supported_outlined),
+                          ),
                         ),
                         Expanded(
                           child: Column(
@@ -134,42 +204,75 @@ class _PurchaseListState extends State<PurchaseList> {
                                       MainAxisAlignment.spaceEvenly,
                                   children: [
                                     Text(
-                                      '${totalPurchases[index].productName}',
-                                      style: TextStyle(fontSize: 15),
+                                      row.productName ?? '상품',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                     Text(
-                                      '${config.formatter.format(totalPurchases[index].purchase.quantity)}개',
-                                      style: TextStyle(fontSize: 15),
-                                    ),
-                                    Text(
-                                      '총 구매액: ${config.formatter.format(totalPurchases[index].purchase.finalprice)}',
-                                      style: TextStyle(fontSize: 15),
+                                      "${row.purchase.quantity}개",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Text(
-                                    '구매 날짜: ${DateFormat(config.dateFormat).format(totalPurchases[index].purchase.purchasedate)}',
-                                    style: TextStyle(fontSize: 15),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: SizedBox(
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(10, 5, 0, 0),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      "주문 금액: ${_fmtMoney(row.purchase.finalprice)}원",
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(10, 5, 0, 0),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      "픽업 날짜: ${_fmtDate(row.purchase.pickupdate)}",
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(10, 5, 0, 0),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      "구매 날짜: ${_fmtDate(row.purchase.purchasedate)}",
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  10,
+                                  10,
+                                  0,
+                                  0,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    SizedBox(
                                       width: 100,
                                       height: 35,
                                       child: ElevatedButton(
                                         onPressed: () {
-                                          final row = totalPurchases[index];
                                           Get.to(
                                             const Chatting(),
                                             arguments: {
-                                              'pcid': row
-                                                  .purchase
-                                                  .id, // 구매 PK (pcid로 쓸 값)
+                                              'pcid': row.purchase.id,
                                               'productName':
                                                   row.productName ?? '상품',
                                             },
@@ -185,20 +288,7 @@ class _PurchaseListState extends State<PurchaseList> {
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Text(
-                                    '수령 날짜: ${DateFormat(config.dateFormat).format(totalPurchases[index].purchase.pickupdate!)}',
-                                    style: TextStyle(fontSize: 15),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: SizedBox(
+                                    SizedBox(
                                       width: 100,
                                       height: 35,
                                       child: ElevatedButton(
@@ -213,8 +303,8 @@ class _PurchaseListState extends State<PurchaseList> {
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),

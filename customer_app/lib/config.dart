@@ -39,19 +39,27 @@ Future<List<dynamic>> getJSONData(String page) async {
 
     var dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));
     List result = dataConvertedJSON["results"];
-    procData(page, result);
-    return procData(page, result);
+
+    final key = page.split('/').first.split('?').first;
+
+    return procData(key, result);
   }
 
-  List<dynamic> procData(String input, data){
-    switch(input){
-      case 'purchase': return data.map((e) => Purchase.fromJson(e)).toList() as List<Purchase>;
-      case 'name': return data.map((e) => Name.fromJson(e)).toList();
-      case 'product': return data.map((e) => Product.fromJson(e)).toList();
-      case 'productimage': return data.map((e) => ProductImage.fromJson(e)).toList();
-      default: return [];
-    }
+  List<dynamic> procData(String input, data) {
+  switch (input) {
+    case 'purchase':
+      return data.map((e) => Purchase.fromJson(e)).toList();
+    case 'name':
+    case 'productname':
+      return data.map((e) => Name.fromJson(e)).toList();
+    case 'product':
+      return data.map((e) => Product.fromJson(e)).toList();
+    case 'productimage':
+      return data.map((e) => ProductImage.fromJson(e)).toList();
+    default:
+      return [];
   }
+}
 
 
 
