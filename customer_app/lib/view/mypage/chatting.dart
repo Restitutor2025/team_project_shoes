@@ -39,6 +39,18 @@ class Chatting extends StatefulWidget {
   State<Chatting> createState() => _ChattingState();
 }
 
+class PurchaseRow {
+  final Purchase purchase;
+  final String? productName;
+  final String imageUrl;
+
+  PurchaseRow({
+    required this.purchase,
+    required this.productName,
+    required this.imageUrl,
+  });
+}
+
 class _ChattingState extends State<Chatting> {
   //  Property
 
@@ -47,9 +59,7 @@ class _ChattingState extends State<Chatting> {
   UserController userController = Get.find<UserController>();
 
   late int cid;
-
   late final PurchaseRow values;
-
   late TextEditingController tEC1;
 
   final String roomId = 'simple_chat';
@@ -179,10 +189,7 @@ class _ChattingState extends State<Chatting> {
 
                           borderRadius: BorderRadius.circular(16),
                         ),
-
-                        child: Text(
-                          '${totalChates[index]['contents'] as String}',
-                        ),
+                        child: Text('${totalChates[index]['contents'] as String}'),
                       ),
                     ),
                   ),
@@ -282,14 +289,11 @@ class _ChattingState extends State<Chatting> {
       'cid': cid,
 
       'eid': null,
-
       'pcid': values.purchase.id,
-
       'contents': text,
 
       'timestamp': FieldValue.serverTimestamp(),
-
-      'title': '${values.productName ?? "상품"} 문의',
+      'title': '${values.productName ?? "상품"} 문의'
     });
   }
 }
