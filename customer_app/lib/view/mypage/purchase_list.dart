@@ -56,7 +56,7 @@ class _PurchaseListState extends State<PurchaseList> {
 
   Future<List<PurchaseRow>> _loadPurchaseRows(int cid) async {
     // 1) purchases 로딩 (config.dart에서 key 추출하도록 고친 상태 가정)
-    final raw = await config.getJSONData('purchase/select?cid=$cid');
+    final raw = await config.getJSONData('purchase/selectcustomer?cid=$cid');
 
     // config.dart가 Purchase로 파싱해준 경우
     List<Purchase> purchases = raw.whereType<Purchase>().toList();
