@@ -161,7 +161,7 @@ class _MypageState extends State<Mypage> {
                       child: Column(
                         children: [
                           IconButton(onPressed: () {
-                            Get.to(PurchaseList());
+                            Get.to(PurchaseList(), arguments: {'cid': customer.id!});
                           }, icon: Icon(Icons.shopping_cart)),
                           Text('구매 내역'),
                           Text(purchases.toString()),
