@@ -11,6 +11,7 @@ import 'package:intl/intl.dart';
   Create: 30/12/2025 12:30, Creator: Chansol, Park
   Update log: 
     DUMMY 00/00/0000 00:00, 'Point X, Description', Creator: Chansol, Park
+    asdddasd
   Version: 1.0
   Dependency: 
   Desc: Chatting - ask

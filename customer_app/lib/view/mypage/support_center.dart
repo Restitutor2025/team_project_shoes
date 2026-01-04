@@ -8,6 +8,7 @@ import 'package:get/get.dart';
   Create: 30/12/2025 11:10, Creator: Chansol, Park
   Update log: 
     DUMMY 00/00/0000 00:00, 'Point X, Description', Creator: Chansol, Park
+    asdasdddd
   Version: 1.0
   Dependency: 
   Desc: Support center
