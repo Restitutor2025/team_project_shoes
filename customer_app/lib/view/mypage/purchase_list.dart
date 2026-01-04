@@ -1,5 +1,7 @@
 import 'package:customer_app/config.dart' as config;
+import 'package:customer_app/model/customer.dart';
 import 'package:customer_app/model/purchase.dart';
+import 'package:customer_app/model/usercontroller.dart';
 import 'package:customer_app/view/mypage/chatting.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -28,17 +30,22 @@ class _PurchaseListState extends State<PurchaseList> {
   //  Property
   List<PurchaseRow> totalPurchases = [];
   bool isLoading = true;
+  late Customer customer;
+  UserController userController = Get.find<UserController>();
 
   @override
   void initState() {
     super.initState();
+    userController.user == null
+      ? customer = Customer(id: 1, email: 'email', password: 'password', name: 'name', phone: 'phone', date: DateTime.now(), address: 'address')
+      : customer = userController.user!;
     _init();
   }
 
   Future<void> _init() async {
-    final cid = 1;
+    final cid = customer.id;
     try {
-      final rows = await setPurchaseList(cid);
+      final rows = await setPurchaseList(cid!);
       if (!mounted) return;
       setState(() {
         totalPurchases = rows;
