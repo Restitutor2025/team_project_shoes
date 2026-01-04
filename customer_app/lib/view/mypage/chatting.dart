@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:customer_app/config.dart' as config;
 import 'package:customer_app/model/customer.dart';
+import 'package:customer_app/model/purchase.dart';
 import 'package:customer_app/model/usercontroller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -27,13 +28,25 @@ class Chatting extends StatefulWidget {
   State<Chatting> createState() => _ChattingState();
 }
 
+class PurchaseRow {
+  final Purchase purchase;
+  final String? productName;
+  final String imageUrl;
+
+  PurchaseRow({
+    required this.purchase,
+    required this.productName,
+    required this.imageUrl,
+  });
+}
+
 class _ChattingState extends State<Chatting> {
   //  Property
   late Customer customer;
   UserController userController = Get.find<UserController>();
 
   late int cid;
-  var values = Get.arguments;
+  late final PurchaseRow values;
   late TextEditingController tEC1;
   final String roomId = 'simple_chat';
 
@@ -45,6 +58,8 @@ class _ChattingState extends State<Chatting> {
       : customer = userController.user!;
     tEC1 = TextEditingController();
     cid = customer.id!;
+
+    values = Get.arguments as PurchaseRow;
   }
 
   @override
@@ -77,6 +92,7 @@ class _ChattingState extends State<Chatting> {
         //  데이타 바뀌어도 자동 동기화
         stream: FirebaseFirestore.instance
             .collection("ask")
+            .where('pcid', isEqualTo: values.purchase.id)
             .orderBy("timestamp", descending: false)
             .snapshots(),
         builder: (context, snapshot) {
@@ -122,7 +138,7 @@ class _ChattingState extends State<Chatting> {
                           color: Colors.grey[100],
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: Text('${totalChates[index]['title']} 관련 상품 문의입니다. \n${totalChates[index]['contents'] as String}'),
+                        child: Text('${totalChates[index]['contents'] as String}'),
                       ),
                     ),
                   ),
@@ -197,9 +213,10 @@ class _ChattingState extends State<Chatting> {
         .add({
       'cid': cid,
       'eid': null,
+      'pcid': values.purchase.id,
       'contents': text,
       'timestamp': FieldValue.serverTimestamp(),
-      'title': '${values.productName} 문의'
+      'title': '${values.productName ?? "상품"} 문의'
     });
   }
 }
