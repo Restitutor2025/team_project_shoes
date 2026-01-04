@@ -76,7 +76,7 @@ class _BoardReviewState extends State<BoardReview> {
   }
 
   Future<List<dynamic>> getJSONData(String page) async {
-    var url = Uri.parse("http://$hostip:8000/$page");
+    var url = Uri.parse("http://$hostip:8008/$page");
     var response = await http.get(url);
 
     var dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));
